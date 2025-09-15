@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMP2000ポータル</title>
+    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@mui/material@5/umd/material-ui.production.min.js"></script>
+    <script src="https://unpkg.com/@emotion/react@11.11.1/dist/emotion-react.umd.min.js"></script>
+    <script src="https://unpkg.com/@emotion/styled@11.11.0/dist/emotion-styled.umd.min.js"></script>
+    <style>
+        /* レイアウト用のシンプルなCSS */
+        .page-container {
+            max-width: 960px; /* 最大幅を指定してPCで広がりすぎないように */
+            margin: 0 auto; /* 中央寄せ */
+            padding: 24px;
+        }
+        .mdc-card-container {
+            display: grid;
+            gap: 24px;
+            /* グリッドレイアウトでレスポンシブに対応 */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        body {
+            font-family: Roboto, sans-serif;
+            background-color: #f5f5f5;
+        }
+        #root {
+            padding: 24px;
+            max-width: 960px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+<script>
+const feedUrls = [
+    {
+        url: 'https://note.com/cmp2000/rss',
+        source: 'note'
+    },
+    {
+        url: 'https://cmp2000.hatenadiary.jp/rss',
+        source: 'hatena'
+    },
+    {
+        url: 'https://www.youtube.com/feeds/videos.xml?channel_id=epumes',
+        source: 'youtube'
+    },
+    {
+        url: 'https://github.com/kevinsonz/cmo2000.atom',
+        source: 'github'
+    }
+];
+
+const fetchFeed = async (feed) => {
+    try {
+        const proxyUrl = 'https://api.allorigins.win/raw?url=';
+        const response = await fetch(proxyUrl + encodeURIComponent(feed.url));
+        const text = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(text, 'text/xml');
+        
+        // RSS/Atomの構造は異なるため、それぞれをパースする
+        const items = Array.from(xmlDoc.querySelectorAll('item, entry')).map(item => {
+            let title = item.querySelector('title')?.textContent;
+            let link = item.querySelector('link')?.getAttribute('href') || item.querySelector('link')?.textContent;
+            let pubDate = item.querySelector('pubDate, updated, published')?.textContent;
+            
+            // GitHubのAtomフィードのタイトルに"Commit on..."が含まれるため、整形
+            if (feed.source === 'github') {
+                title = title.replace(/&lt;.*&gt;/, '').trim();
+            }
+
+            return { title, link, pubDate: new Date(pubDate), source: feed.source };
+        });
+
+        return items;
+    } catch (error) {
+        console.error(`Failed to fetch feed from ${feed.url}:`, error);
+        return [];
+    }
+};
+
+const { Card, CardContent, Typography, Link, Box } = MaterialUI;
+const e = React.createElement;
+
+const App = () => {
+    const [feeds, setFeeds] = React.useState([]);
+
+    React.useEffect(() => {
+        const loadAllFeeds = async () => {
+            const promises = feedUrls.map(fetchFeed);
+            const allItems = (await Promise.all(promises)).flat();
+            
+            // 日付で降順に並べ替え
+            allItems.sort((a, b) => b.pubDate - a.pubDate);
+            
+            setFeeds(allItems);
+        };
+        loadAllFeeds();
+    }, []);
+
+    return e(Box, { sx: { display: 'flex', flexDirection: 'column', gap: 2 } },
+        feeds.map((item, index) =>
+            e(Card, { key: index, sx: { minWidth: 275 } },
+                e(CardContent, null,
+                    e(Typography, { variant: 'h5', component: 'div' }, item.title),
+                    e(Typography, { sx: { mb: 1.5 }, color: 'text.secondary' }, 
+                        `${item.source} - ${item.pubDate.toLocaleDateString()}`
+                    ),
+                    e(Link, { href: item.link, target: '_blank', rel: 'noopener' }, '記事へ')
+                )
+            )
+        )
+    );
+};
+
+ReactDOM.render(e(App), document.getElementById('root'));
+</script>
+
+    <div id="root"></div>
+
+    <div class="page-container">
+        <h1 class="mdc-typography--headline4">CMP2000ポータル</h1>
+
+        <h2 class="mdc-typography--headline5">共通コンテンツ</h2>
+
+        <div class="mdc-card-container">
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://cmp2000.hatenadiary.jp/">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">公式ブログ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://note.com/cmp2000">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">文章系コンテンツ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://www.instagram.com/peitaro_s/">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">画像系コンテンツ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://www.youtube.com/channel/UCKJaXVABY6PiTnTaP3exI5A">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">映像等コンテンツ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://github.com/kevinsonz/cmp2000">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">リポジトリ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <div class="mdc-card__primary-action" href="#" style="align-items: flex-start;">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+
+                    <ul class="mdc-list">
+                        <li class="mdc-list-item">
+                        <a href="https://x.com/epumes" class="mdc-list-item__text">
+                            告知
+                        </a>
+                        </li>
+                        <li class="mdc-list-item">
+                        <a href="https://cmp2000.hatenadiary.jp/archive/category/%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B" class="mdc-list-item__text">
+                            公式ブログ > お知らせ
+                        </a>
+                        </li>
+                    </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <h2 class="mdc-typography--headline5">けびんケビンソン</h2>
+        <div class="mdc-card-container">
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://kevinson2.hateblo.jp/">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">活動ブログ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="#">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">文章系コンテンツ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://www.instagram.com/kevinsonzz/">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">画像系コンテンツ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="#">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">映像等コンテンツ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://github.com/kevinsonz">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">リポジトリ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <div class="mdc-card__primary-action" href="#" style="align-items: flex-start;">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+
+                    <ul class="mdc-list">
+                        <li class="mdc-list-item">
+                        <a href="https://x.com/kevinsonzzz" class="mdc-list-item__text">
+                            活動つぶやき
+                        </a>
+                        </li>
+                    </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <h2 class="mdc-typography--headline5">イイダリョウ</h2>
+        <div class="mdc-card-container">
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://www.i-ryo.com/">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">技術ブログ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://idr-zz.hatenablog.jp/">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">趣味ブログ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://www.instagram.com/idr_zz/">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">画像系コンテンツ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="#">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">映像等コンテンツ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <a class="mdc-card__primary-action" href="https://github.com/ryo-i">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+                        <h3 class="mdc-typography--subtitle1">リポジトリ</h3>
+                    </div>
+                </a>
+            </div>
+
+            <div class="mdc-card">
+                <div class="mdc-card__primary-action" href="#" style="align-items: flex-start;">
+                    <div class="mdc-card__media mdc-card__media--16-9" style="background-image: url();"></div>
+                    <div class="mdc-card__content">
+
+                    <ul class="mdc-list">
+                        <li class="mdc-list-item">
+                        <a href="https://x.com/idr_zz" class="mdc-list-item__text">
+                            技術つぶやき
+                        </a>
+                        </li>
+                        <li class="mdc-list-item">
+                        <a href="https://x.com/idr_zzz" class="mdc-list-item__text">
+                            趣味つぶやき
+                        </a>
+                        </li>
+                    </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
