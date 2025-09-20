@@ -24,30 +24,6 @@
 </head>
 <body>
 
-    <script>
-    fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cmp2000.hatenadiary.jp/rss')
-    .then(response => response.json())
-    .then(data => {
-        const container = document.getElementById('rss-container');
-        data.items.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'rss-card';
-
-            const title = document.createElement('h3');
-            title.innerHTML = `<a href="${item.link}" target="_blank">${item.title}</a>`;
-
-            const date = new Date(item.pubDate).toLocaleDateString();
-            const dateElement = document.createElement('p');
-            dateElement.textContent = `公開日: ${date}`;
-
-            card.appendChild(title);
-            card.appendChild(dateElement);
-            container.appendChild(card);
-        });
-    })
-    .catch(error => console.error('Error fetching RSS feed:', error));
-    </script>
-
     <div class="page-container">
         <h1 class="mdc-typography--headline4">CMP2000ポータル</h1>
 
@@ -259,5 +235,30 @@
 
         </div>
     </div>
+
+    <script>
+        fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cmp2000.hatenadiary.jp/rss')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('rss-container');
+            data.items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'rss-card';
+    
+                const title = document.createElement('h3');
+                title.innerHTML = `<a href="${item.link}" target="_blank">${item.title}</a>`;
+    
+                const date = new Date(item.pubDate).toLocaleDateString();
+                const dateElement = document.createElement('p');
+                dateElement.textContent = `公開日: ${date}`;
+    
+                card.appendChild(title);
+                card.appendChild(dateElement);
+                container.appendChild(card);
+            });
+        })
+        .catch(error => console.error('Error fetching RSS feed:', error));
+        </script>
+    
 </body>
 </html>
