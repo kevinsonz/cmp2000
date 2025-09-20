@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -6,11 +7,6 @@
     <title>CMP2000ポータル</title>
     <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
     <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@mui/material@5/umd/material-ui.production.min.js"></script>
-    <script src="https://unpkg.com/@emotion/react@11.11.1/dist/emotion-react.umd.min.js"></script>
-    <script src="https://unpkg.com/@emotion/styled@11.11.0/dist/emotion-styled.umd.min.js"></script>
     <style>
         /* レイアウト用のシンプルなCSS */
         .page-container {
@@ -24,105 +20,33 @@
             /* グリッドレイアウトでレスポンシブに対応 */
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         }
-        body {
-            font-family: Roboto, sans-serif;
-            background-color: #f5f5f5;
-        }
-        #root {
-            padding: 24px;
-            max-width: 960px;
-            margin: auto;
-        }
     </style>
 </head>
 <body>
-<script>
-const feedUrls = [
-    {
-        url: 'https://note.com/cmp2000/rss',
-        source: 'note'
-    },
-    {
-        url: 'https://cmp2000.hatenadiary.jp/rss',
-        source: 'hatena'
-    },
-    {
-        url: 'https://www.youtube.com/feeds/videos.xml?channel_id=epumes',
-        source: 'youtube'
-    },
-    {
-        url: 'https://github.com/kevinsonz/cmo2000.atom',
-        source: 'github'
-    }
-];
 
-const fetchFeed = async (feed) => {
-    try {
-        const proxyUrl = 'https://api.allorigins.win/raw?url=';
-        const response = await fetch(proxyUrl + encodeURIComponent(feed.url));
-        const text = await response.text();
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(text, 'text/xml');
-        
-        // RSS/Atomの構造は異なるため、それぞれをパースする
-        const items = Array.from(xmlDoc.querySelectorAll('item, entry')).map(item => {
-            let title = item.querySelector('title')?.textContent;
-            let link = item.querySelector('link')?.getAttribute('href') || item.querySelector('link')?.textContent;
-            let pubDate = item.querySelector('pubDate, updated, published')?.textContent;
-            
-            // GitHubのAtomフィードのタイトルに"Commit on..."が含まれるため、整形
-            if (feed.source === 'github') {
-                title = title.replace(/&lt;.*&gt;/, '').trim();
-            }
+    <script>
+    fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cmp2000.hatenadiary.jp/rss')
+    .then(response => response.json())
+    .then(data => {
+        const container = document.getElementById('rss-container');
+        data.items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'rss-card';
 
-            return { title, link, pubDate: new Date(pubDate), source: feed.source };
+            const title = document.createElement('h3');
+            title.innerHTML = `<a href="${item.link}" target="_blank">${item.title}</a>`;
+
+            const date = new Date(item.pubDate).toLocaleDateString();
+            const dateElement = document.createElement('p');
+            dateElement.textContent = `公開日: ${date}`;
+
+            card.appendChild(title);
+            card.appendChild(dateElement);
+            container.appendChild(card);
         });
-
-        return items;
-    } catch (error) {
-        console.error(`Failed to fetch feed from ${feed.url}:`, error);
-        return [];
-    }
-};
-
-const { Card, CardContent, Typography, Link, Box } = MaterialUI;
-const e = React.createElement;
-
-const App = () => {
-    const [feeds, setFeeds] = React.useState([]);
-
-    React.useEffect(() => {
-        const loadAllFeeds = async () => {
-            const promises = feedUrls.map(fetchFeed);
-            const allItems = (await Promise.all(promises)).flat();
-            
-            // 日付で降順に並べ替え
-            allItems.sort((a, b) => b.pubDate - a.pubDate);
-            
-            setFeeds(allItems);
-        };
-        loadAllFeeds();
-    }, []);
-
-    return e(Box, { sx: { display: 'flex', flexDirection: 'column', gap: 2 } },
-        feeds.map((item, index) =>
-            e(Card, { key: index, sx: { minWidth: 275 } },
-                e(CardContent, null,
-                    e(Typography, { variant: 'h5', component: 'div' }, item.title),
-                    e(Typography, { sx: { mb: 1.5 }, color: 'text.secondary' }, 
-                        `${item.source} - ${item.pubDate.toLocaleDateString()}`
-                    ),
-                    e(Link, { href: item.link, target: '_blank', rel: 'noopener' }, '記事へ')
-                )
-            )
-        )
-    );
-};
-
-ReactDOM.render(e(App), document.getElementById('root'));
-</script>
-
-    <div id="root"></div>
+    })
+    .catch(error => console.error('Error fetching RSS feed:', error));
+    </script>
 
     <div class="page-container">
         <h1 class="mdc-typography--headline4">CMP2000ポータル</h1>
