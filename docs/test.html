@@ -24,6 +24,44 @@
 </head>
 <body>
 
+
+    <h1>最新の更新情報</h1>
+    <div id="rss-feed-container">
+        </div>
+
+    <script>
+        // 表示したいRSSフィードのURLをここに正確に貼り付けてください
+        const RSS_FEED_URL = 'https://cmp2000.hatenadiary.jp/rss'; // 例：Qiitaのフィード
+
+        // コンテナ要素を取得
+        const container = document.getElementById('rss-feed-container');
+
+        // RSS2JSONのAPIを呼び出す
+        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${RSS_FEED_URL}`)
+            .then(response => response.json())
+            .then(data => {
+                // データの取得に成功した場合
+                const items = data.items;
+                items.forEach(item => {
+                    const articleTitle = item.title;
+                    const articleLink = item.link;
+                    const articleDate = new Date(item.pubDate).toLocaleDateString('ja-JP');
+                    
+                    const articleElement = document.createElement('div');
+                    articleElement.innerHTML = `
+                        <h3><a href="${articleLink}" target="_blank">${articleTitle}</a></h3>
+                        <p>${articleDate}</p>
+                    `;
+                    container.appendChild(articleElement);
+                });
+            })
+            .catch(error => {
+                // エラーが発生した場合
+                console.error('データの取得中にエラーが発生しました:', error);
+                container.innerHTML = '<p>更新情報を取得できませんでした。</p>';
+            });
+    </script>
+
     <div class="page-container">
         <h1 class="mdc-typography--headline4">CMP2000ポータル</h1>
 
@@ -236,29 +274,5 @@
         </div>
     </div>
 
-    <script>
-        fetch('https://api.rss2json.com/v1/api.json?rss_url=https://cmp2000.hatenadiary.jp/rss')
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById('rss-container');
-            data.items.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'rss-card';
-    
-                const title = document.createElement('h3');
-                title.innerHTML = `<a href="${item.link}" target="_blank">${item.title}</a>`;
-    
-                const date = new Date(item.pubDate).toLocaleDateString();
-                const dateElement = document.createElement('p');
-                dateElement.textContent = `公開日: ${date}`;
-    
-                card.appendChild(title);
-                card.appendChild(dateElement);
-                container.appendChild(card);
-            });
-        })
-        .catch(error => console.error('Error fetching RSS feed:', error));
-        </script>
-    
 </body>
 </html>
