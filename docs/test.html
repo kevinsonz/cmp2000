@@ -4,63 +4,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMP2000ポータル</title>
-    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
-    <style>
-        /* レイアウト用のシンプルなCSS */
-        .page-container {
-            max-width: 960px; /* 最大幅を指定してPCで広がりすぎないように */
-            margin: 0 auto; /* 中央寄せ */
-            padding: 24px;
-        }
-        .mdc-card-container {
-            display: grid;
-            gap: 24px;
-            /* グリッドレイアウトでレスポンシブに対応 */
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        }
-    </style>
+    <title>CMP2000 Official Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./script.js"></script>    
 </head>
-<body>
-
-
-    <h1>最新の更新情報</h1>
-    <div id="rss-feed-container">
+<body class="bg-light" id="cmp">
+<h1>CMP2000 Official Portal</h1>
+<hr>
+<div class="page-container text-center">
+    <h3>最新の更新情報</h3>
+    <div class="row">
+        <div class="col">
+            <div id="multi-rss-feed-container" class="rss-feed-container text-start"></div>
         </div>
-
-    <script>
-        // 表示したいRSSフィードのURLをここに正確に貼り付けてください
-        const RSS_FEED_URL = 'https://cmp2000.hatenadiary.jp/rss'; // 例：Qiitaのフィード
-
-        // コンテナ要素を取得
-        const container = document.getElementById('rss-feed-container');
-
-        // RSS2JSONのAPIを呼び出す
-        fetch(`https://api.rss2json.com/v1/api.json?rss_url=${RSS_FEED_URL}`)
-            .then(response => response.json())
-            .then(data => {
-                // データの取得に成功した場合
-                const items = data.items;
-                items.forEach(item => {
-                    const articleTitle = item.title;
-                    const articleLink = item.link;
-                    const articleDate = new Date(item.pubDate).toLocaleDateString('ja-JP');
-                    
-                    const articleElement = document.createElement('div');
-                    articleElement.innerHTML = `
-                        <h3><a href="${articleLink}" target="_blank">${articleTitle}</a></h3>
-                        <p>${articleDate}</p>
-                    `;
-                    container.appendChild(articleElement);
-                });
-            })
-            .catch(error => {
-                // エラーが発生した場合
-                console.error('データの取得中にエラーが発生しました:', error);
-                container.innerHTML = '<p>更新情報を取得できませんでした。</p>';
-            });
-    </script>
+    </div>
+</div>
+<hr>
+    <div class="container text-center">
+        <div class="row">
+          <h3>共通コンテンツ</h3>
+          <div class="col">
+            <div class="card">
+                <img src="https://placehold.jp/100x50.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title">公式ブログ</h5>
+                  <p class="card-text"><div id="single-rss-feed-container-cmpOfficialBlog" class="rss-feed-container text-start"></div></p>
+                  <a href="https://cmp2000.hatenadiary.jp" class="btn btn-primary" target="_blank">Go to Site</a>
+                </div>
+              </div>
+          </div>
+          <div class="col">
+            <div class="card">
+                <img src="https://placehold.jp/100x50.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title">文章系コンテンツ</h5>
+                  <p class="card-text"><div id="single-rss-feed-container-cmpText" class="rss-feed-container text-start"></div></p>
+                  <a href="https://note.com/cmp2000" class="btn btn-primary" target="_blank">Go to Site</a>
+                </div>
+              </div>
+          </div>
+          <div class="col">
+            <div class="card">
+                <img src="https://placehold.jp/100x50.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title">画像系コンテンツ</h5>
+                  <p class="rss-feed-container text-start">xxx</p>
+                  <a href="https://www.instagram.com/peitaro_s" class="btn btn-primary" target="_blank">Go to Site</a>
+                </div>
+              </div>
+          </div>
+          <div class="col">
+            <div class="card">
+                <img src="https://placehold.jp/100x50.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title">映像系コンテンツ</h5>
+                  <p class="rss-feed-container text-start">xxx</p>
+                  <a href="https://www.youtube.com/@epumes" class="btn btn-primary" target="_blank">Go to Site</a>
+                </div>
+              </div>
+          </div>
+          <div class="col">
+            <div class="card">
+                <img src="https://placehold.jp/100x50.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                  <h5 class="card-title">リポジトリ</h5>
+                  <p class="card-text"><div id="single-rss-feed-container-cmpRepository" class="rss-feed-container text-start"></div></p>
+                  <a href="https://github.com/kevinsonz/cmp2000" class="btn btn-primary" target="_blank">Go to Site</a>
+                </div>
+              </div>
+          </div>
+        </div>
+      </div>
 
     <div class="page-container">
         <h1 class="mdc-typography--headline4">CMP2000ポータル</h1>

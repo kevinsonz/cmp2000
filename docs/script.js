@@ -1,76 +1,102 @@
-/**
-// 表示したいRSSフィードのURLをここに正確に貼り付けてください
-const RSS_FEED_URL = 'https://cmp2000.hatenadiary.jp/rss'; // 例：Qiitaのフィード
+const multiMaxLength = 20;
+const singleMaxLength = 10;
 
-// コンテナ要素を取得
-const container = document.getElementById('rss-feed-container');
+// フィード設定
+const feedUrls = {
+    cmpOfficialBlog: {
+        url: 'https://cmp2000.hatenadiary.jp/rss',
+        siteUrl: 'https://cmp2000.hatenadiary.jp/',
+        siteTitle: 'CMP2000 > 公式ブログ'
+    },
+    cmpText: {
+        url: 'https://note.com/cmp2000/rss',
+        siteUrl: 'https://note.com/cmp2000',
+        siteTitle: 'CMP2000 > 文章系コンテンツ'
+    },
+    cmpRepository: {
+        url: 'https://github.com/kevinsonz/cmp2000/commits.atom',
+        siteUrl: 'https://github.com/kevinsonz/cmp2000/',
+        siteTitle: 'CMP2000 > リポジトリ'
+    }
+};
 
-// RSS2JSONのAPIを呼び出す
-fetch(`https://api.rss2json.com/v1/api.json?rss_url=${RSS_FEED_URL}`)
-    .then(response => response.json())
-    .then(data => {
-        // データの取得に成功した場合
-        const items = data.items;
-        items.forEach(item => {
-            const articleTitle = item.title;
-            const articleLink = item.link;
-            const articleDate = new Date(item.pubDate).toLocaleDateString('ja-JP');
-            
-            const articleElement = document.createElement('div');
-            articleElement.innerHTML = `
-                <h3><a href="${articleLink}" target="_blank">${articleTitle}</a></h3>
-                <p>${articleDate}</p>
-            `;
-            container.appendChild(articleElement);
-        });
-    })
-    .catch(error => {
-        // エラーが発生した場合
-        console.error('データの取得中にエラーが発生しました:', error);
-        container.innerHTML = '<p>更新情報を取得できませんでした。</p>';
-    });
- */
+// ========================
+// 複数サイトフィードの取得と表示
+// ========================
+const multiSiteItems = [];
 
-const feedUrls = [
-    'https://cmp2000.hatenadiary.jp/rss', // サイトA
-    'https://note.com/cmp2000/rss'  // サイトB
-];
-const allItems = []; // すべての記事を格納する配列
-
-// Promise.allで複数の取得処理を待つ
-const promises = feedUrls.map(url =>
-    // 各URLにRSS2JSON APIを経由してアクセス
-    fetch(`https://api.rss2json.com/v1/api.json?rss_url=${url}`)
+const multiPromises = Object.entries(feedUrls).map(([key, config]) =>
+    fetch(`https://api.rss2json.com/v1/api.json?rss_url=${config.url}`)
         .then(response => response.json())
         .then(data => {
-            // サイト名を追加しつつ、記事データを結合
-            const siteTitle = data.feed.title;
+            const siteTitle = config.siteTitle;
+            const siteUrl = config.siteUrl;
             const itemsWithTitle = data.items.map(item => ({
-                ...item, // 元の記事のプロパティをすべてコピー
-                siteTitle: siteTitle // サイト名を追加
+                ...item,
+                siteTitle: siteTitle,
+                siteUrl: siteUrl
             }));
-            allItems.push(...itemsWithTitle);
+            multiSiteItems.push(...itemsWithTitle);
         })
 );
 
-// 全てのデータ取得が完了したら次の処理へ
-Promise.all(promises).then(() => {
-    // ステップ2へ進む
-});
-
-Promise.all(promises).then(() => {
+Promise.all(multiPromises).then(() => {
     // 日付（pubDate）で降順ソート
-    allItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+    multiSiteItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
 
-    const container = document.getElementById('rss-feed-container');
+    const container = document.getElementById('multi-rss-feed-container');
     
-    // ソートされたリストを表示
-    allItems.forEach(item => {
+    // 上位20件のみ表示
+    multiSiteItems.slice(0, multiMaxLength).forEach(item => {
+        const date = new Date(item.pubDate);
+        const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
         const articleElement = document.createElement('div');
         articleElement.innerHTML = `
-            <h3 style="margin-bottom: 0.25rem"><a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a></h3>
-            <p style="margin-bottom: 0.25rem"><strong>${item.siteTitle}</strong> - ${new Date(item.pubDate).toLocaleDateString('ja-JP')}</p>
+        <p style="margin-bottom: 0.25rem">
+            <span style="display: inline-block; width: 15rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">
+                <a href="${item.siteUrl}" target="_blank"><strong>${item.siteTitle}</strong></a>
+            </span>
+            <span style="display: inline-block; width: 7.5rem">
+                 - ${formattedDate} 
+            </span>
+            <span>
+                <a href="${item.link}" target="_blank">
+                    <span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">${item.title}</span>
+                </a>
+            </span>
+        </p>
         `;
         container.appendChild(articleElement);
     });
+});
+
+// ========================
+// 単独サイトフィードの取得と表示
+// ========================
+Object.entries(feedUrls).forEach(([key, config]) => {
+    fetch(`https://api.rss2json.com/v1/api.json?rss_url=${config.url}`)
+        .then(response => response.json())
+        .then(data => {
+            const items = data.items;
+            
+            // 日付で降順ソート
+            items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+            
+            const containerId = `single-rss-feed-container-${key}`;
+            const singleContainer = document.getElementById(containerId);
+            
+            if (singleContainer) {
+                // 上位10件のみ表示
+                items.slice(0, singleMaxLength).forEach(item => {
+                    const date = new Date(item.pubDate);
+                    const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+                    const articleElement = document.createElement('div');
+                    // サイト名は表示しない
+                    articleElement.innerHTML = `
+                        <span style="margin-bottom: 0.25rem">${formattedDate}<a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a></span>
+                    `;
+                    singleContainer.appendChild(articleElement);
+                });
+            }
+        });
 });

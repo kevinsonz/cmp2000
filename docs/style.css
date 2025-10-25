@@ -1,0 +1,29 @@
+/* レイアウト用のシンプルなCSS */
+.page-container {
+    max-width: 960px; /* 最大幅を指定してPCで広がりすぎないように */
+    margin: 0 auto; /* 中央寄せ */
+    padding: 24px;
+}
+
+.row {
+    gap: 2rem;
+}
+
+.card {
+    width: 20rem;
+    height: 30rem;
+}
+
+#cmp .rss-feed-container {
+    overflow-y: scroll;
+    height: 12rem;
+    background-color: white;
+}
+
+#cmp .rss-feed-container a {
+    font-size: 1rem;
+}
+
+#cmp .rss-feed-container h3 {
+    margin-bottom: .25rem;
+}
