@@ -219,25 +219,8 @@ function getLocalFeedUrls() {
         //     type: 'api'
         // },
 
-        cmpOfficialBlog: {
-            url: 'https://cmp2000.hatenadiary.jp/rss',
-            siteUrl: 'https://cmp2000.hatenadiary.jp/',
-            siteTitle: 'CMP2000 > 公式ブログ',
-            type: 'api'
-        },
-        cmpText: {
-            url: 'https://note.com/cmp2000/rss',
-            siteUrl: 'https://note.com/cmp2000',
-            siteTitle: 'CMP2000 > 文章系コンテンツ',
-            type: 'api'
-        },
-        cmpRepository: {
-            url: 'https://github.com/kevinsonz/cmp2000/commits.atom',
-            siteUrl: 'https://github.com/kevinsonz/cmp2000/',
-            siteTitle: 'CMP2000 > リポジトリ',
-            type: 'api'
-        },
-        
+
+
         // ===== カスタムフィード（手作りJSON）の例 =====
         // sampleCustomSite: {
         //     url: './feeds/sample-custom.json',
@@ -245,13 +228,9 @@ function getLocalFeedUrls() {
         //     siteTitle: 'カスタムサイト',
         //     type: 'custom'
         // },
-        
-        cmpVideo: {
-            url: './feeds/cmpVideo.json',
-            siteUrl: 'https://www.youtube.com/@epumes',
-            siteTitle: 'CMP2000 > 映像系コンテンツ',
-            type: 'custom'
-        }
+
+
+
         // 必要に応じてサイトを追加
     };
 }
@@ -270,14 +249,7 @@ function getLocalCustomFeeds() {
         //     ]
         // }
 
-        cmpVideo: {
-            items: [
-                {
-                    title: '処女作2',
-                    link: 'https://www.youtube.com/watch?v=ogmxxnvQVhM',
-                    pubDate: '2017-01-02'
-                }
-            ]
-        }
+
+
     };
 }
