@@ -1,26 +1,26 @@
 {
-  cmpOfficialBlog: {
-    url: 'https://cmp2000.hatenadiary.jp/rss',
-    siteUrl: 'https://cmp2000.hatenadiary.jp/',
-    siteTitle: 'CMP2000 > 公式ブログ',
-    type: 'api'
-},
-cmpText: {
-    url: 'https://note.com/cmp2000/rss',
-    siteUrl: 'https://note.com/cmp2000',
-    siteTitle: 'CMP2000 > 文章系コンテンツ',
-    type: 'api'
-},
-cmpRepository: {
-    url: 'https://github.com/kevinsonz/cmp2000/commits.atom',
-    siteUrl: 'https://github.com/kevinsonz/cmp2000/',
-    siteTitle: 'CMP2000 > リポジトリ',
-    type: 'api'
-},
-cmpVideo: {
-  url: './feeds/cmpVideo.json',
-  siteUrl: 'https://www.youtube.com/@epumes',
-  siteTitle: 'CMP2000 > 映像系コンテンツ',
-  type: 'custom'
-}
+  "cmpOfficialBlog": {
+    "url": "https://cmp2000.hatenadiary.jp/rss",
+    "siteUrl": "https://cmp2000.hatenadiary.jp/",
+    "siteTitle": "CMP2000 > 公式ブログ",
+    "type": "api"
+  },
+  "cmpText": {
+    "url": "https://note.com/cmp2000/rss",
+    "siteUrl": "https://note.com/cmp2000",
+    "siteTitle": "CMP2000 > 文章系コンテンツ",
+    "type": "api"
+  },
+  "cmpRepository": {
+    "url": "https://github.com/kevinsonz/cmp2000/commits.atom",
+    "siteUrl": "https://github.com/kevinsonz/cmp2000/",
+    "siteTitle": "CMP2000 > リポジトリ",
+    "type": "api"
+  },
+  "cmpVideo": {
+    "url": "https://kevinsonz.github.io/cmp2000/feeds/cmpVideo.json",
+    "siteUrl": "https://www.youtube.com/@epumes",
+    "siteTitle": "CMP2000 > 映像系コンテンツ",
+    "type": "custom"
   }
+}
