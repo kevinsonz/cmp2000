@@ -1,7 +1,7 @@
 const multiMaxLength = 20;
 const singleMaxLength = 10;
 
-// フィード設定を外部JSONから読み込む（本番環境用）
+// フィード設定をCSVから読み込む（本番環境用）
 let feedUrls = {};
 
 // 環境判定：file://プロトコルならローカルモード
@@ -12,15 +12,56 @@ if (isLocalMode) {
     feedUrls = getLocalFeedUrls();
     loadFeeds();
 } else {
-    fetch('./feedUrls.json')
-        .then(response => response.json())
-        .then(data => {
-            feedUrls = data;
+    fetch('./feedUrls.csv')
+        .then(response => response.text())
+        .then(csvText => {
+            feedUrls = parseCSV(csvText);
             loadFeeds();
         })
         .catch(error => {
-            console.error('feedUrls.jsonの読み込みに失敗しました:', error);
+            console.error('feedUrls.csvの読み込みに失敗しました:', error);
         });
+}
+
+// CSV解析関数（feedUrls用）
+function parseCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const result = {};
+    
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        const key = values[0];
+        const obj = {};
+        
+        for (let j = 1; j < headers.length; j++) {
+            obj[headers[j]] = values[j];
+        }
+        
+        result[key] = obj;
+    }
+    
+    return result;
+}
+
+// CSV解析関数（カスタムフィード用）
+function parseCustomFeedCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const items = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        const item = {};
+        
+        for (let j = 0; j < headers.length; j++) {
+            item[headers[j]] = values[j];
+        }
+        
+        items.push(item);
+    }
+    
+    return { items: items };
 }
 
 function loadFeeds() {
@@ -31,7 +72,7 @@ function loadFeeds() {
 
     const multiPromises = Object.entries(feedUrls).map(([key, config]) => {
         if (config.type === 'custom') {
-            // 手作りJSON形式のカスタムフィード
+            // 手作りCSV形式のカスタムフィード
             if (isLocalMode) {
                 // ローカルモード：getLocalCustomFeeds()から取得
                 return Promise.resolve().then(() => {
@@ -48,12 +89,13 @@ function loadFeeds() {
                     }
                 });
             } else {
-                // 本番モード：JSONファイルから取得
+                // 本番モード：CSVファイルから取得
                 return fetch(config.url)
-                    .then(response => response.json())
-                    .then(data => {
+                    .then(response => response.text())
+                    .then(csvText => {
                         const siteTitle = config.siteTitle;
                         const siteUrl = config.siteUrl;
+                        const data = parseCustomFeedCSV(csvText);
                         if (data && data.items) {
                             const itemsWithTitle = data.items.map(item => ({
                                 ...item,
@@ -116,7 +158,7 @@ function loadFeeds() {
     // ========================
     Object.entries(feedUrls).forEach(([key, config]) => {
         if (config.type === 'custom') {
-            // 手作りJSON形式のカスタムフィード
+            // 手作りCSV形式のカスタムフィード
             if (isLocalMode) {
                 // ローカルモード：getLocalCustomFeeds()から取得
                 const siteData = getLocalCustomFeeds()[key];
@@ -144,10 +186,11 @@ function loadFeeds() {
                     }
                 }
             } else {
-                // 本番モード：JSONファイルから取得
+                // 本番モード：CSVファイルから取得
                 fetch(config.url)
-                    .then(response => response.json())
-                    .then(data => {
+                    .then(response => response.text())
+                    .then(csvText => {
+                        const data = parseCustomFeedCSV(csvText);
                         if (data && data.items) {
                             const items = data.items;
                             
@@ -208,7 +251,7 @@ function loadFeeds() {
 // ローカル確認用設定（ファイル最後に配置）
 // ========================
 function getLocalFeedUrls() {
-    // ここにfeedUrls.jsonの内容を貼り付け
+    // ここにfeedUrls.csvの内容を貼り付け
     return {
 
         // ===== API経由のフィード（RSS/ATOM）の例 =====
@@ -221,9 +264,9 @@ function getLocalFeedUrls() {
 
 
 
-        // ===== カスタムフィード（手作りJSON）の例 =====
+        // ===== カスタムフィード（手作りCSV）の例 =====
         // sampleCustomSite: {
-        //     url: './feeds/sample-custom.json',
+        //     url: './feeds/sample-custom.csv',
         //     siteUrl: 'https://custom-site.com',
         //     siteTitle: 'カスタムサイト',
         //     type: 'custom'
@@ -236,7 +279,8 @@ function getLocalFeedUrls() {
 }
 
 function getLocalCustomFeeds() {
-    // ここにcustom-feeds.jsonの内容を貼り付け
+    // ここにカスタムフィードの内容を貼り付け
+    // キー名はgetLocalFeedUrls()のキー名と一致させる
     return {
         // 例:
         // customSite1: {
