@@ -1,19 +1,32 @@
 /* レイアウト用のシンプルなCSS */
 .page-container {
-    max-width: 960px; /* 最大幅を指定してPCで広がりすぎないように */
-    margin: 0 auto; /* 中央寄せ */
+    max-width: 960px;
+    margin: 0 auto;
     padding: 24px;
 }
 
-.row {
+/* カードコンテナ用のスタイル */
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 2rem;
+    margin-top: 1.5rem;
 }
 
-.card {
+/* カードラッパー：レスポンシブな幅設定 */
+.card-wrapper {
+    flex: 0 0 auto;
     width: 20rem;
+    max-width: 100%;
+}
+
+/* カードの高さを固定 */
+.card {
     height: 30rem;
 }
 
+/* RSSフィードコンテナのスタイル */
 #cmp .rss-feed-container {
     overflow-y: scroll;
     height: 12rem;
@@ -26,4 +39,19 @@
 
 #cmp .rss-feed-container h3 {
     margin-bottom: .25rem;
+}
+
+/* セクションタイトルのスタイル */
+.section-title {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0;
+}
+
+/* スマホサイズでカード幅を調整 */
+@media (max-width: 576px) {
+    .card-wrapper {
+        width: 100%;
+        max-width: 20rem;
+    }
 }
