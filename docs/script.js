@@ -1,136 +1,146 @@
 const multiMaxLength = 20;
 const singleMaxLength = 10;
 
-// フィード設定をCSVから読み込む（本番環境用）
-let feedUrls = {};
+// ========================
+// ローカル用CSV設定データ（最優先で定義）
+// ========================
+
+// ローカル用multi履歴CSV（siteTitle,siteUrl,title,link,date の形式）
+const LOCAL_MULTI_CSV = `
+siteTitle,siteUrl,title,link,date
+CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,最新記事のタイトル1,https://example.com/article1,2025-01-20
+CMP2000 > 文章系コンテンツ,https://note.com/cmp2000,最新記事のタイトル2,https://example.com/article2,2025-01-19
+CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes,動画タイトル1,https://youtu.be/xxxxx1,2025-01-18
+けびんケビンソン > 活動ブログ,https://kevinson2.hateblo.jp/,ブログ記事1,https://example.com/article3,2025-01-17
+CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,過去の記事,https://example.com/article4,2025-01-15
+イイダリョウ > 技術系ブログ,https://www.i-ryo.com/,技術記事1,https://example.com/article5,2025-01-14
+CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/,コミット履歴1,https://github.com/kevinsonz/cmp2000/commit/xxx,2025-01-13
+けびんケビンソン > 文章系コンテンツ,https://note.com/kevinson/,Note記事1,https://example.com/article6,2025-01-12
+イイダリョウ > 文章系（キャリア関係）,https://note.com/idr_zz/,キャリア記事1,https://example.com/article7,2025-01-11
+CMP2000 > 文章系コンテンツ,https://note.com/cmp2000,文章記事2,https://example.com/article8,2025-01-10
+`;
+
+// ローカル用single履歴CSV（key,title,link,date の形式）
+const LOCAL_SINGLE_CSV = `
+key,title,link,date
+cmpOfficialBlog,記事タイトル1,https://example.com/1,2025-01-20
+cmpOfficialBlog,記事タイトル2,https://example.com/2,2025-01-19
+cmpOfficialBlog,記事タイトル3,https://example.com/3,2025-01-18
+cmpText,テキスト記事1,https://example.com/4,2025-01-17
+cmpText,テキスト記事2,https://example.com/5,2025-01-16
+cmpText,,,,
+cmpVideo,動画タイトル1,https://youtu.be/xxx1,2025-01-15
+cmpVideo,動画タイトル2,https://youtu.be/xxx2,2025-01-14
+cmpVideo,,,
+cmpVideo,,,
+cmpRepository,コミット1,https://github.com/xxx/commit/1,2025-01-13
+cmpRepository,コミット2,https://github.com/xxx/commit/2,2025-01-12
+cmpRepository,,,
+kevinson-blog,ブログ記事1,https://example.com/6,2025-01-11
+kevinson-blog,ブログ記事2,https://example.com/7,2025-01-10
+kevinson-blog,,,
+kevinson-blog,,,
+iida-blog,技術ブログ1,https://example.com/8,2025-01-09
+iida-blog,技術ブログ2,https://example.com/9,2025-01-08
+iida-blog,,,
+`;
+
+// 公開スプレッドシートのCSV URL
+const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
+const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
 
 // 環境判定：file://プロトコルならローカルモード
 const isLocalMode = window.location.protocol === 'file:';
 
 if (isLocalMode) {
     console.log('ローカルモードで実行中');
-    feedUrls = getLocalFeedUrls();
-    loadFeeds();
+    const multiData = parseMultiCSV(LOCAL_MULTI_CSV);
+    const singleData = parseSingleCSV(LOCAL_SINGLE_CSV);
+    loadFeeds(multiData, singleData);
 } else {
-    fetch('./feedUrls.csv')
-        .then(response => response.text())
-        .then(csvText => {
-            feedUrls = parseCSV(csvText);
-            loadFeeds();
-        })
-        .catch(error => {
-            console.error('feedUrls.csvの読み込みに失敗しました:', error);
-        });
+    Promise.all([
+        fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),
+        fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text())
+    ])
+    .then(([multiCsvText, singleCsvText]) => {
+        const multiData = parseMultiCSV(multiCsvText);
+        const singleData = parseSingleCSV(singleCsvText);
+        loadFeeds(multiData, singleData);
+    })
+    .catch(error => {
+        console.error('公開CSVの読み込みに失敗しました:', error);
+    });
 }
 
-// CSV解析関数（feedUrls用）
-function parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const result = {};
-    
-    for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        const key = values[0];
-        const obj = {};
-        
-        for (let j = 1; j < headers.length; j++) {
-            obj[headers[j]] = values[j];
-        }
-        
-        result[key] = obj;
-    }
-    
-    return result;
-}
-
-// CSV解析関数（カスタムフィード用）
-function parseCustomFeedCSV(csvText) {
+// CSV解析関数（multi用：siteTitle,siteUrl,title,link,date）
+function parseMultiCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     const items = [];
     
+    const siteTitleIndex = headers.indexOf('siteTitle');
+    const siteUrlIndex = headers.indexOf('siteUrl');
+    const titleIndex = headers.indexOf('title');
+    const linkIndex = headers.indexOf('link');
+    const dateIndex = headers.indexOf('date');
+    
     for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
-        const item = {};
         
-        for (let j = 0; j < headers.length; j++) {
-            item[headers[j]] = values[j];
+        // 全ての必須フィールドが埋まっているかチェック
+        if (values[siteTitleIndex] && values[siteUrlIndex] && 
+            values[titleIndex] && values[linkIndex] && values[dateIndex]) {
+            items.push({
+                siteTitle: values[siteTitleIndex],
+                siteUrl: values[siteUrlIndex],
+                title: values[titleIndex],
+                link: values[linkIndex],
+                pubDate: values[dateIndex]
+            });
         }
-        
-        items.push(item);
     }
     
-    return { items: items };
+    return items;
 }
 
-function loadFeeds() {
-    // ========================
-    // 複数サイトフィードの取得と表示
-    // ========================
-    const multiSiteItems = [];
-
-    const multiPromises = Object.entries(feedUrls).map(([key, config]) => {
-        if (config.type === 'custom') {
-            // 手作りCSV形式のカスタムフィード
-            if (isLocalMode) {
-                // ローカルモード：getLocalCustomFeeds()から取得
-                return Promise.resolve().then(() => {
-                    const siteTitle = config.siteTitle;
-                    const siteUrl = config.siteUrl;
-                    const siteData = getLocalCustomFeeds()[key];
-                    if (siteData && siteData.items) {
-                        const itemsWithTitle = siteData.items.map(item => ({
-                            ...item,
-                            siteTitle: siteTitle,
-                            siteUrl: siteUrl
-                        }));
-                        multiSiteItems.push(...itemsWithTitle);
-                    }
-                });
-            } else {
-                // 本番モード：CSVファイルから取得
-                return fetch(config.url)
-                    .then(response => response.text())
-                    .then(csvText => {
-                        const siteTitle = config.siteTitle;
-                        const siteUrl = config.siteUrl;
-                        const data = parseCustomFeedCSV(csvText);
-                        if (data && data.items) {
-                            const itemsWithTitle = data.items.map(item => ({
-                                ...item,
-                                siteTitle: siteTitle,
-                                siteUrl: siteUrl
-                            }));
-                            multiSiteItems.push(...itemsWithTitle);
-                        }
-                    });
-            }
-        } else {
-            // RSS/ATOM形式のフィード（RSS2JSON API経由）
-            return fetch(`https://api.rss2json.com/v1/api.json?rss_url=${config.url}`)
-                .then(response => response.json())
-                .then(data => {
-                    const siteTitle = config.siteTitle;
-                    const siteUrl = config.siteUrl;
-                    const itemsWithTitle = data.items.map(item => ({
-                        ...item,
-                        siteTitle: siteTitle,
-                        siteUrl: siteUrl
-                    }));
-                    multiSiteItems.push(...itemsWithTitle);
-                });
-        }
-    });
-
-    Promise.all(multiPromises).then(() => {
-        // 日付（pubDate）で降順ソート
-        multiSiteItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-
-        const container = document.getElementById('multi-rss-feed-container');
+// CSV解析関数（single用：key,title,link,date）
+function parseSingleCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const items = [];
+    
+    const keyIndex = headers.indexOf('key');
+    const titleIndex = headers.indexOf('title');
+    const linkIndex = headers.indexOf('link');
+    const dateIndex = headers.indexOf('date');
+    
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
         
-        // 上位件数のみ表示
-        multiSiteItems.slice(0, multiMaxLength).forEach(item => {
+        // keyと他の全てのフィールドが埋まっているかチェック
+        if (values[keyIndex] && values[titleIndex] && 
+            values[linkIndex] && values[dateIndex]) {
+            items.push({
+                key: values[keyIndex],
+                title: values[titleIndex],
+                link: values[linkIndex],
+                pubDate: values[dateIndex]
+            });
+        }
+    }
+    
+    return items;
+}
+
+function loadFeeds(multiData, singleData) {
+    // ========================
+    // 複数サイトフィード（multi）の表示
+    // ========================
+    const multiContainer = document.getElementById('multi-rss-feed-container');
+    
+    if (multiContainer) {
+        // 上位件数のみ表示（CSVで既にソート済みだが念のため）
+        multiData.slice(0, multiMaxLength).forEach(item => {
             const date = new Date(item.pubDate);
             const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
             const articleElement = document.createElement('div');
@@ -149,151 +159,39 @@ function loadFeeds() {
                 </span>
             </p>
             `;
-            container.appendChild(articleElement);
+            multiContainer.appendChild(articleElement);
         });
+    }
+    
+    // ========================
+    // 単独サイトフィード（single）の表示
+    // ========================
+    // keyごとにグループ化
+    const groupedByKey = {};
+    singleData.forEach(item => {
+        if (!groupedByKey[item.key]) {
+            groupedByKey[item.key] = [];
+        }
+        groupedByKey[item.key].push(item);
     });
-
-    // ========================
-    // 単独サイトフィードの取得と表示
-    // ========================
-    Object.entries(feedUrls).forEach(([key, config]) => {
-        if (config.type === 'custom') {
-            // 手作りCSV形式のカスタムフィード
-            if (isLocalMode) {
-                // ローカルモード：getLocalCustomFeeds()から取得
-                const siteData = getLocalCustomFeeds()[key];
-                if (siteData && siteData.items) {
-                    const items = siteData.items;
-                    
-                    // 日付で降順ソート
-                    items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-                    
-                    const containerId = `single-rss-feed-container-${key}`;
-                    const singleContainer = document.getElementById(containerId);
-                    
-                    if (singleContainer) {
-                        // 上位件数のみ表示
-                        items.slice(0, singleMaxLength).forEach(item => {
-                            const date = new Date(item.pubDate);
-                            const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-                            const articleElement = document.createElement('div');
-                            // サイト名は表示しない
-                            articleElement.innerHTML = `
-                                <span style="margin-bottom: 0.25rem">${formattedDate}<a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a></span>
-                            `;
-                            singleContainer.appendChild(articleElement);
-                        });
-                    }
-                }
-            } else {
-                // 本番モード：CSVファイルから取得
-                fetch(config.url)
-                    .then(response => response.text())
-                    .then(csvText => {
-                        const data = parseCustomFeedCSV(csvText);
-                        if (data && data.items) {
-                            const items = data.items;
-                            
-                            // 日付で降順ソート
-                            items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-                            
-                            const containerId = `single-rss-feed-container-${key}`;
-                            const singleContainer = document.getElementById(containerId);
-                            
-                            if (singleContainer) {
-                                // 上位件数のみ表示
-                                items.slice(0, singleMaxLength).forEach(item => {
-                                    const date = new Date(item.pubDate);
-                                    const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-                                    const articleElement = document.createElement('div');
-                                    // サイト名は表示しない
-                                    articleElement.innerHTML = `
-                                        <span style="margin-bottom: 0.25rem">${formattedDate}<a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a></span>
-                                    `;
-                                    singleContainer.appendChild(articleElement);
-                                });
-                            }
-                        }
-                    });
-            }
-        } else {
-            // RSS/ATOM形式のフィード（RSS2JSON API経由）
-            fetch(`https://api.rss2json.com/v1/api.json?rss_url=${config.url}`)
-                .then(response => response.json())
-                .then(data => {
-                    const items = data.items;
-                    
-                    // 日付で降順ソート
-                    items.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
-                    
-                    const containerId = `single-rss-feed-container-${key}`;
-                    const singleContainer = document.getElementById(containerId);
-                    
-                    if (singleContainer) {
-                        // 上位件数のみ表示
-                        items.slice(0, singleMaxLength).forEach(item => {
-                            const date = new Date(item.pubDate);
-                            const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-                            const articleElement = document.createElement('div');
-                            // サイト名は表示しない
-                            articleElement.innerHTML = `
-                                <span style="margin-bottom: 0.25rem">${formattedDate}<a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a></span>
-                            `;
-                            singleContainer.appendChild(articleElement);
-                        });
-                    }
-                });
+    
+    // 各keyごとに表示
+    Object.entries(groupedByKey).forEach(([key, items]) => {
+        const containerId = `single-rss-feed-container-${key}`;
+        const singleContainer = document.getElementById(containerId);
+        
+        if (singleContainer) {
+            // 上位件数のみ表示（CSVで既にソート済みだが念のため）
+            items.slice(0, singleMaxLength).forEach(item => {
+                const date = new Date(item.pubDate);
+                const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+                const articleElement = document.createElement('div');
+                // サイト名は表示しない
+                articleElement.innerHTML = `
+                    <span style="margin-bottom: 0.25rem">${formattedDate}<a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a></span>
+                `;
+                singleContainer.appendChild(articleElement);
+            });
         }
     });
-}
-
-// ========================
-// ローカル確認用設定（ファイル最後に配置）
-// ========================
-function getLocalFeedUrls() {
-    // ここにfeedUrls.csvの内容を貼り付け
-    return {
-
-        // ===== API経由のフィード（RSS/ATOM）の例 =====
-        // sampleRssSite: {
-        //     url: 'https://example.com/rss',
-        //     siteUrl: 'https://example.com',
-        //     siteTitle: 'サンプルサイト',
-        //     type: 'api'
-        // },
-
-
-
-        // ===== カスタムフィード（手作りCSV）の例 =====
-        // sampleCustomSite: {
-        //     url: './feeds/sample-custom.csv',
-        //     siteUrl: 'https://custom-site.com',
-        //     siteTitle: 'カスタムサイト',
-        //     type: 'custom'
-        // },
-
-
-
-        // 必要に応じてサイトを追加
-    };
-}
-
-function getLocalCustomFeeds() {
-    // ここにカスタムフィードの内容を貼り付け
-    // キー名はgetLocalFeedUrls()のキー名と一致させる
-    return {
-        // 例:
-        // customSite1: {
-        //     items: [
-        //         {
-        //             title: "記事タイトル",
-        //             link: "https://example.com/article",
-        //             pubDate: "2025-10-22"
-        //         }
-        //     ]
-        // }
-
-
-
-    };
 }
