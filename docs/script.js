@@ -30,19 +30,19 @@ ryoVideoMusic,イイダリョウ,映像系（音楽関係）,イイダリョウ 
 ryoRepository,イイダリョウ,リポジトリ,イイダリョウ > リポジトリ,https://github.com/ryo-i/
 `;
 
-// ローカル用multi履歴CSV（breadcrumbs,siteUrl,title,link,date の形式）
+// ローカル用multi履歴CSV（key,category,siteTitle,breadcrumbs,siteUrl,title,link,date の形式）
 const LOCAL_MULTI_CSV = `
-breadcrumbs,siteUrl,title,link,date
-CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,最新記事のタイトル1,https://example.com/article1,2025-01-20
-CMP2000 > 文章系コンテンツ,https://note.com/cmp2000,最新記事のタイトル2,https://example.com/article2,2025-01-19
-CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes,動画タイトル1,https://youtu.be/xxxxx1,2025-01-18
-けびんケビンソン > 活動ブログ,https://kevinson2.hateblo.jp/,ブログ記事1,https://example.com/article3,2025-01-17
-CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,過去の記事,https://example.com/article4,2025-01-15
-イイダリョウ > 技術系ブログ,https://www.i-ryo.com/,技術記事1,https://example.com/article5,2025-01-14
-CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/,コミット履歴1,https://github.com/kevinsonz/cmp2000/commit/xxx,2025-01-13
-けびんケビンソン > 文章系コンテンツ,https://note.com/kevinson/,Note記事1,https://example.com/article6,2025-01-12
-イイダリョウ > 文章系（キャリア関係）,https://note.com/idr_zz/,キャリア記事1,https://example.com/article7,2025-01-11
-CMP2000 > 文章系コンテンツ,https://note.com/cmp2000,文章記事2,https://example.com/article8,2025-01-10
+key,category,siteTitle,breadcrumbs,siteUrl,title,link,date
+cmpOfficialBlog,共通コンテンツ,公式ブログ,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,最新記事のタイトル1,https://example.com/article1,2025-01-20
+cmpText,共通コンテンツ,文章系コンテンツ,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000,最新記事のタイトル2,https://example.com/article2,2025-01-19
+cmpVideo,共通コンテンツ,映像系コンテンツ,CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes,動画タイトル1,https://youtu.be/xxxxx1,2025-01-18
+kevinBlog,けびんケビンソン,活動ブログ,けびんケビンソン > 活動ブログ,https://kevinson2.hateblo.jp/,ブログ記事1,https://example.com/article3,2025-01-17
+cmpOfficialBlog,共通コンテンツ,公式ブログ,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,過去の記事,https://example.com/article4,2025-01-15
+ryoTechBlog,イイダリョウ,技術系ブログ,イイダリョウ > 技術系ブログ,https://www.i-ryo.com/,技術記事1,https://example.com/article5,2025-01-14
+cmpRepository,共通コンテンツ,リポジトリ,CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/,コミット履歴1,https://github.com/kevinsonz/cmp2000/commit/xxx,2025-01-13
+kevinText,けびんケビンソン,文章系コンテンツ,けびんケビンソン > 文章系コンテンツ,https://note.com/kevinson/,Note記事1,https://example.com/article6,2025-01-12
+ryoTextCareer,イイダリョウ,文章系（キャリア関係）,イイダリョウ > 文章系（キャリア関係）,https://note.com/idr_zz/,キャリア記事1,https://example.com/article7,2025-01-11
+cmpText,共通コンテンツ,文章系コンテンツ,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000,文章記事2,https://example.com/article8,2025-01-10
 `;
 
 // ローカル用single履歴CSV（key,title,link,date の形式）
@@ -136,12 +136,15 @@ function parseBasicInfoCSV(csvText) {
     return items;
 }
 
-// CSV解析関数（multi用：breadcrumbs,siteUrl,title,link,date）
+// CSV解析関数（multi用：key,category,siteTitle,breadcrumbs,siteUrl,title,link,date）
 function parseMultiCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     const items = [];
     
+    const keyIndex = headers.indexOf('key');
+    const categoryIndex = headers.indexOf('category');
+    const siteTitleIndex = headers.indexOf('siteTitle');
     const breadcrumbsIndex = headers.indexOf('breadcrumbs');
     const siteUrlIndex = headers.indexOf('siteUrl');
     const titleIndex = headers.indexOf('title');
@@ -151,10 +154,13 @@ function parseMultiCSV(csvText) {
     for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
         
-        // 全ての必須フィールドが埋まっているかチェック
-        if (values[breadcrumbsIndex] && values[siteUrlIndex] && 
+        // 必須フィールド（key, breadcrumbs, siteUrl, title, link, date）が埋まっているかチェック
+        if (values[keyIndex] && values[breadcrumbsIndex] && values[siteUrlIndex] && 
             values[titleIndex] && values[linkIndex] && values[dateIndex]) {
             items.push({
+                key: values[keyIndex],
+                category: values[categoryIndex] || '',
+                siteTitle: values[siteTitleIndex] || '',
                 breadcrumbs: values[breadcrumbsIndex],
                 siteUrl: values[siteUrlIndex],
                 title: values[titleIndex],
