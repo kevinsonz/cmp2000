@@ -5,9 +5,34 @@ const singleMaxLength = 10;
 // ローカル用CSV設定データ（最優先で定義）
 // ========================
 
-// ローカル用multi履歴CSV（siteTitle,siteUrl,title,link,date の形式）
+// ローカル用基本情報CSV（key,category,siteTitle,breadcrumbs,siteUrl の形式）
+const LOCAL_BASIC_INFO_CSV = `
+key,category,siteTitle,breadcrumbs,siteUrl
+cmp2000,共通コンテンツ,CMP2000,CMP2000,https://kevinsonz.github.io/cmp2000/
+cmpOfficialBlog,共通コンテンツ,公式ブログ,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/
+cmpText,共通コンテンツ,文章系コンテンツ,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000/
+cmpPicture,共通コンテンツ,画像系コンテンツ,CMP2000 > 画像系コンテンツ,https://www.instagram.com/peitaro_s
+cmpVideo,共通コンテンツ,映像系コンテンツ,CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes
+cmpRepository,共通コンテンツ,リポジトリ,CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/
+kevinBlog,けびんケビンソン,活動ブログ,けびんケビンソン > 活動ブログ,https://kevinson2.hateblo.jp/
+kevinText,けびんケビンソン,文章系コンテンツ,けびんケビンソン > 文章系コンテンツ,https://note.com/kevinson/
+kevinPicture,けびんケビンソン,画像系コンテンツ,けびんケビンソン > 画像系コンテンツ,https://www.instagram.com/kevinsonzz
+kevinVideo,けびんケビンソン,映像系コンテンツ,けびんケビンソン > 映像系コンテンツ,https://www.youtube.com/@kevinvinvinson
+kevinRepository,けびんケビンソン,リポジトリ,けびんケビンソン > リポジトリ,https://github.com/kevinsonz/
+ryoTechBlog,イイダリョウ,技術系ブログ,イイダリョウ > 技術系ブログ,https://www.i-ryo.com/
+ryoTechSummary,イイダリョウ,技術系まとめ,イイダリョウ > 技術系まとめ,https://qiita.com/i-ryo/
+ryoTextCareer,イイダリョウ,文章系（キャリア関係）,イイダリョウ > 文章系（キャリア関係）,https://note.com/idr_zz/
+ryoTextHobby,イイダリョウ,文章系（趣味関係）,イイダリョウ > 文章系（趣味関係）,https://idr-zz.hatenablog.jp/
+ryoPicture,イイダリョウ,画像系コンテンツ,イイダリョウ > 画像系コンテンツ,https://www.instagram.com/idr_zz/
+ryoVideoTech,イイダリョウ,映像系（技術関係）,イイダリョウ > 映像系（技術関係）,https://www.youtube.com/@idr_zz
+ryoVideoHobby,イイダリョウ,映像系（趣味関係）,イイダリョウ > 映像系（趣味関係）,https://www.youtube.com/@idr_zzz
+ryoVideoMusic,イイダリョウ,映像系（音楽関係）,イイダリョウ > 映像系（音楽関係）,https://music.youtube.com/channel/UCps-rhJpt3fbOuWokQAAHIg
+ryoRepository,イイダリョウ,リポジトリ,イイダリョウ > リポジトリ,https://github.com/ryo-i/
+`;
+
+// ローカル用multi履歴CSV（breadcrumbs,siteUrl,title,link,date の形式）
 const LOCAL_MULTI_CSV = `
-siteTitle,siteUrl,title,link,date
+breadcrumbs,siteUrl,title,link,date
 CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,最新記事のタイトル1,https://example.com/article1,2025-01-20
 CMP2000 > 文章系コンテンツ,https://note.com/cmp2000,最新記事のタイトル2,https://example.com/article2,2025-01-19
 CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes,動画タイトル1,https://youtu.be/xxxxx1,2025-01-18
@@ -46,6 +71,7 @@ iida-blog,,,
 `;
 
 // 公開スプレッドシートのCSV URL
+const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
 const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
 const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
 
@@ -54,17 +80,22 @@ const isLocalMode = window.location.protocol === 'file:';
 
 if (isLocalMode) {
     console.log('ローカルモードで実行中');
+    const basicInfo = parseBasicInfoCSV(LOCAL_BASIC_INFO_CSV);
     const multiData = parseMultiCSV(LOCAL_MULTI_CSV);
     const singleData = parseSingleCSV(LOCAL_SINGLE_CSV);
+    generateCards(basicInfo);
     loadFeeds(multiData, singleData);
 } else {
     Promise.all([
+        fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text())
     ])
-    .then(([multiCsvText, singleCsvText]) => {
+    .then(([basicInfoCsvText, multiCsvText, singleCsvText]) => {
+        const basicInfo = parseBasicInfoCSV(basicInfoCsvText);
         const multiData = parseMultiCSV(multiCsvText);
         const singleData = parseSingleCSV(singleCsvText);
+        generateCards(basicInfo);
         loadFeeds(multiData, singleData);
     })
     .catch(error => {
@@ -72,13 +103,46 @@ if (isLocalMode) {
     });
 }
 
-// CSV解析関数（multi用：siteTitle,siteUrl,title,link,date）
+// CSV解析関数（基本情報用：key,category,siteTitle,breadcrumbs,siteUrl）
+function parseBasicInfoCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const items = [];
+    
+    const keyIndex = headers.indexOf('key');
+    const categoryIndex = headers.indexOf('category');
+    const siteTitleIndex = headers.indexOf('siteTitle');
+    const breadcrumbsIndex = headers.indexOf('breadcrumbs');
+    const siteUrlIndex = headers.indexOf('siteUrl');
+    
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        
+        // cmp2000は除外
+        if (values[keyIndex] === 'cmp2000') continue;
+        
+        if (values[keyIndex] && values[categoryIndex] && 
+            values[siteTitleIndex] && values[breadcrumbsIndex] && values[siteUrlIndex]) {
+            items.push({
+                key: values[keyIndex],
+                category: values[categoryIndex],
+                siteTitle: values[siteTitleIndex],
+                breadcrumbs: values[breadcrumbsIndex],
+                siteUrl: values[siteUrlIndex]
+            });
+        }
+    }
+    
+    return items;
+}
+
+// CSV解析関数（multi用：breadcrumbs,siteUrl,title,link,date）
 function parseMultiCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     const items = [];
     
-    const siteTitleIndex = headers.indexOf('siteTitle');
+    const breadcrumbsIndex = headers.indexOf('breadcrumbs');
     const siteUrlIndex = headers.indexOf('siteUrl');
     const titleIndex = headers.indexOf('title');
     const linkIndex = headers.indexOf('link');
@@ -88,10 +152,10 @@ function parseMultiCSV(csvText) {
         const values = lines[i].split(',').map(v => v.trim());
         
         // 全ての必須フィールドが埋まっているかチェック
-        if (values[siteTitleIndex] && values[siteUrlIndex] && 
+        if (values[breadcrumbsIndex] && values[siteUrlIndex] && 
             values[titleIndex] && values[linkIndex] && values[dateIndex]) {
             items.push({
-                siteTitle: values[siteTitleIndex],
+                breadcrumbs: values[breadcrumbsIndex],
                 siteUrl: values[siteUrlIndex],
                 title: values[titleIndex],
                 link: values[linkIndex],
@@ -132,6 +196,60 @@ function parseSingleCSV(csvText) {
     return items;
 }
 
+// カード自動生成関数
+function generateCards(basicInfo) {
+    // categoryごとにグループ化
+    const groupedByCategory = {};
+    basicInfo.forEach(item => {
+        if (!groupedByCategory[item.category]) {
+            groupedByCategory[item.category] = [];
+        }
+        groupedByCategory[item.category].push(item);
+    });
+    
+    // containerを探す
+    const container = document.querySelector('.container');
+    if (!container) return;
+    
+    // 各categoryごとにセクションとカードを生成
+    Object.entries(groupedByCategory).forEach(([category, items]) => {
+        // セクションタイトル
+        const sectionTitle = document.createElement('h3');
+        sectionTitle.className = 'section-title';
+        sectionTitle.textContent = category;
+        container.appendChild(sectionTitle);
+        
+        // カードコンテナ
+        const cardContainer = document.createElement('div');
+        cardContainer.className = 'card-container';
+        
+        // 各サイトのカードを生成
+        items.forEach(site => {
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'card-wrapper';
+            cardWrapper.innerHTML = `
+                <div class="card">
+                    <img src="https://placehold.jp/100x50.png" class="card-img-top" alt="${site.siteTitle}">
+                    <div class="card-body">
+                        <h5 class="card-title">${site.siteTitle}</h5>
+                        <p class="card-text">
+                            <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
+                        </p>
+                        <a href="${site.siteUrl}" class="btn btn-primary" target="_blank">Go to Site</a>
+                    </div>
+                </div>
+            `;
+            cardContainer.appendChild(cardWrapper);
+        });
+        
+        container.appendChild(cardContainer);
+        
+        // 区切り線
+        const hr = document.createElement('hr');
+        container.appendChild(hr);
+    });
+}
+
 function loadFeeds(multiData, singleData) {
     // ========================
     // 複数サイトフィード（multi）の表示
@@ -147,7 +265,7 @@ function loadFeeds(multiData, singleData) {
             articleElement.innerHTML = `
             <p style="margin-bottom: 0.25rem">
                 <span style="display: inline-block; width: 15rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">
-                    <a href="${item.siteUrl}" target="_blank"><strong>${item.siteTitle}</strong></a>
+                    <a href="${item.siteUrl}" target="_blank"><strong>${item.breadcrumbs}</strong></a>
                 </span>
                 <span style="display: inline-block; width: 7.5rem">
                      - ${formattedDate} 
