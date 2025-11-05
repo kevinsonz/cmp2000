@@ -1,5 +1,0 @@
-key,url,siteUrl,siteTitle,type
-cmpOfficialBlog,https://cmp2000.hatenadiary.jp/rss,https://cmp2000.hatenadiary.jp/,CMP2000 > 公式ブログ,api
-cmpText,https://note.com/cmp2000/rss,https://note.com/cmp2000/,CMP2000 > 文章系コンテンツ,api
-cmpRepository,https://github.com/kevinsonz/cmp2000/commits.atom,https://github.com/kevinsonz/cmp2000/,CMP2000 > リポジトリ,api
-cmpVideo,https://kevinsonz.github.io/cmp2000/feeds/cmpVideo.csv,https://www.youtube.com/@epumes,CMP2000 > 映像系コンテンツ,custom

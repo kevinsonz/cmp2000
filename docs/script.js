@@ -5,29 +5,29 @@ const singleMaxLength = 10;
 // ローカル用CSV設定データ（最優先で定義）
 // ========================
 
-// ローカル用基本情報CSV（key,category,siteTitle,breadcrumbs,siteUrl の形式）
+// ローカル用基本情報CSV（key,category,siteTitle,breadcrumbs,siteUrl,image,logo の形式）
 const LOCAL_BASIC_INFO_CSV = `
-key,category,siteTitle,breadcrumbs,siteUrl
-cmp2000,共通コンテンツ,CMP2000,CMP2000,https://kevinsonz.github.io/cmp2000/
-cmpOfficialBlog,共通コンテンツ,公式ブログ,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/
-cmpText,共通コンテンツ,文章系コンテンツ,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000/
-cmpPicture,共通コンテンツ,画像系コンテンツ,CMP2000 > 画像系コンテンツ,https://www.instagram.com/peitaro_s
-cmpVideo,共通コンテンツ,映像系コンテンツ,CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes
-cmpRepository,共通コンテンツ,リポジトリ,CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/
-kevinBlog,けびんケビンソン,活動ブログ,けびんケビンソン > 活動ブログ,https://kevinson2.hateblo.jp/
-kevinText,けびんケビンソン,文章系コンテンツ,けびんケビンソン > 文章系コンテンツ,https://note.com/kevinson/
-kevinPicture,けびんケビンソン,画像系コンテンツ,けびんケビンソン > 画像系コンテンツ,https://www.instagram.com/kevinsonzz
-kevinVideo,けびんケビンソン,映像系コンテンツ,けびんケビンソン > 映像系コンテンツ,https://www.youtube.com/@kevinvinvinson
-kevinRepository,けびんケビンソン,リポジトリ,けびんケビンソン > リポジトリ,https://github.com/kevinsonz/
-ryoTechBlog,イイダリョウ,技術系ブログ,イイダリョウ > 技術系ブログ,https://www.i-ryo.com/
-ryoTechSummary,イイダリョウ,技術系まとめ,イイダリョウ > 技術系まとめ,https://qiita.com/i-ryo/
-ryoTextCareer,イイダリョウ,文章系（キャリア関係）,イイダリョウ > 文章系（キャリア関係）,https://note.com/idr_zz/
-ryoTextHobby,イイダリョウ,文章系（趣味関係）,イイダリョウ > 文章系（趣味関係）,https://idr-zz.hatenablog.jp/
-ryoPicture,イイダリョウ,画像系コンテンツ,イイダリョウ > 画像系コンテンツ,https://www.instagram.com/idr_zz/
-ryoVideoTech,イイダリョウ,映像系（技術関係）,イイダリョウ > 映像系（技術関係）,https://www.youtube.com/@idr_zz
-ryoVideoHobby,イイダリョウ,映像系（趣味関係）,イイダリョウ > 映像系（趣味関係）,https://www.youtube.com/@idr_zzz
-ryoVideoMusic,イイダリョウ,映像系（音楽関係）,イイダリョウ > 映像系（音楽関係）,https://music.youtube.com/channel/UCps-rhJpt3fbOuWokQAAHIg
-ryoRepository,イイダリョウ,リポジトリ,イイダリョウ > リポジトリ,https://github.com/ryo-i/
+key,category,siteTitle,breadcrumbs,siteUrl,image,logo
+cmp2000,共通コンテンツ,-,CMP2000,https://kevinsonz.github.io/cmp2000/,./images/cmp2000-sk.png,./logos/GitHub_Logo.png
+cmpOfficialBlog,共通コンテンツ,公式ブログ,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,./images/cmp2000-sk.png,./logos/hatenablog-logotype.svg
+cmpText,共通コンテンツ,文章系コンテンツ,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000/,./images/cmp2000-sk.png,./logos/note-logo.svg
+cmpPicture,共通コンテンツ,画像系コンテンツ,CMP2000 > 画像系コンテンツ,https://www.instagram.com/peitaro_s,./images/cmp2000-sk.png,./logos/Instagram_logo.svg.png
+cmpVideo,共通コンテンツ,映像系コンテンツ,CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes,./images/cmp2000-sk.png,./logos/yt_logo_rgb_light.png
+cmpRepository,共通コンテンツ,リポジトリ,CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/,./images/cmp2000-sk.png,./logos/GitHub_Logo.png
+kevinBlog,けびんケビンソン,活動ブログ,けびんケビンソン > 活動ブログ,https://kevinson2.hateblo.jp/,./images/kevin-moon.png,./logos/hatenablog-logotype.svg
+kevinText,けびんケビンソン,文章系コンテンツ,けびんケビンソン > 文章系コンテンツ,https://note.com/kevinson/,./images/kevin-moon.png,./logos/note-logo.svg
+kevinPicture,けびんケビンソン,画像系コンテンツ,けびんケビンソン > 画像系コンテンツ,https://www.instagram.com/kevinsonzz,./images/kevin-moon.png,./logos/Instagram_logo.svg.png
+kevinVideo,けびんケビンソン,映像系コンテンツ,けびんケビンソン > 映像系コンテンツ,https://www.youtube.com/@kevinvinvinson,./images/kevin-moon.png,./logos/yt_logo_rgb_light.png
+kevinRepository,けびんケビンソン,リポジトリ,けびんケビンソン > リポジトリ,https://github.com/kevinsonz/,./images/kevin-moon.png,./logos/GitHub_Logo.png
+ryoTechBlog,イイダリョウ,技術系ブログ,イイダリョウ > 技術系ブログ,https://www.i-ryo.com/,./images/kumokotsu.jpg,./logos/hatenablog-logotype.svg
+ryoTechSummary,イイダリョウ,技術系まとめ,イイダリョウ > 技術系まとめ,https://qiita.com/i-ryo/,./images/kumokotsu.jpg,./logos/qiita-logo-background-color.png
+ryoTextCareer,イイダリョウ,文章系（キャリア関係）,イイダリョウ > 文章系（キャリア関係）,https://note.com/idr_zz/,./images/kumokotsu.jpg,./logos/note-logo.svg
+ryoTextHobby,イイダリョウ,文章系（趣味関係）,イイダリョウ > 文章系（趣味関係）,https://idr-zz.hatenablog.jp/,./images/kumokotsu.jpg,./logos/hatenablog-logotype.svg
+ryoPicture,イイダリョウ,画像系コンテンツ,イイダリョウ > 画像系コンテンツ,https://www.instagram.com/idr_zz/,./images/kumokotsu.jpg,./logos/Instagram_logo.svg.png
+ryoVideoTech,イイダリョウ,映像系（技術関係）,イイダリョウ > 映像系（技術関係）,https://www.youtube.com/@idr_zz,./images/kumokotsu.jpg,./logos/yt_logo_rgb_light.png
+ryoVideoHobby,イイダリョウ,映像系（趣味関係）,イイダリョウ > 映像系（趣味関係）,https://www.youtube.com/@idr_zzz,./images/kumokotsu.jpg,./logos/yt_logo_rgb_light.png
+ryoVideoMusic,イイダリョウ,映像系（音楽関係）,イイダリョウ > 映像系（音楽関係）,https://music.youtube.com/channel/UCps-rhJpt3fbOuWokQAAHIg,./images/kumokotsu.jpg,./logos/YouTube_Music_logo.svg.png
+ryoRepository,イイダリョウ,リポジトリ,イイダリョウ > リポジトリ,https://github.com/ryo-i/,./images/kumokotsu.jpg,./logos/GitHub_Logo.png
 `;
 
 // ローカル用multi履歴CSV（key,breadcrumbs,siteUrl,title,link,date の形式）
@@ -103,7 +103,7 @@ if (isLocalMode) {
     });
 }
 
-// CSV解析関数（基本情報用：key,category,siteTitle,breadcrumbs,siteUrl）
+// CSV解析関数（基本情報用：key,category,siteTitle,breadcrumbs,siteUrl,image,logo）
 function parseBasicInfoCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -114,6 +114,8 @@ function parseBasicInfoCSV(csvText) {
     const siteTitleIndex = headers.indexOf('siteTitle');
     const breadcrumbsIndex = headers.indexOf('breadcrumbs');
     const siteUrlIndex = headers.indexOf('siteUrl');
+    const imageIndex = headers.indexOf('image');
+    const logoIndex = headers.indexOf('logo');
     
     for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
@@ -128,7 +130,9 @@ function parseBasicInfoCSV(csvText) {
                 category: values[categoryIndex],
                 siteTitle: values[siteTitleIndex],
                 breadcrumbs: values[breadcrumbsIndex],
-                siteUrl: values[siteUrlIndex]
+                siteUrl: values[siteUrlIndex],
+                image: values[imageIndex] || '',
+                logo: values[logoIndex] || ''
             });
         }
     }
@@ -231,7 +235,10 @@ function generateCards(basicInfo) {
             cardWrapper.className = 'card-wrapper';
             cardWrapper.innerHTML = `
                 <div class="card">
-                    <img src="https://placehold.jp/100x50.png" class="card-img-top" alt="${site.siteTitle}">
+                    <div style="position: relative; overflow: hidden; height: 200px;">
+                        <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <img src="${site.logo}" alt="logo" style="position: absolute; top: 8px; right: 8px; width: 60px; height: auto; max-width: 30%; object-fit: contain;">
+                    </div>
                     <div class="card-body">
                         <h5 class="card-title">${site.siteTitle}</h5>
                         <p class="card-text">
