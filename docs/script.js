@@ -253,6 +253,15 @@ function generateCards(basicInfo) {
         
         container.appendChild(cardContainer);
         
+        // セクションにIDを追加（ジャンプ用）
+        if (category === '共通コンテンツ') {
+            sectionTitle.id = 'common';
+        } else if (category === 'けびんケビンソン') {
+            sectionTitle.id = 'kevin';
+        } else if (category === 'イイダリョウ') {
+            sectionTitle.id = 'ryo';
+        }
+        
         // 区切り線
         const hr = document.createElement('hr');
         container.appendChild(hr);
@@ -322,3 +331,32 @@ function loadFeeds(multiData, singleData) {
         }
     });
 }
+
+// ジャンプメニューの初期化
+function initJumpMenu() {
+    const jumpBtn = document.getElementById('jump-btn');
+    const jumpOptions = document.getElementById('jump-options');
+    
+    if (jumpBtn && jumpOptions) {
+        jumpBtn.addEventListener('click', () => {
+            jumpOptions.style.display = jumpOptions.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        // メニュー外クリックで閉じる
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#jump-menu')) {
+                jumpOptions.style.display = 'none';
+            }
+        });
+        
+        // リンククリックで閉じる
+        jumpOptions.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                jumpOptions.style.display = 'none';
+            });
+        });
+    }
+}
+
+// ページ読み込み時にジャンプメニューを初期化
+document.addEventListener('DOMContentLoaded', initJumpMenu);
