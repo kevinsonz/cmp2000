@@ -39,5 +39,15 @@
     <div class="container">
         <!-- カードはscript.jsで自動生成されます -->
     </div>
+
+    <div id="jump-menu" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <button id="jump-btn" class="btn btn-primary" style="border-radius: 50%; width: 60px; height: 60px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">☰</button>
+        <div id="jump-options" style="display: none; position: absolute; bottom: 70px; right: 0; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-width: 200px;">
+            <a href="#" onclick="window.scrollTo(0,0); return false;" class="btn btn-light" style="display: block; text-align: left; border-radius: 8px 8px 0 0;">トップ</a>
+            <a href="#common" class="btn btn-light" style="display: block; text-align: left;">共通コンテンツ</a>
+            <a href="#kevin" class="btn btn-light" style="display: block; text-align: left;">けびんケビンソン</a>
+            <a href="#ryo" class="btn btn-light" style="display: block; text-align: left; border-radius: 0 0 8px 8px;">イイダリョウ</a>
+        </div>
+    </div>
 </body>
 </html>
