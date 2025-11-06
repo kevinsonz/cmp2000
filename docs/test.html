@@ -25,14 +25,14 @@
     </header>
 
     <!-- 理念セクション（折りたたみ） -->
-    <div class="philosophy-section mt-3 mb-4" style="max-width: 960px; margin-left: auto; margin-right: auto;">
+    <div class="philosophy-section mt-3 mb-4 mx-auto" style="max-width: 960px;">
         <div class="text-center">
             <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#philosophyCollapse" aria-expanded="false" aria-controls="philosophyCollapse">
                 本活動の理念
             </button>
         </div>
         <div class="collapse mt-2" id="philosophyCollapse">
-            <div class="card" style="padding: 0.4rem 0.8rem;">
+            <div class="card p-2 px-3">
                 <p class="mb-0" style="line-height: 1.4;">
                     <strong>Creation Meets Peace</strong>＝『創造』と『平和』の出会い。<br>
                     争いの絶えない世の中において、平和は自然に生まれるモノではなく、ヒトの創造によって実現されるモノである、という理念。
@@ -68,18 +68,24 @@
         <!-- カードはscript.jsで自動生成されます -->
     </div>
 
-    <div id="jump-menu" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-        <button id="jump-btn" class="btn btn-primary" style="border-radius: 50%; width: 60px; height: 60px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">☰</button>
-        <div id="jump-options" style="display: none; position: absolute; bottom: 70px; right: 0; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); min-width: 200px;">
-            <a href="#" onclick="window.scrollTo(0,0); return false;" class="btn btn-light" style="display: block; text-align: left; border-radius: 8px 8px 0 0;">トップ</a>
-            <a href="#common" class="btn btn-light" style="display: block; text-align: left;">共通コンテンツ</a>
-            <a href="#kevin" class="btn btn-light" style="display: block; text-align: left;">けびんケビンソン</a>
-            <a href="#ryo" class="btn btn-light" style="display: block; text-align: left; border-radius: 0 0 8px 8px;">イイダリョウ</a>
-        </div>
+    <!-- ジャンプメニュー（Bootstrap dropdown使用） -->
+    <div class="dropup position-fixed bottom-0 end-0 m-3" style="z-index: 1000;">
+        <button class="btn btn-primary rounded-circle shadow" type="button" id="jumpMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="width: 60px; height: 60px;">
+            ☰
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jumpMenuButton">
+            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#common">共通コンテンツ</a></li>
+            <li><a class="dropdown-item" href="#kevin">けびんケビンソン</a></li>
+            <li><a class="dropdown-item" href="#ryo">イイダリョウ</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#footer">フッター</a></li>
+        </ul>
     </div>
 
     <!-- フッター -->
-    <footer class="text-center py-4 mt-5 border-top">
+    <footer id="footer" class="text-center py-4 mt-5 border-top bg-light">
         <p class="mb-0 text-muted">
             <small>&copy; 2000-<span id="current-year"></span> CMP2000</small>
         </p>

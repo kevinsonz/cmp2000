@@ -551,32 +551,6 @@ function generateContributionGraph(contributionData) {
     container.appendChild(graphContainer);
 }
 
-// ジャンプメニューの初期化
-function initJumpMenu() {
-    const jumpBtn = document.getElementById('jump-btn');
-    const jumpOptions = document.getElementById('jump-options');
-    
-    if (jumpBtn && jumpOptions) {
-        jumpBtn.addEventListener('click', () => {
-            jumpOptions.style.display = jumpOptions.style.display === 'none' ? 'block' : 'none';
-        });
-        
-        // メニュー外クリックで閉じる
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('#jump-menu')) {
-                jumpOptions.style.display = 'none';
-            }
-        });
-        
-        // リンククリックで閉じる
-        jumpOptions.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                jumpOptions.style.display = 'none';
-            });
-        });
-    }
-}
-
 // ヘッダースクロール効果の初期化
 function initHeaderScroll() {
     const header = document.getElementById('main-header');
@@ -601,9 +575,8 @@ function updateCurrentYear() {
     }
 }
 
-// ページ読み込み時にジャンプメニューとヘッダースクロールを初期化
+// ページ読み込み時の初期化
 document.addEventListener('DOMContentLoaded', () => {
-    initJumpMenu();
     initHeaderScroll();
     updateCurrentYear();
 });
