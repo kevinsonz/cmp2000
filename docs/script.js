@@ -461,6 +461,10 @@ function generateContributionGraph(contributionData) {
     // 月ラベルを生成
     const monthsRow = document.createElement('div');
     monthsRow.className = 'contribution-months';
+    monthsRow.style.position = 'relative';
+    monthsRow.style.height = '20px';
+    monthsRow.style.marginBottom = '5px';
+    monthsRow.style.zIndex = '10';
     
     let lastMonth = -1;
     weeks.forEach((week, weekIndex) => {
@@ -474,19 +478,19 @@ function generateContributionGraph(contributionData) {
             monthLabel.textContent = `${month + 1}月`;
             monthLabel.style.position = 'absolute';
             monthLabel.style.left = `${25 + weekIndex * 14}px`; // 25pxは曜日ラベル分のオフセット（min-width）
+            monthLabel.style.zIndex = '10';
             monthsRow.appendChild(monthLabel);
             lastMonth = month;
         }
     });
     
-    monthsRow.style.position = 'relative';
-    monthsRow.style.height = '20px';
-    monthsRow.style.marginBottom = '5px';
     graphContainer.appendChild(monthsRow);
     
     // メインコンテンツ
     const mainContent = document.createElement('div');
     mainContent.className = 'contribution-main';
+    mainContent.style.position = 'relative';
+    mainContent.style.zIndex = '1';
     
     // 曜日ラベル（月・水・金のみ表示、位置を修正）
     const weekdays = document.createElement('div');
@@ -588,8 +592,18 @@ function initHeaderScroll() {
     }
 }
 
+// 現在年を更新
+function updateCurrentYear() {
+    const currentYearSpan = document.getElementById('current-year');
+    if (currentYearSpan) {
+        const currentYear = new Date().getFullYear();
+        currentYearSpan.textContent = currentYear;
+    }
+}
+
 // ページ読み込み時にジャンプメニューとヘッダースクロールを初期化
 document.addEventListener('DOMContentLoaded', () => {
     initJumpMenu();
     initHeaderScroll();
+    updateCurrentYear();
 });
