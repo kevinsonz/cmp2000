@@ -214,7 +214,7 @@ function generateCards(basicInfo) {
     });
     
     // containerを探す
-    const container = document.querySelector('.container');
+    const container = document.getElementById('card-content-container');
     if (!container) return;
     
     // 各categoryごとにセクションとカードを生成
@@ -358,5 +358,23 @@ function initJumpMenu() {
     }
 }
 
-// ページ読み込み時にジャンプメニューを初期化
-document.addEventListener('DOMContentLoaded', initJumpMenu);
+// ヘッダースクロール効果の初期化
+function initHeaderScroll() {
+    const header = document.getElementById('main-header');
+    
+    if (header) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    }
+}
+
+// ページ読み込み時にジャンプメニューとヘッダースクロールを初期化
+document.addEventListener('DOMContentLoaded', () => {
+    initJumpMenu();
+    initHeaderScroll();
+});

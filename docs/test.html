@@ -19,8 +19,27 @@
 </head>
 
 <body class="bg-light" id="cmp">
-    <!-- ページヘッダー -->
-    <h1 class="text-center">CMP2000 Official Portal</h1>
+    <!-- ページヘッダー（固定） -->
+    <header id="main-header" class="sticky-top bg-light border-bottom">
+        <h1 class="text-center py-3 mb-0">CMP2000 Official Portal</h1>
+    </header>
+
+    <!-- 理念セクション（折りたたみ） -->
+    <div class="philosophy-section mt-3 mb-4" style="max-width: 960px; margin-left: auto; margin-right: auto;">
+        <div class="text-center">
+            <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#philosophyCollapse" aria-expanded="false" aria-controls="philosophyCollapse">
+                本活動の理念
+            </button>
+        </div>
+        <div class="collapse mt-2" id="philosophyCollapse">
+            <div class="card" style="padding: 0.4rem 0.8rem;">
+                <p class="mb-0" style="line-height: 1.4;">
+                    <strong>Creation Meets Peace</strong>＝『創造』と『平和』の出会い。<br>
+                    争いの絶えない世の中において、平和は自然に生まれるモノではなく、ヒトの創造によって実現されるモノである、という理念。
+                </p>
+            </div>
+        </div>
+    </div>
     <hr>
 
     <!-- 最新の更新情報セクション -->
@@ -36,7 +55,7 @@
     <hr>
 
     <!-- メインコンテンツエリア（script.jsが自動生成） -->
-    <div class="container">
+    <div id="card-content-container" class="container">
         <!-- カードはscript.jsで自動生成されます -->
     </div>
 
