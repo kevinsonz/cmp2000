@@ -74,6 +74,43 @@ iida-blog,,,
 const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
 const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
 const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
+const PUBLIC_CONTRIBUTION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=928202728&single=true&output=csv';
+
+// ローカル用コントリビューションCSV
+const LOCAL_CONTRIBUTION_CSV = `
+date,count
+2024/01/15,2
+2024/01/28,1
+2024/02/05,3
+2024/02/14,5
+2024/02/20,1
+2024/03/10,4
+2024/03/22,2
+2024/04/08,1
+2024/04/18,6
+2024/05/01,3
+2024/05/15,2
+2024/05/28,8
+2024/06/05,1
+2024/06/20,4
+2024/07/04,2
+2024/07/18,10
+2024/08/02,1
+2024/08/15,3
+2024/08/30,2
+2024/09/10,5
+2024/09/25,1
+2024/10/08,7
+2024/10/20,3
+2024/11/01,2
+2024/11/07,4
+2024/11/15,1
+2024/12/01,6
+2024/12/25,2
+2025/01/05,3
+2025/01/13,1
+2025/01/28,5
+`;
 
 // 環境判定：file://プロトコルならローカルモード
 const isLocalMode = window.location.protocol === 'file:';
@@ -83,20 +120,25 @@ if (isLocalMode) {
     const basicInfo = parseBasicInfoCSV(LOCAL_BASIC_INFO_CSV);
     const multiData = parseMultiCSV(LOCAL_MULTI_CSV);
     const singleData = parseSingleCSV(LOCAL_SINGLE_CSV);
+    const contributionData = parseContributionCSV(LOCAL_CONTRIBUTION_CSV);
     generateCards(basicInfo);
     loadFeeds(multiData, singleData);
+    generateContributionGraph(contributionData);
 } else {
     Promise.all([
         fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),
-        fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text())
+        fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text()),
+        fetch(PUBLIC_CONTRIBUTION_CSV_URL).then(response => response.text())
     ])
-    .then(([basicInfoCsvText, multiCsvText, singleCsvText]) => {
+    .then(([basicInfoCsvText, multiCsvText, singleCsvText, contributionCsvText]) => {
         const basicInfo = parseBasicInfoCSV(basicInfoCsvText);
         const multiData = parseMultiCSV(multiCsvText);
         const singleData = parseSingleCSV(singleCsvText);
+        const contributionData = parseContributionCSV(contributionCsvText);
         generateCards(basicInfo);
         loadFeeds(multiData, singleData);
+        generateContributionGraph(contributionData);
     })
     .catch(error => {
         console.error('公開CSVの読み込みに失敗しました:', error);
@@ -195,6 +237,29 @@ function parseSingleCSV(csvText) {
                 title: values[titleIndex],
                 link: values[linkIndex],
                 pubDate: values[dateIndex]
+            });
+        }
+    }
+    
+    return items;
+}
+
+// CSV解析関数（contribution用：date,count）
+function parseContributionCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const items = [];
+    
+    const dateIndex = headers.indexOf('date');
+    const countIndex = headers.indexOf('count');
+    
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        
+        if (values[dateIndex] && values[countIndex]) {
+            items.push({
+                date: values[dateIndex],
+                count: parseInt(values[countIndex], 10) || 0
             });
         }
     }
@@ -330,6 +395,156 @@ function loadFeeds(multiData, singleData) {
             });
         }
     });
+}
+
+// コントリビューショングラフ生成関数
+function generateContributionGraph(contributionData) {
+    const container = document.getElementById('contribution-graph');
+    if (!container) return;
+    
+    // データをマップに変換（日付 -> カウント）
+    const dataMap = {};
+    contributionData.forEach(item => {
+        dataMap[item.date] = item.count;
+    });
+    
+    // 今日の日付から1年前までの期間を計算
+    const today = new Date();
+    const oneYearAgo = new Date(today);
+    oneYearAgo.setFullYear(today.getFullYear() - 1);
+    
+    // 日曜日に調整（グラフは日曜日から始まる）
+    const startDate = new Date(oneYearAgo);
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+    
+    // カウント数に応じたレベルを決定（GitHub風）
+    function getLevel(count) {
+        if (count === 0) return 0;
+        if (count <= 2) return 1;
+        if (count <= 5) return 2;
+        if (count <= 9) return 3;
+        return 4;
+    }
+    
+    // 日付をフォーマット
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}/${month}/${day}`;
+    }
+    
+    // 53週分のデータを生成
+    const weeks = [];
+    let currentDate = new Date(startDate);
+    
+    for (let week = 0; week < 53; week++) {
+        const days = [];
+        for (let day = 0; day < 7; day++) {
+            const dateStr = formatDate(currentDate);
+            const count = dataMap[dateStr] || 0;
+            days.push({
+                date: new Date(currentDate),
+                dateStr: dateStr,
+                count: count,
+                level: getLevel(count)
+            });
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        weeks.push(days);
+    }
+    
+    // グラフ構造を作成
+    const graphContainer = document.createElement('div');
+    graphContainer.className = 'contribution-graph-container';
+    
+    // 月ラベルを生成
+    const monthsRow = document.createElement('div');
+    monthsRow.className = 'contribution-months';
+    
+    let lastMonth = -1;
+    weeks.forEach((week, weekIndex) => {
+        const firstDay = week[0].date;
+        const month = firstDay.getMonth();
+        
+        // 月が変わったときラベルを表示
+        if (month !== lastMonth) {
+            const monthLabel = document.createElement('div');
+            monthLabel.className = 'contribution-month';
+            monthLabel.textContent = `${month + 1}月`;
+            monthLabel.style.position = 'absolute';
+            monthLabel.style.left = `${25 + weekIndex * 14}px`; // 25pxは曜日ラベル分のオフセット（min-width）
+            monthsRow.appendChild(monthLabel);
+            lastMonth = month;
+        }
+    });
+    
+    monthsRow.style.position = 'relative';
+    monthsRow.style.height = '20px';
+    monthsRow.style.marginBottom = '5px';
+    graphContainer.appendChild(monthsRow);
+    
+    // メインコンテンツ
+    const mainContent = document.createElement('div');
+    mainContent.className = 'contribution-main';
+    
+    // 曜日ラベル（月・水・金のみ表示、位置を修正）
+    const weekdays = document.createElement('div');
+    weekdays.className = 'contribution-weekdays';
+    ['日', '月', '火', '水', '木', '金', '土'].forEach((day, index) => {
+        const weekday = document.createElement('div');
+        weekday.className = 'contribution-weekday';
+        // 月・水・金のみ表示
+        if (index === 1 || index === 3 || index === 5) {
+            weekday.textContent = day;
+        }
+        weekdays.appendChild(weekday);
+    });
+    mainContent.appendChild(weekdays);
+    
+    // 週のコンテナ
+    const weeksContainer = document.createElement('div');
+    weeksContainer.className = 'contribution-weeks';
+    
+    // 各週を生成
+    weeks.forEach(week => {
+        const weekElement = document.createElement('div');
+        weekElement.className = 'contribution-week';
+        
+        week.forEach(day => {
+            const dayElement = document.createElement('div');
+            dayElement.className = `contribution-day level-${day.level}`;
+            dayElement.dataset.date = day.dateStr;
+            dayElement.dataset.count = day.count;
+            
+            // ホバー時のツールチップ
+            dayElement.addEventListener('mouseenter', (e) => {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'contribution-tooltip';
+                tooltip.textContent = `${day.dateStr}: ${day.count}件`;
+                tooltip.style.display = 'block';
+                tooltip.style.left = `${e.pageX + 10}px`;
+                tooltip.style.top = `${e.pageY - 30}px`;
+                document.body.appendChild(tooltip);
+                dayElement._tooltip = tooltip;
+            });
+            
+            dayElement.addEventListener('mouseleave', () => {
+                if (dayElement._tooltip) {
+                    dayElement._tooltip.remove();
+                    dayElement._tooltip = null;
+                }
+            });
+            
+            weekElement.appendChild(dayElement);
+        });
+        
+        weeksContainer.appendChild(weekElement);
+    });
+    
+    mainContent.appendChild(weeksContainer);
+    graphContainer.appendChild(mainContent);
+    container.appendChild(graphContainer);
 }
 
 // ジャンプメニューの初期化
