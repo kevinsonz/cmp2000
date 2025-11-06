@@ -8,12 +8,12 @@ const singleMaxLength = 10;
 // ローカル用基本情報CSV（key,category,siteTitle,breadcrumbs,siteUrl,image,logo の形式）
 const LOCAL_BASIC_INFO_CSV = `
 key,category,siteTitle,breadcrumbs,siteUrl,image,logo
-cmp2000,共通コンテンツ,-,CMP2000,https://kevinsonz.github.io/cmp2000/,./images/cmp2000-sk.png,./logos/GitHub_Logo.png
-cmpOfficialBlog,共通コンテンツ,公式ブログ,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,./images/cmp2000-sk.png,./logos/hatenablog-logotype.svg
-cmpText,共通コンテンツ,文章系コンテンツ,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000/,./images/cmp2000-sk.png,./logos/note-logo.svg
-cmpPicture,共通コンテンツ,画像系コンテンツ,CMP2000 > 画像系コンテンツ,https://www.instagram.com/peitaro_s,./images/cmp2000-sk.png,./logos/Instagram_logo.svg.png
-cmpVideo,共通コンテンツ,映像系コンテンツ,CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes,./images/cmp2000-sk.png,./logos/yt_logo_rgb_light.png
-cmpRepository,共通コンテンツ,リポジトリ,CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/,./images/cmp2000-sk.png,./logos/GitHub_Logo.png
+cmp2000,共通コンテンツ,-,CMP2000,https://kevinsonz.github.io/cmp2000/,./images/cmp2000-sk.jpg,./logos/GitHub_Logo.png
+cmpOfficialBlog,共通コンテンツ,公式ブログ,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,./images/cmp2000-sk.jpg,./logos/hatenablog-logotype.svg
+cmpText,共通コンテンツ,文章系コンテンツ,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000/,./images/cmp2000-sk.jpg,./logos/note-logo.svg
+cmpPicture,共通コンテンツ,画像系コンテンツ,CMP2000 > 画像系コンテンツ,https://www.instagram.com/peitaro_s,./images/cmp2000-sk.jpg,./logos/Instagram_logo.svg.png
+cmpVideo,共通コンテンツ,映像系コンテンツ,CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes,./images/cmp2000-sk.jpg,./logos/yt_logo_rgb_light.png
+cmpRepository,共通コンテンツ,リポジトリ,CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/,./images/cmp2000-sk.jpg,./logos/GitHub_Logo.png
 kevinBlog,けびんケビンソン,活動ブログ,けびんケビンソン > 活動ブログ,https://kevinson2.hateblo.jp/,./images/kevin-moon.png,./logos/hatenablog-logotype.svg
 kevinText,けびんケビンソン,文章系コンテンツ,けびんケビンソン > 文章系コンテンツ,https://note.com/kevinson/,./images/kevin-moon.png,./logos/note-logo.svg
 kevinPicture,けびんケビンソン,画像系コンテンツ,けびんケビンソン > 画像系コンテンツ,https://www.instagram.com/kevinsonzz,./images/kevin-moon.png,./logos/Instagram_logo.svg.png
