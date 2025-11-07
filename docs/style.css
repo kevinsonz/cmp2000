@@ -17,6 +17,16 @@
     padding-bottom: 0.5rem !important;
 }
 
+/* クリック可能な要素のスタイル */
+.clickable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.clickable:hover {
+    background-color: #f8f9fa !important;
+}
+
 /* レイアウト用のシンプルなCSS */
 .page-container {
     max-width: 960px;
@@ -156,12 +166,27 @@
     align-items: flex-start;
 }
 
+.contribution-years {
+    display: flex;
+    margin-bottom: 2px;
+    padding-left: 0px;
+    position: relative;
+    min-height: 20px;
+}
+
+.contribution-year {
+    font-size: 11px;
+    color: #57606a;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
 .contribution-months {
     display: flex;
     margin-bottom: 10px;
     padding-left: 0px;
     position: relative;
-    min-height: 25px;
+    min-height: 18px;
 }
 
 .contribution-month {

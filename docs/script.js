@@ -458,18 +458,51 @@ function generateContributionGraph(contributionData) {
     const graphContainer = document.createElement('div');
     graphContainer.className = 'contribution-graph-container';
     
+    // 年ラベルを生成
+    const yearsRow = document.createElement('div');
+    yearsRow.className = 'contribution-years';
+    yearsRow.style.position = 'relative';
+    yearsRow.style.height = '20px';
+    yearsRow.style.marginBottom = '2px';
+    
+    let lastYear = -1;
+    weeks.forEach((week, weekIndex) => {
+        const firstDay = week[0].date;
+        const year = firstDay.getFullYear();
+        
+        // 最初の週、または年が変わったときに年ラベルを表示
+        if (weekIndex === 0 || year !== lastYear) {
+            const yearLabel = document.createElement('div');
+            yearLabel.className = 'contribution-year';
+            yearLabel.textContent = `${year}年`;
+            yearLabel.style.position = 'absolute';
+            yearLabel.style.left = `${25 + weekIndex * 14}px`;
+            yearsRow.appendChild(yearLabel);
+            lastYear = year;
+        }
+    });
+    
+    graphContainer.appendChild(yearsRow);
+    
     // 月ラベルを生成
     const monthsRow = document.createElement('div');
     monthsRow.className = 'contribution-months';
     monthsRow.style.position = 'relative';
-    monthsRow.style.height = '20px';
+    monthsRow.style.height = '18px';
     monthsRow.style.marginBottom = '5px';
-    monthsRow.style.zIndex = '10';
     
+    lastYear = -1;
     let lastMonth = -1;
     weeks.forEach((week, weekIndex) => {
         const firstDay = week[0].date;
         const month = firstDay.getMonth();
+        const year = firstDay.getFullYear();
+        
+        // 年が変わった場合は月の表示をリセット
+        if (year !== lastYear) {
+            lastMonth = -1;
+            lastYear = year;
+        }
         
         // 月が変わったときラベルを表示
         if (month !== lastMonth) {
@@ -477,8 +510,7 @@ function generateContributionGraph(contributionData) {
             monthLabel.className = 'contribution-month';
             monthLabel.textContent = `${month + 1}月`;
             monthLabel.style.position = 'absolute';
-            monthLabel.style.left = `${25 + weekIndex * 14}px`; // 25pxは曜日ラベル分のオフセット（min-width）
-            monthLabel.style.zIndex = '10';
+            monthLabel.style.left = `${25 + weekIndex * 14}px`;
             monthsRow.appendChild(monthLabel);
             lastMonth = month;
         }
@@ -549,6 +581,14 @@ function generateContributionGraph(contributionData) {
     mainContent.appendChild(weeksContainer);
     graphContainer.appendChild(mainContent);
     container.appendChild(graphContainer);
+    
+    // グラフ生成後に右端にスクロール
+    setTimeout(() => {
+        const graphWrapper = document.querySelector('.contribution-graph-wrapper');
+        if (graphWrapper) {
+            graphWrapper.scrollLeft = graphWrapper.scrollWidth;
+        }
+    }, 100);
 }
 
 // ヘッダースクロール効果の初期化
@@ -575,8 +615,24 @@ function updateCurrentYear() {
     }
 }
 
+// 理念セクションの+/-アイコン切り替え
+function initPhilosophyIconToggle() {
+    const philosophyCollapse = document.getElementById('philosophyCollapse');
+    const icon = document.getElementById('philosophy-icon');
+    
+    if (philosophyCollapse && icon) {
+        philosophyCollapse.addEventListener('show.bs.collapse', function () {
+            icon.textContent = '-';
+        });
+        philosophyCollapse.addEventListener('hide.bs.collapse', function () {
+            icon.textContent = '+';
+        });
+    }
+}
+
 // ページ読み込み時の初期化
 document.addEventListener('DOMContentLoaded', () => {
     initHeaderScroll();
     updateCurrentYear();
+    initPhilosophyIconToggle();
 });
