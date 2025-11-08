@@ -4,130 +4,26 @@ const singleMaxLength = 10;
 // NEW!!バッジを表示する日数（変更可能なパラメータ）
 const NEW_BADGE_DAYS = 30;
 
-// ========================
-// ローカル用CSV設定データ（最優先で定義）
-// ========================
-
-// ローカル用基本情報CSV（key,category,siteTitle,breadcrumbs,siteUrl,image,logo の形式）
-const LOCAL_BASIC_INFO_CSV = `
-key,category,siteTitle,breadcrumbs,siteUrl,image,logo
-cmp2000,共通コンテンツ,-,CMP2000,https://kevinsonz.github.io/cmp2000/,./images/cmp2000-sk.jpg,./logos/GitHub_Logo.png
-cmpOfficialBlog,共通コンテンツ,公式ブログ,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,./images/cmp2000-sk.jpg,./logos/hatenablog-logotype.svg
-cmpText,共通コンテンツ,文章系コンテンツ,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000/,./images/cmp2000-sk.jpg,./logos/note-logo.svg
-cmpPicture,共通コンテンツ,画像系コンテンツ,CMP2000 > 画像系コンテンツ,https://www.instagram.com/peitaro_s,./images/cmp2000-sk.jpg,./logos/Instagram_logo.svg.png
-cmpVideo,共通コンテンツ,映像系コンテンツ,CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes,./images/cmp2000-sk.jpg,./logos/yt_logo_rgb_light.png
-cmpRepository,共通コンテンツ,リポジトリ,CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/,./images/cmp2000-sk.jpg,./logos/GitHub_Logo.png
-kevinBlog,けびんケビンソン,活動ブログ,けびんケビンソン > 活動ブログ,https://kevinson2.hateblo.jp/,./images/kevin-moon.png,./logos/hatenablog-logotype.svg
-kevinText,けびんケビンソン,文章系コンテンツ,けびんケビンソン > 文章系コンテンツ,https://note.com/kevinson/,./images/kevin-moon.png,./logos/note-logo.svg
-kevinPicture,けびんケビンソン,画像系コンテンツ,けびんケビンソン > 画像系コンテンツ,https://www.instagram.com/kevinsonzz,./images/kevin-moon.png,./logos/Instagram_logo.svg.png
-kevinVideo,けびんケビンソン,映像系コンテンツ,けびんケビンソン > 映像系コンテンツ,https://www.youtube.com/@kevinvinvinson,./images/kevin-moon.png,./logos/yt_logo_rgb_light.png
-kevinRepository,けびんケビンソン,リポジトリ,けびんケビンソン > リポジトリ,https://github.com/kevinsonz/,./images/kevin-moon.png,./logos/GitHub_Logo.png
-ryoTechBlog,イイダリョウ,技術系ブログ,イイダリョウ > 技術系ブログ,https://www.i-ryo.com/,./images/kumokotsu.jpg,./logos/hatenablog-logotype.svg
-ryoTechSummary,イイダリョウ,技術系まとめ,イイダリョウ > 技術系まとめ,https://qiita.com/i-ryo/,./images/kumokotsu.jpg,./logos/qiita-logo-background-color.png
-ryoTextCareer,イイダリョウ,文章系（キャリア関係）,イイダリョウ > 文章系（キャリア関係）,https://note.com/idr_zz/,./images/kumokotsu.jpg,./logos/note-logo.svg
-ryoTextHobby,イイダリョウ,文章系（趣味関係）,イイダリョウ > 文章系（趣味関係）,https://idr-zz.hatenablog.jp/,./images/kumokotsu.jpg,./logos/hatenablog-logotype.svg
-ryoPicture,イイダリョウ,画像系コンテンツ,イイダリョウ > 画像系コンテンツ,https://www.instagram.com/idr_zz/,./images/kumokotsu.jpg,./logos/Instagram_logo.svg.png
-ryoVideoTech,イイダリョウ,映像系（技術関係）,イイダリョウ > 映像系（技術関係）,https://www.youtube.com/@idr_zz,./images/kumokotsu.jpg,./logos/yt_logo_rgb_light.png
-ryoVideoHobby,イイダリョウ,映像系（趣味関係）,イイダリョウ > 映像系（趣味関係）,https://www.youtube.com/@idr_zzz,./images/kumokotsu.jpg,./logos/yt_logo_rgb_light.png
-ryoVideoMusic,イイダリョウ,映像系（音楽関係）,イイダリョウ > 映像系（音楽関係）,https://music.youtube.com/channel/UCps-rhJpt3fbOuWokQAAHIg,./images/kumokotsu.jpg,./logos/YouTube_Music_logo.svg.png
-ryoRepository,イイダリョウ,リポジトリ,イイダリョウ > リポジトリ,https://github.com/ryo-i/,./images/kumokotsu.jpg,./logos/GitHub_Logo.png
-`;
-
-// ローカル用multi履歴CSV（key,breadcrumbs,siteUrl,title,link,date の形式）
-const LOCAL_MULTI_CSV = `
-key,breadcrumbs,siteUrl,title,link,date
-cmpOfficialBlog,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,最新記事のタイトル1,https://example.com/article1,2025-01-20
-cmpText,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000,最新記事のタイトル2,https://example.com/article2,2025-01-19
-cmpVideo,CMP2000 > 映像系コンテンツ,https://www.youtube.com/@epumes,動画タイトル1,https://youtu.be/xxxxx1,2025-01-18
-kevinBlog,けびんケビンソン > 活動ブログ,https://kevinson2.hateblo.jp/,ブログ記事1,https://example.com/article3,2025-01-17
-cmpOfficialBlog,CMP2000 > 公式ブログ,https://cmp2000.hatenadiary.jp/,過去の記事,https://example.com/article4,2025-01-15
-ryoTechBlog,イイダリョウ > 技術系ブログ,https://www.i-ryo.com/,技術記事1,https://example.com/article5,2025-01-14
-cmpRepository,CMP2000 > リポジトリ,https://github.com/kevinsonz/cmp2000/,コミット履歴1,https://github.com/kevinsonz/cmp2000/commit/xxx,2025-01-13
-kevinText,けびんケビンソン > 文章系コンテンツ,https://note.com/kevinson/,Note記事1,https://example.com/article6,2025-01-12
-ryoTextCareer,イイダリョウ > 文章系（キャリア関係）,https://note.com/idr_zz/,キャリア記事1,https://example.com/article7,2025-01-11
-cmpText,CMP2000 > 文章系コンテンツ,https://note.com/cmp2000,文章記事2,https://example.com/article8,2025-01-10
-`;
-
-// ローカル用single履歴CSV（key,title,link,date の形式）
-const LOCAL_SINGLE_CSV = `
-key,title,link,date
-cmpOfficialBlog,記事タイトル1,https://example.com/1,2025-01-20
-cmpOfficialBlog,記事タイトル2,https://example.com/2,2025-01-19
-cmpOfficialBlog,記事タイトル3,https://example.com/3,2025-01-18
-cmpText,テキスト記事1,https://example.com/4,2025-01-17
-cmpText,テキスト記事2,https://example.com/5,2025-01-16
-cmpText,日付なし記事,,
-cmpVideo,動画タイトル1,https://youtu.be/xxx1,2025-01-15
-cmpVideo,動画タイトル2,https://youtu.be/xxx2,2025-01-14
-cmpVideo,リンクなし動画,,2025-01-13
-cmpVideo,,,
-cmpRepository,コミット1,https://github.com/xxx/commit/1,2025-01-13
-cmpRepository,コミット2,https://github.com/xxx/commit/2,2025-01-12
-cmpRepository,,,
-kevinBlog,ブログ記事1,https://example.com/6,2025-01-11
-kevinBlog,ブログ記事2,https://example.com/7,2025-01-10
-kevinBlog,,,
-kevinText,テキスト記事,https://example.com/10,2025-01-09
-ryoTechBlog,技術ブログ1,https://example.com/8,2025-01-09
-ryoTechBlog,技術ブログ2,https://example.com/9,2025-01-08
-ryoTechBlog,,,
-`;
-
 // 公開スプレッドシートのCSV URL
 const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
 const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
 const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
 const PUBLIC_CONTRIBUTION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=928202728&single=true&output=csv';
 
-// ローカル用コントリビューションCSV
-const LOCAL_CONTRIBUTION_CSV = `
-date,count
-2024/01/15,2
-2024/01/28,1
-2024/02/05,3
-2024/02/14,5
-2024/02/20,1
-2024/03/10,4
-2024/03/22,2
-2024/04/08,1
-2024/04/18,6
-2024/05/01,3
-2024/05/15,2
-2024/05/28,8
-2024/06/05,1
-2024/06/20,4
-2024/07/04,2
-2024/07/18,10
-2024/08/02,1
-2024/08/15,3
-2024/08/30,2
-2024/09/10,5
-2024/09/25,1
-2024/10/08,7
-2024/10/20,3
-2024/11/01,2
-2024/11/07,4
-2024/11/15,1
-2024/12/01,6
-2024/12/25,2
-2025/01/05,3
-2025/01/13,1
-2025/01/28,5
-`;
+// 環境判定：file://プロトコルまたはTEST_DATAが存在する場合はローカルモード
+const isLocalMode = window.location.protocol === 'file:' || (typeof TEST_DATA !== 'undefined');
 
-// 環境判定：file://プロトコルならローカルモード
-const isLocalMode = window.location.protocol === 'file:';
-
-if (isLocalMode) {
-    console.log('ローカルモードで実行中');
-    const basicInfo = parseBasicInfoCSV(LOCAL_BASIC_INFO_CSV);
-    const multiData = parseMultiCSV(LOCAL_MULTI_CSV);
-    const singleData = parseSingleCSV(LOCAL_SINGLE_CSV);
-    const contributionData = parseContributionCSV(LOCAL_CONTRIBUTION_CSV);
+if (isLocalMode && typeof TEST_DATA !== 'undefined') {
+    console.log('ローカルモードで実行中（test-data.js使用）');
+    const basicInfo = parseBasicInfoCSV(TEST_DATA.BASIC_INFO_CSV);
+    const multiData = parseMultiCSV(TEST_DATA.MULTI_CSV);
+    const singleData = parseSingleCSV(TEST_DATA.SINGLE_CSV);
+    const contributionData = parseContributionCSV(TEST_DATA.CONTRIBUTION_CSV);
     generateCards(basicInfo, singleData);
     loadFeeds(multiData, singleData);
     generateContributionGraph(contributionData);
 } else {
+    console.log('オンラインモードで実行中（公開CSV使用）');
     Promise.all([
         fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),

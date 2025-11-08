@@ -129,5 +129,8 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-#Macの不要な隠しファイル
+# Macの不要な隠しファイル
 .DS_Store
+
+# テストデータ
+test-data.js
