@@ -1,6 +1,9 @@
 const multiMaxLength = 20;
 const singleMaxLength = 10;
 
+// NEW!!バッジを表示する日数（変更可能なパラメータ）
+const NEW_BADGE_DAYS = 30;
+
 // ========================
 // ローカル用CSV設定データ（最優先で定義）
 // ========================
@@ -53,21 +56,21 @@ cmpOfficialBlog,記事タイトル2,https://example.com/2,2025-01-19
 cmpOfficialBlog,記事タイトル3,https://example.com/3,2025-01-18
 cmpText,テキスト記事1,https://example.com/4,2025-01-17
 cmpText,テキスト記事2,https://example.com/5,2025-01-16
-cmpText,,,,
+cmpText,日付なし記事,,
 cmpVideo,動画タイトル1,https://youtu.be/xxx1,2025-01-15
 cmpVideo,動画タイトル2,https://youtu.be/xxx2,2025-01-14
-cmpVideo,,,
+cmpVideo,リンクなし動画,,2025-01-13
 cmpVideo,,,
 cmpRepository,コミット1,https://github.com/xxx/commit/1,2025-01-13
 cmpRepository,コミット2,https://github.com/xxx/commit/2,2025-01-12
 cmpRepository,,,
-kevinson-blog,ブログ記事1,https://example.com/6,2025-01-11
-kevinson-blog,ブログ記事2,https://example.com/7,2025-01-10
-kevinson-blog,,,
-kevinson-blog,,,
-iida-blog,技術ブログ1,https://example.com/8,2025-01-09
-iida-blog,技術ブログ2,https://example.com/9,2025-01-08
-iida-blog,,,
+kevinBlog,ブログ記事1,https://example.com/6,2025-01-11
+kevinBlog,ブログ記事2,https://example.com/7,2025-01-10
+kevinBlog,,,
+kevinText,テキスト記事,https://example.com/10,2025-01-09
+ryoTechBlog,技術ブログ1,https://example.com/8,2025-01-09
+ryoTechBlog,技術ブログ2,https://example.com/9,2025-01-08
+ryoTechBlog,,,
 `;
 
 // 公開スプレッドシートのCSV URL
@@ -121,7 +124,7 @@ if (isLocalMode) {
     const multiData = parseMultiCSV(LOCAL_MULTI_CSV);
     const singleData = parseSingleCSV(LOCAL_SINGLE_CSV);
     const contributionData = parseContributionCSV(LOCAL_CONTRIBUTION_CSV);
-    generateCards(basicInfo);
+    generateCards(basicInfo, singleData);
     loadFeeds(multiData, singleData);
     generateContributionGraph(contributionData);
 } else {
@@ -136,7 +139,7 @@ if (isLocalMode) {
         const multiData = parseMultiCSV(multiCsvText);
         const singleData = parseSingleCSV(singleCsvText);
         const contributionData = parseContributionCSV(contributionCsvText);
-        generateCards(basicInfo);
+        generateCards(basicInfo, singleData);
         loadFeeds(multiData, singleData);
         generateContributionGraph(contributionData);
     })
@@ -229,14 +232,13 @@ function parseSingleCSV(csvText) {
     for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
         
-        // keyと他の全てのフィールドが埋まっているかチェック
-        if (values[keyIndex] && values[titleIndex] && 
-            values[linkIndex] && values[dateIndex]) {
+        // keyとtitleのみ必須、linkとdateは空白OK
+        if (values[keyIndex] && values[titleIndex]) {
             items.push({
                 key: values[keyIndex],
                 title: values[titleIndex],
-                link: values[linkIndex],
-                pubDate: values[dateIndex]
+                link: values[linkIndex] || '',  // 空白の場合は空文字列
+                pubDate: values[dateIndex] || ''  // 空白の場合は空文字列
             });
         }
     }
@@ -268,7 +270,7 @@ function parseContributionCSV(csvText) {
 }
 
 // カード自動生成関数
-function generateCards(basicInfo) {
+function generateCards(basicInfo, singleData) {
     // categoryごとにグループ化
     const groupedByCategory = {};
     basicInfo.forEach(item => {
@@ -277,6 +279,30 @@ function generateCards(basicInfo) {
         }
         groupedByCategory[item.category].push(item);
     });
+    
+    // keyごとにsingleDataをグループ化
+    const singleDataByKey = {};
+    singleData.forEach(item => {
+        if (!singleDataByKey[item.key]) {
+            singleDataByKey[item.key] = [];
+        }
+        singleDataByKey[item.key].push(item);
+    });
+    
+    // 最新記事がNEW!!対象かを判定する関数
+    function isNewArticle(key) {
+        const articles = singleDataByKey[key];
+        if (!articles || articles.length === 0) return false;
+        
+        // 最新の記事（最初の記事）の日付を取得
+        const latestArticle = articles[0];
+        const articleDate = new Date(latestArticle.pubDate);
+        const today = new Date();
+        const diffTime = today - articleDate;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return diffDays <= NEW_BADGE_DAYS;
+    }
     
     // containerを探す
     const container = document.getElementById('card-content-container');
@@ -298,10 +324,17 @@ function generateCards(basicInfo) {
         items.forEach(site => {
             const cardWrapper = document.createElement('div');
             cardWrapper.className = 'card-wrapper';
+            
+            // NEW!!バッジのHTML（条件に合う場合のみ表示）
+            const newBadgeHtml = isNewArticle(site.key) 
+                ? '<span class="badge bg-danger new-badge">New!!</span>' 
+                : '';
+            
             cardWrapper.innerHTML = `
                 <div class="card">
                     <div style="position: relative; overflow: hidden; height: 200px;">
                         <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
+                        ${newBadgeHtml}
                         <img src="${site.logo}" alt="logo" style="position: absolute; top: 8px; right: 8px; width: 60px; height: auto; max-width: 30%; object-fit: contain;">
                     </div>
                     <div class="card-body">
@@ -384,13 +417,36 @@ function loadFeeds(multiData, singleData) {
         if (singleContainer) {
             // 上位件数のみ表示（CSVで既にソート済みだが念のため）
             items.slice(0, singleMaxLength).forEach(item => {
-                const date = new Date(item.pubDate);
-                const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
                 const articleElement = document.createElement('div');
-                // サイト名は表示しない
-                articleElement.innerHTML = `
-                    <span style="margin-bottom: 0.25rem">${formattedDate}<a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a></span>
-                `;
+                
+                // 日付のフォーマット（dateが空白でない場合のみ）
+                let dateHtml = '';
+                if (item.pubDate) {
+                    const date = new Date(item.pubDate);
+                    // 有効な日付かチェック
+                    if (!isNaN(date.getTime())) {
+                        const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+                        dateHtml = `<span style="margin-bottom: 0.25rem">${formattedDate}</span>`;
+                    }
+                }
+                
+                // タイトル部分（linkが空白かどうかで分岐）
+                let titleHtml = '';
+                if (item.link) {
+                    // リンクあり
+                    titleHtml = `<a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a>`;
+                } else {
+                    // リンクなし（テキストのみ）
+                    titleHtml = `<p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p>`;
+                }
+                
+                // HTML生成（dateがある場合とない場合で改行を調整）
+                if (dateHtml) {
+                    articleElement.innerHTML = `${dateHtml}${titleHtml}`;
+                } else {
+                    articleElement.innerHTML = titleHtml;
+                }
+                
                 singleContainer.appendChild(articleElement);
             });
         }
