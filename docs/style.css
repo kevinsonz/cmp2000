@@ -38,7 +38,7 @@
 .card-container {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 2rem;
     margin-top: 1.5rem;
 }
@@ -67,6 +67,20 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* sub-imageのスタイル（X/Twitter風の円形アイコン） */
+.card-sub-image {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
 /* RSSフィードコンテナのスタイル */
 #cmp .rss-feed-container {
     overflow-y: scroll;
@@ -87,6 +101,7 @@
     width: 100%;
     text-align: center;
     margin-bottom: 0;
+    scroll-margin-top: 100px; /* ヘッダー分のオフセット */
 }
 
 /* スマホサイズでカード幅を調整 */

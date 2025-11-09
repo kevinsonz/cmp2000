@@ -44,7 +44,7 @@ if (isLocalMode && typeof TEST_DATA !== 'undefined') {
     });
 }
 
-// CSV解析関数（基本情報用：key,category,siteTitle,breadcrumbs,siteUrl,image,logo）
+// CSV解析関数（基本情報用：key,category,siteTitle,breadcrumbs,siteUrl,image,sub-image,logo）
 function parseBasicInfoCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -56,6 +56,7 @@ function parseBasicInfoCSV(csvText) {
     const breadcrumbsIndex = headers.indexOf('breadcrumbs');
     const siteUrlIndex = headers.indexOf('siteUrl');
     const imageIndex = headers.indexOf('image');
+    const subImageIndex = headers.indexOf('sub-image');
     const logoIndex = headers.indexOf('logo');
     
     for (let i = 1; i < lines.length; i++) {
@@ -73,6 +74,7 @@ function parseBasicInfoCSV(csvText) {
                 breadcrumbs: values[breadcrumbsIndex],
                 siteUrl: values[siteUrlIndex],
                 image: values[imageIndex] || '',
+                subImage: values[subImageIndex] || '',  // sub-imageフィールド追加
                 logo: values[logoIndex] || ''
             });
         }
@@ -97,15 +99,16 @@ function parseMultiCSV(csvText) {
     for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
         
-        // 必須フィールド（key, breadcrumbs, siteUrl, title, link, date）が埋まっているかチェック
+        // 必須フィールド（key, breadcrumbs, siteUrl, title, date）が埋まっているかチェック
+        // linkは空白でも可（オプション）
         if (values[keyIndex] && values[breadcrumbsIndex] && values[siteUrlIndex] && 
-            values[titleIndex] && values[linkIndex] && values[dateIndex]) {
+            values[titleIndex] && values[dateIndex]) {
             items.push({
                 key: values[keyIndex],
                 breadcrumbs: values[breadcrumbsIndex],
                 siteUrl: values[siteUrlIndex],
                 title: values[titleIndex],
-                link: values[linkIndex],
+                link: values[linkIndex] || '',  // 空白の場合は空文字列
                 pubDate: values[dateIndex]
             });
         }
@@ -226,13 +229,19 @@ function generateCards(basicInfo, singleData) {
                 ? '<span class="badge bg-danger new-badge">New!!</span>' 
                 : '';
             
+            // sub-imageがある場合の表示HTML
+            const subImageHtml = site.subImage 
+                ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
+                : '';
+            
             cardWrapper.innerHTML = `
                 <div class="card">
-                    <div style="position: relative; overflow: hidden; height: 200px;">
+                    <a href="${site.siteUrl}" target="_blank" style="position: relative; overflow: hidden; height: 200px; display: block; text-decoration: none;">
                         <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
                         ${newBadgeHtml}
+                        ${subImageHtml}
                         <img src="${site.logo}" alt="logo" style="position: absolute; top: 8px; right: 8px; width: 60px; height: auto; max-width: 30%; object-fit: contain;">
-                    </div>
+                    </a>
                     <div class="card-body">
                         <h5 class="card-title">${site.siteTitle}</h5>
                         <p class="card-text">
@@ -271,21 +280,35 @@ function loadFeeds(multiData, singleData) {
     if (multiContainer) {
         // 上位件数のみ表示（CSVで既にソート済みだが念のため）
         multiData.slice(0, multiMaxLength).forEach(item => {
+            // 日付が空白の場合はスキップ
+            if (!item.pubDate) return;
+            
             const date = new Date(item.pubDate);
             const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
             const articleElement = document.createElement('div');
+            
+            // タイトル部分（linkが空白かどうかで分岐）
+            let titleSpan = '';
+            if (item.link) {
+                // リンクあり
+                titleSpan = `<a href="${item.link}" target="_blank">
+                    <span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle;">${item.title}</span>
+                </a>`;
+            } else {
+                // リンクなし（テキストのみ）
+                titleSpan = `<span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle;">${item.title}</span>`;
+            }
+            
             articleElement.innerHTML = `
             <p style="margin-bottom: 0.25rem">
-                <span style="display: inline-block; width: 15rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">
+                <span style="display: inline-block; width: 15rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle;">
                     <a href="${item.siteUrl}" target="_blank"><strong>${item.breadcrumbs}</strong></a>
                 </span>
-                <span style="display: inline-block; width: 7.5rem">
+                <span style="display: inline-block; width: 7.5rem; vertical-align: middle;">
                      - ${formattedDate} 
                 </span>
-                <span>
-                    <a href="${item.link}" target="_blank">
-                        <span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">${item.title}</span>
-                    </a>
+                <span style="vertical-align: middle;">
+                    ${titleSpan}
                 </span>
             </p>
             `;
@@ -386,11 +409,12 @@ function generateContributionGraph(contributionData) {
         return `${year}/${month}/${day}`;
     }
     
-    // 53週分のデータを生成
+    // 週のデータを生成（今日の日付まで確実に含まれるように）
     const weeks = [];
     let currentDate = new Date(startDate);
     
-    for (let week = 0; week < 53; week++) {
+    // 今日の日付を含む週まで生成
+    while (currentDate <= today) {
         const days = [];
         for (let day = 0; day < 7; day++) {
             const dateStr = formatDate(currentDate);
@@ -402,6 +426,11 @@ function generateContributionGraph(contributionData) {
                 level: getLevel(count)
             });
             currentDate.setDate(currentDate.getDate() + 1);
+            
+            // 今日を超えたら週の途中でも抜ける
+            if (currentDate > today) {
+                break;
+            }
         }
         weeks.push(days);
     }
