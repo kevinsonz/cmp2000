@@ -52,7 +52,7 @@
     margin-top: 1.5rem;
     margin-left: auto;
     margin-right: auto;
-    max-width: fit-content;
+    max-width: 64rem; /* カード3列分: 20rem × 3 + gap 2rem × 2 = 64rem */
 }
 
 /* カードラッパー：レスポンシブな幅設定 */
