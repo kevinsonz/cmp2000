@@ -4,18 +4,17 @@ const singleMaxLength = 10;
 // NEW!!バッジを表示する日数（変更可能なパラメータ）
 const NEW_BADGE_DAYS = 30;
 
-// 公開スプレッドシートのCSV URL
-const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
+// 公開スプレッドシートのCSV URL（basic-info.jsは同階層ファイルから読み込み）
 const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
 const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
 const PUBLIC_CONTRIBUTION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=928202728&single=true&output=csv';
 
-// 環境判定：file://プロトコルまたはTEST_DATAが存在する場合はローカルモード
-const isLocalMode = window.location.protocol === 'file:' || (typeof TEST_DATA !== 'undefined');
+// 環境判定：file://プロトコルまたはBASIC_INFO_CSVとTEST_DATAが存在する場合はローカルモード
+const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined');
 
-if (isLocalMode && typeof TEST_DATA !== 'undefined') {
-    console.log('ローカルモードで実行中（test-data.js使用）');
-    const basicInfo = parseBasicInfoCSV(TEST_DATA.BASIC_INFO_CSV);
+if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined') {
+    console.log('ローカルモードで実行中（basic-info.js + test-data.js使用）');
+    const basicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
     const multiData = parseMultiCSV(TEST_DATA.MULTI_CSV);
     const singleData = parseSingleCSV(TEST_DATA.SINGLE_CSV);
     const contributionData = parseContributionCSV(TEST_DATA.CONTRIBUTION_CSV);
@@ -23,15 +22,21 @@ if (isLocalMode && typeof TEST_DATA !== 'undefined') {
     loadFeeds(multiData, singleData);
     generateContributionGraph(contributionData);
 } else {
-    console.log('オンラインモードで実行中（公開CSV使用）');
+    console.log('オンラインモードで実行中（basic-info.js + 公開CSV使用）');
+    
+    // basic-info.jsが読み込まれているかチェック
+    if (typeof BASIC_INFO_CSV === 'undefined') {
+        console.error('basic-info.jsが読み込まれていません');
+        return;
+    }
+    
     Promise.all([
-        fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_CONTRIBUTION_CSV_URL).then(response => response.text())
     ])
-    .then(([basicInfoCsvText, multiCsvText, singleCsvText, contributionCsvText]) => {
-        const basicInfo = parseBasicInfoCSV(basicInfoCsvText);
+    .then(([multiCsvText, singleCsvText, contributionCsvText]) => {
+        const basicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
         const multiData = parseMultiCSV(multiCsvText);
         const singleData = parseSingleCSV(singleCsvText);
         const contributionData = parseContributionCSV(contributionCsvText);
@@ -44,7 +49,7 @@ if (isLocalMode && typeof TEST_DATA !== 'undefined') {
     });
 }
 
-// CSV解析関数（基本情報用：key,category,siteTitle,breadcrumbs,siteUrl,image,sub-image,logo）
+// CSV解析関数（基本情報用：key,category,siteTitle,breadcrumbs,comment,siteUrl,image,sub-image,logo）
 function parseBasicInfoCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -54,6 +59,7 @@ function parseBasicInfoCSV(csvText) {
     const categoryIndex = headers.indexOf('category');
     const siteTitleIndex = headers.indexOf('siteTitle');
     const breadcrumbsIndex = headers.indexOf('breadcrumbs');
+    const commentIndex = headers.indexOf('comment');
     const siteUrlIndex = headers.indexOf('siteUrl');
     const imageIndex = headers.indexOf('image');
     const subImageIndex = headers.indexOf('sub-image');
@@ -72,6 +78,7 @@ function parseBasicInfoCSV(csvText) {
                 category: values[categoryIndex],
                 siteTitle: values[siteTitleIndex],
                 breadcrumbs: values[breadcrumbsIndex],
+                comment: values[commentIndex] || '',
                 siteUrl: values[siteUrlIndex],
                 image: values[imageIndex] || '',
                 subImage: values[subImageIndex] || '',  // sub-imageフィールド追加
@@ -240,14 +247,17 @@ function generateCards(basicInfo, singleData) {
                         <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
                         ${newBadgeHtml}
                         ${subImageHtml}
-                        <img src="${site.logo}" alt="logo" style="position: absolute; top: 8px; right: 8px; width: 60px; height: auto; max-width: 30%; object-fit: contain;">
+                        <img src="${site.logo}" alt="logo" class="card-logo-img">
                     </a>
                     <div class="card-body">
                         <h5 class="card-title">${site.siteTitle}</h5>
                         <p class="card-text">
                             <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
                         </p>
-                        <a href="${site.siteUrl}" class="btn btn-primary" target="_blank">Go to Site</a>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="${site.siteUrl}" class="btn btn-primary" target="_blank">Go to Site</a>
+                            <small class="text-muted">${site.comment}</small>
+                        </div>
                     </div>
                 </div>
             `;

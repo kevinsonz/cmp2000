@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - CMP2000 Official Portal</title>
+    
+    <!-- ファビコン -->
+    <link rel="icon" type="image/png" href="./images/cmp2000-sk.png">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    
+    <!-- Bootstrap JavaScript Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+
+    <!-- カスタムスタイルシート -->
+    <link rel="stylesheet" href="./style.css">
+
+    <!-- データファイル -->
+    <script src="./basic-info.js"></script>
+    <script src="./about-data.js"></script>
+
+    <style>
+        /* セクションカード用のスタイル */
+        .section-card {
+            margin-bottom: 2rem;
+        }
+        
+        .section-header {
+            background-color: #f8f9fa;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #212529;
+        }
+        
+        .section-body {
+            padding: 1rem;
+        }
+        
+        .site-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        
+        .site-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .site-item:last-child {
+            border-bottom: none;
+        }
+        
+        .site-link {
+            text-decoration: none;
+            color: #0d6efd;
+            margin-right: 0.5rem;
+        }
+        
+        .site-link:hover {
+            text-decoration: underline;
+        }
+        
+        .logo-img {
+            height: 20px;
+            width: auto;
+            max-width: 100px;
+            object-fit: contain;
+            vertical-align: middle;
+            margin-left: 0.5rem;
+        }
+        
+        .site-comment {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-left: 0.5rem;
+        }
+        
+        .archive-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #6c757d;
+        }
+        
+        .archive-title {
+            font-weight: bold;
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .archive-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        
+        .archive-item {
+            padding: 0.4rem 0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            opacity: 0.8;
+        }
+        
+        .family-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .family-item:last-child {
+            border-bottom: none;
+        }
+        
+        .family-name {
+            font-weight: bold;
+            color: #212529;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        
+        .family-comment {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            display: block;
+        }
+        
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .section-header {
+                font-size: 1.1rem;
+            }
+            
+            .family-comment {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <!-- ページヘッダー -->
+    <header id="main-header" class="sticky-top bg-light border-bottom">
+        <h1 class="text-center py-3 mb-0">About CMP2000</h1>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <div class="page-container">
+        <div class="mb-4 text-center">
+            <a href="index.html" class="btn btn-outline-primary">← ポータルページへ戻る</a>
+        </div>
+        
+        <!-- 理念セクション -->
+        <div class="philosophy-section mb-4">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-center align-items-center">
+                    <strong>CMP2000とは</strong>
+                </div>
+                <div class="card-body p-3">
+                    <p class="mb-3" style="line-height: 1.4;">
+                        <strong>Creation Meets Peace</strong>＝『創造』と『平和』の出会い。<br>
+                        争いの絶えない世の中において、平和は自然に生まれるモノではなく、ヒトの創造によって実現されるモノである、という理念。
+                    </p>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="mb-3">
+                        <h6 class="mb-1 fw-bold">けびんケビンソン</h6>
+                        <p class="mb-0 small text-muted" style="line-height: 1.5;">
+                            2019年（コロナ禍）頃からの参画で、現在はCMP2000管理人の役割を担っている。「何か」をしたくて活動しており、現在も模索中。
+                        </p>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <h6 class="mb-1 fw-bold">イイダリョウ</h6>
+                        <p class="mb-0 small text-muted" style="line-height: 1.5;">
+                            2014年頃から参画しているCMP2000主要メンバー。多岐に渡るキャリアを経ており、現在はフロントエンドを中心としたエンジニア。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="about-content" class="bg-white p-4 rounded shadow-sm">
+            <!-- JavaScriptで自動生成 -->
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer id="footer" class="text-center py-4 mt-5 border-top bg-light">
+        <p class="mb-0 text-muted">
+            <small>&copy; 2000-<span id="current-year"></span> CMP2000</small>
+        </p>
+    </footer>
+
+    <script>
+        // 基本情報CSVの解析
+        function parseBasicInfoCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const items = [];
+            
+            const keyIndex = headers.indexOf('key');
+            const categoryIndex = headers.indexOf('category');
+            const siteTitleIndex = headers.indexOf('siteTitle');
+            const commentIndex = headers.indexOf('comment');
+            const siteUrlIndex = headers.indexOf('siteUrl');
+            const logoIndex = headers.indexOf('logo');
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                
+                // cmp2000は除外
+                if (values[keyIndex] === 'cmp2000') continue;
+                
+                if (values[keyIndex] && values[categoryIndex] && values[siteTitleIndex]) {
+                    items.push({
+                        key: values[keyIndex],
+                        category: values[categoryIndex],
+                        siteTitle: values[siteTitleIndex],
+                        comment: values[commentIndex] || '',
+                        siteUrl: values[siteUrlIndex] || '#',
+                        logo: values[logoIndex] || ''
+                    });
+                }
+            }
+            
+            return items;
+        }
+
+        // アーカイブCSVの解析
+        function parseArchiveCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const items = [];
+            
+            const categoryIndex = headers.indexOf('category');
+            const siteTitleIndex = headers.indexOf('siteTitle');
+            const commentIndex = headers.indexOf('comment');
+            const siteUrlIndex = headers.indexOf('siteUrl');
+            const logoIndex = headers.indexOf('logo');
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                
+                if (values[categoryIndex] && values[siteTitleIndex]) {
+                    items.push({
+                        category: values[categoryIndex],
+                        siteTitle: values[siteTitleIndex],
+                        comment: values[commentIndex] || '',
+                        siteUrl: values[siteUrlIndex] || '#',
+                        logo: values[logoIndex] || ''
+                    });
+                }
+            }
+            
+            return items;
+        }
+
+        // ファミリーCSVの解析
+        function parseFamilyCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const items = [];
+            
+            const categoryIndex = headers.indexOf('category');
+            const nameIndex = headers.indexOf('name');
+            const commentIndex = headers.indexOf('comment');
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i];
+                const values = [];
+                let currentValue = '';
+                let insideQuotes = false;
+                
+                // カンマ区切りの解析（コメント内のカンマを考慮）
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        insideQuotes = !insideQuotes;
+                    } else if (char === ',' && !insideQuotes) {
+                        values.push(currentValue.trim());
+                        currentValue = '';
+                    } else {
+                        currentValue += char;
+                    }
+                }
+                values.push(currentValue.trim());
+                
+                if (values[categoryIndex] && values[nameIndex]) {
+                    items.push({
+                        category: values[categoryIndex],
+                        name: values[nameIndex],
+                        comment: values[commentIndex] || ''
+                    });
+                }
+            }
+            
+            return items;
+        }
+
+        // Aboutページの生成
+        function generateAboutPage() {
+            const basicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
+            const archiveInfo = parseArchiveCSV(ABOUT_DATA.ARCHIVE_CSV);
+            const familyInfo = parseFamilyCSV(ABOUT_DATA.FAMILY_CSV);
+            
+            const container = document.getElementById('about-content');
+            if (!container) return;
+            
+            // カテゴリごとにグループ化
+            const groupedByCategory = {};
+            basicInfo.forEach(item => {
+                if (!groupedByCategory[item.category]) {
+                    groupedByCategory[item.category] = [];
+                }
+                groupedByCategory[item.category].push(item);
+            });
+            
+            // アーカイブをカテゴリごとにグループ化
+            const archiveByCategory = {};
+            archiveInfo.forEach(item => {
+                if (!archiveByCategory[item.category]) {
+                    archiveByCategory[item.category] = [];
+                }
+                archiveByCategory[item.category].push(item);
+            });
+            
+            // ファミリーをカテゴリごとにグループ化
+            const familyByCategory = {};
+            familyInfo.forEach(item => {
+                if (!familyByCategory[item.category]) {
+                    familyByCategory[item.category] = [];
+                }
+                familyByCategory[item.category].push(item);
+            });
+            
+            // 表示順: 共通コンテンツ → けびんケビンソン → イイダリョウ → スタッフ → ファミリー
+            const categories = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
+            
+            // サイト情報のセクション
+            categories.forEach(category => {
+                if (groupedByCategory[category]) {
+                    const sectionCard = document.createElement('div');
+                    sectionCard.className = 'section-card card';
+                    
+                    const sectionHeader = document.createElement('div');
+                    sectionHeader.className = 'section-header';
+                    sectionHeader.textContent = category;
+                    sectionCard.appendChild(sectionHeader);
+                    
+                    const sectionBody = document.createElement('div');
+                    sectionBody.className = 'section-body';
+                    
+                    const siteList = document.createElement('ul');
+                    siteList.className = 'site-list';
+                    
+                    // 各サイトを表示
+                    groupedByCategory[category].forEach(site => {
+                        const siteItem = document.createElement('li');
+                        siteItem.className = 'site-item';
+                        
+                        const siteLink = document.createElement('a');
+                        siteLink.href = site.siteUrl;
+                        siteLink.target = '_blank';
+                        siteLink.className = 'site-link';
+                        siteLink.textContent = site.siteTitle;
+                        
+                        siteItem.appendChild(siteLink);
+                        
+                        // ロゴがあれば表示
+                        if (site.logo) {
+                            const logoImg = document.createElement('img');
+                            logoImg.src = site.logo;
+                            logoImg.className = 'logo-img';
+                            logoImg.alt = 'logo';
+                            siteItem.appendChild(logoImg);
+                        }
+                        
+                        // コメントがあれば表示
+                        if (site.comment) {
+                            const commentSpan = document.createElement('span');
+                            commentSpan.className = 'site-comment';
+                            commentSpan.textContent = site.comment;
+                            siteItem.appendChild(commentSpan);
+                        }
+                        
+                        siteList.appendChild(siteItem);
+                    });
+                    
+                    sectionBody.appendChild(siteList);
+                    
+                    // アーカイブを追加（けびんケビンソンとイイダリョウのみ）
+                    if (archiveByCategory[category]) {
+                        const archiveSection = document.createElement('div');
+                        archiveSection.className = 'archive-section';
+                        
+                        const archiveTitle = document.createElement('div');
+                        archiveTitle.className = 'archive-title';
+                        archiveTitle.textContent = '【アーカイブ】';
+                        archiveSection.appendChild(archiveTitle);
+                        
+                        const archiveList = document.createElement('ul');
+                        archiveList.className = 'archive-list';
+                        
+                        archiveByCategory[category].forEach(archive => {
+                            const archiveItem = document.createElement('li');
+                            archiveItem.className = 'archive-item';
+                            
+                            const archiveLink = document.createElement('a');
+                            archiveLink.href = archive.siteUrl;
+                            archiveLink.target = '_blank';
+                            archiveLink.className = 'site-link';
+                            archiveLink.textContent = archive.siteTitle;
+                            
+                            archiveItem.appendChild(archiveLink);
+                            
+                            // ロゴがあれば表示
+                            if (archive.logo) {
+                                const logoImg = document.createElement('img');
+                                logoImg.src = archive.logo;
+                                logoImg.className = 'logo-img';
+                                logoImg.alt = 'logo';
+                                archiveItem.appendChild(logoImg);
+                            }
+                            
+                            // コメントがあれば表示
+                            if (archive.comment) {
+                                const commentSpan = document.createElement('span');
+                                commentSpan.className = 'site-comment';
+                                commentSpan.textContent = archive.comment;
+                                archiveItem.appendChild(commentSpan);
+                            }
+                            
+                            archiveList.appendChild(archiveItem);
+                        });
+                        
+                        archiveSection.appendChild(archiveList);
+                        sectionBody.appendChild(archiveSection);
+                    }
+                    
+                    sectionCard.appendChild(sectionBody);
+                    container.appendChild(sectionCard);
+                }
+            });
+            
+            // スタッフとファミリーのセクション（並列に表示）
+            ['スタッフ', 'ファミリー'].forEach(familyCategory => {
+                if (familyByCategory[familyCategory]) {
+                    const sectionCard = document.createElement('div');
+                    sectionCard.className = 'section-card card';
+                    
+                    const sectionHeader = document.createElement('div');
+                    sectionHeader.className = 'section-header';
+                    sectionHeader.textContent = familyCategory;
+                    sectionCard.appendChild(sectionHeader);
+                    
+                    const sectionBody = document.createElement('div');
+                    sectionBody.className = 'section-body';
+                    
+                    familyByCategory[familyCategory].forEach(member => {
+                        const familyItem = document.createElement('div');
+                        familyItem.className = 'family-item';
+                        
+                        const familyName = document.createElement('span');
+                        familyName.className = 'family-name';
+                        familyName.textContent = member.name;
+                        
+                        const familyComment = document.createElement('span');
+                        familyComment.className = 'family-comment';
+                        familyComment.textContent = member.comment;
+                        
+                        familyItem.appendChild(familyName);
+                        familyItem.appendChild(familyComment);
+                        
+                        sectionBody.appendChild(familyItem);
+                    });
+                    
+                    sectionCard.appendChild(sectionBody);
+                    container.appendChild(sectionCard);
+                }
+            });
+        }
+
+        // 現在年を更新
+        function updateCurrentYear() {
+            const currentYearSpan = document.getElementById('current-year');
+            if (currentYearSpan) {
+                const currentYear = new Date().getFullYear();
+                currentYearSpan.textContent = currentYear;
+            }
+        }
+
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            generateAboutPage();
+            updateCurrentYear();
+        });
+    </script>
+</body>
+</html>

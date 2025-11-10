@@ -93,6 +93,30 @@
     z-index: 10;
 }
 
+/* ロゴ画像の統一スタイル */
+.logo-img {
+    height: 20px;
+    width: auto;
+    max-width: 100px;
+    object-fit: contain;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+}
+
+/* カード内のロゴ（右上配置） */
+.card-logo-img {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    height: 40px;
+    width: auto;
+    max-width: 80px;
+    object-fit: contain;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 4px;
+    border-radius: 4px;
+}
+
 /* RSSフィードコンテナのスタイル */
 #cmp .rss-feed-container {
     overflow-y: scroll;
