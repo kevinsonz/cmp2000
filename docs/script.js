@@ -583,13 +583,29 @@ function initHeaderScroll() {
     const header = document.getElementById('main-header');
     
     if (header) {
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
+        let ticking = false;
+        
+        const updateHeader = () => {
+            if (window.scrollY > 50 || window.pageYOffset > 50) {
                 header.classList.add('scrolled');
             } else {
                 header.classList.remove('scrolled');
             }
-        });
+            ticking = false;
+        };
+        
+        const onScroll = () => {
+            if (!ticking) {
+                window.requestAnimationFrame(updateHeader);
+                ticking = true;
+            }
+        };
+        
+        // passive: true でパフォーマンス向上（特にモバイル）
+        window.addEventListener('scroll', onScroll, { passive: true });
+        
+        // 初回実行
+        updateHeader();
     }
 }
 
@@ -602,24 +618,8 @@ function updateCurrentYear() {
     }
 }
 
-// 理念セクションの+/-アイコン切り替え
-function initPhilosophyIconToggle() {
-    const philosophyCollapse = document.getElementById('philosophyCollapse');
-    const icon = document.getElementById('philosophy-icon');
-    
-    if (philosophyCollapse && icon) {
-        philosophyCollapse.addEventListener('show.bs.collapse', function () {
-            icon.textContent = '-';
-        });
-        philosophyCollapse.addEventListener('hide.bs.collapse', function () {
-            icon.textContent = '+';
-        });
-    }
-}
-
 // ページ読み込み時の初期化
 document.addEventListener('DOMContentLoaded', () => {
     initHeaderScroll();
     updateCurrentYear();
-    initPhilosophyIconToggle();
 });

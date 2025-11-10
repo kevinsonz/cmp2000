@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About - CMP2000 Official Portal</title>
+    <title>CMP2000 Official Portal</title>
     
     <!-- ファビコン -->
     <link rel="icon" type="image/png" href="./images/cmp2000-sk.png">
@@ -22,9 +22,71 @@
     <script src="./about-data.js"></script>
 
     <style>
+        /* ヘッダーのスタイル */
+        #main-header {
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #main-header h1 {
+            font-size: 2.5rem;
+            transition: font-size 0.3s ease, padding 0.3s ease;
+        }
+
+        /* スクロール時の小さいヘッダー */
+        #main-header.scrolled h1 {
+            font-size: 1.5rem;
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+
+        /* ページメニューのスタイル */
+        .page-menu-wrapper {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 0;
+        }
+
+        .page-menu {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .page-menu-item {
+            text-decoration: none;
+            color: #495057;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .page-menu-item:hover {
+            background-color: #e9ecef;
+            color: #212529;
+        }
+
+        .page-menu-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .page-menu-separator {
+            color: #dee2e6;
+        }
+
         /* セクションカード用のスタイル */
         .section-card {
             margin-bottom: 2rem;
+            scroll-margin-top: 100px; /* ヘッダー分のオフセット */
         }
         
         .section-header {
@@ -151,14 +213,25 @@
 <body class="bg-light">
     <!-- ページヘッダー -->
     <header id="main-header" class="sticky-top bg-light border-bottom">
-        <h1 class="text-center py-3 mb-0">About CMP2000</h1>
+        <h1 class="text-center py-3 mb-0">CMP2000 Official Portal</h1>
     </header>
+
+    <!-- ページメニュー -->
+    <div class="page-menu-wrapper">
+        <div class="page-menu">
+            <a href="index.html" class="page-menu-item">Top</a>
+            <span class="page-menu-separator">|</span>
+            <a href="about.html" class="page-menu-item active">About</a>
+        </div>
+    </div>
 
     <!-- メインコンテンツ -->
     <div class="page-container">
-        <div class="mb-4 text-center">
+        <div class="mb-3 text-center">
             <a href="index.html" class="btn btn-outline-primary">← ポータルページへ戻る</a>
         </div>
+        
+        <h2 class="text-center mb-3">About</h2>
         
         <!-- 理念セクション -->
         <div class="philosophy-section mb-4">
@@ -194,6 +267,24 @@
         <div id="about-content" class="bg-white p-4 rounded shadow-sm">
             <!-- JavaScriptで自動生成 -->
         </div>
+    </div>
+
+    <!-- ジャンプメニュー（Bootstrap dropdown使用） -->
+    <div class="dropup position-fixed bottom-0 end-0 m-3" style="z-index: 1000;">
+        <button class="btn btn-primary rounded-circle shadow" type="button" id="jumpMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="width: 60px; height: 60px;">
+            ☰
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jumpMenuButton">
+            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#common">共通コンテンツ</a></li>
+            <li><a class="dropdown-item" href="#kevin">けびんケビンソン</a></li>
+            <li><a class="dropdown-item" href="#ryo">イイダリョウ</a></li>
+            <li><a class="dropdown-item" href="#staff">スタッフ</a></li>
+            <li><a class="dropdown-item" href="#family">ファミリー</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#footer">フッター</a></li>
+        </ul>
     </div>
 
     <!-- フッター -->
@@ -354,6 +445,15 @@
                     const sectionCard = document.createElement('div');
                     sectionCard.className = 'section-card card';
                     
+                    // セクションにIDを追加（ジャンプ用）
+                    if (category === '共通コンテンツ') {
+                        sectionCard.id = 'common';
+                    } else if (category === 'けびんケビンソン') {
+                        sectionCard.id = 'kevin';
+                    } else if (category === 'イイダリョウ') {
+                        sectionCard.id = 'ryo';
+                    }
+                    
                     const sectionHeader = document.createElement('div');
                     sectionHeader.className = 'section-header';
                     sectionHeader.textContent = category;
@@ -460,6 +560,13 @@
                     const sectionCard = document.createElement('div');
                     sectionCard.className = 'section-card card';
                     
+                    // セクションにIDを追加（ジャンプ用）
+                    if (familyCategory === 'スタッフ') {
+                        sectionCard.id = 'staff';
+                    } else if (familyCategory === 'ファミリー') {
+                        sectionCard.id = 'family';
+                    }
+                    
                     const sectionHeader = document.createElement('div');
                     sectionHeader.className = 'section-header';
                     sectionHeader.textContent = familyCategory;
@@ -501,10 +608,42 @@
             }
         }
 
+        // ヘッダースクロール効果の初期化
+        function initHeaderScroll() {
+            const header = document.getElementById('main-header');
+            
+            if (header) {
+                let ticking = false;
+                
+                const updateHeader = () => {
+                    if (window.scrollY > 50 || window.pageYOffset > 50) {
+                        header.classList.add('scrolled');
+                    } else {
+                        header.classList.remove('scrolled');
+                    }
+                    ticking = false;
+                };
+                
+                const onScroll = () => {
+                    if (!ticking) {
+                        window.requestAnimationFrame(updateHeader);
+                        ticking = true;
+                    }
+                };
+                
+                // passive: true でパフォーマンス向上（特にモバイル）
+                window.addEventListener('scroll', onScroll, { passive: true });
+                
+                // 初回実行
+                updateHeader();
+            }
+        }
+
         // ページ読み込み時の初期化
         document.addEventListener('DOMContentLoaded', () => {
             generateAboutPage();
             updateCurrentYear();
+            initHeaderScroll();
         });
     </script>
 </body>
