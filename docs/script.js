@@ -21,14 +21,8 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
     generateCards(basicInfo, singleData);
     loadFeeds(multiData, singleData);
     generateContributionGraph(contributionData);
-} else {
+} else if (typeof BASIC_INFO_CSV !== 'undefined') {
     console.log('オンラインモードで実行中（basic-info.js + 公開CSV使用）');
-    
-    // basic-info.jsが読み込まれているかチェック
-    if (typeof BASIC_INFO_CSV === 'undefined') {
-        console.error('basic-info.jsが読み込まれていません');
-        return;
-    }
     
     Promise.all([
         fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),
@@ -47,6 +41,8 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
     .catch(error => {
         console.error('公開CSVの読み込みに失敗しました:', error);
     });
+} else {
+    console.error('basic-info.jsが読み込まれていません。ページを正しく表示できません。');
 }
 
 // CSV解析関数（基本情報用：key,category,siteTitle,breadcrumbs,comment,siteUrl,image,sub-image,logo）
