@@ -4,25 +4,37 @@ const singleMaxLength = 10;
 // NEW!!バッジを表示する日数（変更可能なパラメータ）
 const NEW_BADGE_DAYS = 30;
 
-// 公開スプレッドシートのCSV URL（basic-info.jsは同階層ファイルから読み込み）
+// 公開スプレッドシートのCSV URL
 const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
 const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
 const PUBLIC_CONTRIBUTION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=928202728&single=true&output=csv';
 
-// 環境判定：file://プロトコルまたはBASIC_INFO_CSVとTEST_DATAが存在する場合はローカルモード
+// グローバル変数（ハッシュタグフィルタリング用）
+let allHashTags = [];
+let currentFilterTag = null;
+let basicInfoData = null;
+let singleDataGlobal = null;
+
+// 環境判定
 const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined');
 
 if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined') {
-    console.log('ローカルモードで実行中（basic-info.js + test-data.js使用）');
+    console.log('ローカルモードで実行中');
     const basicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
     const multiData = parseMultiCSV(TEST_DATA.MULTI_CSV);
     const singleData = parseSingleCSV(TEST_DATA.SINGLE_CSV);
     const contributionData = parseContributionCSV(TEST_DATA.CONTRIBUTION_CSV);
+    
+    basicInfoData = basicInfo;
+    singleDataGlobal = singleData;
+    allHashTags = collectAllHashTags(basicInfo);
+    
     generateCards(basicInfo, singleData);
     loadFeeds(multiData, singleData);
     generateContributionGraph(contributionData);
+    renderHashTagList();
 } else if (typeof BASIC_INFO_CSV !== 'undefined') {
-    console.log('オンラインモードで実行中（basic-info.js + 公開CSV使用）');
+    console.log('オンラインモードで実行中');
     
     Promise.all([
         fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),
@@ -34,18 +46,156 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
         const multiData = parseMultiCSV(multiCsvText);
         const singleData = parseSingleCSV(singleCsvText);
         const contributionData = parseContributionCSV(contributionCsvText);
+        
+        basicInfoData = basicInfo;
+        singleDataGlobal = singleData;
+        allHashTags = collectAllHashTags(basicInfo);
+        
         generateCards(basicInfo, singleData);
         loadFeeds(multiData, singleData);
         generateContributionGraph(contributionData);
+        renderHashTagList();
     })
     .catch(error => {
         console.error('公開CSVの読み込みに失敗しました:', error);
     });
 } else {
-    console.error('basic-info.jsが読み込まれていません。ページを正しく表示できません。');
+    console.error('basic-info.jsが読み込まれていません。');
 }
 
-// CSV解析関数（基本情報用：key,category,siteTitle,breadcrumbs,comment,siteUrl,image,sub-image,logo）
+// ハッシュタグ抽出（半角・全角スペース対応）
+function extractHashTags(hashTagString) {
+    if (!hashTagString) return [];
+    return hashTagString.split(/[\s\u3000]+/).filter(tag => tag.trim().startsWith('#'));
+}
+
+// 全ハッシュタグを収集
+function collectAllHashTags(basicInfo) {
+    const tags = new Set();
+    basicInfo.forEach(item => {
+        if (item.hashTag) {
+            extractHashTags(item.hashTag).forEach(tag => tags.add(tag));
+        }
+    });
+    return Array.from(tags).sort();
+}
+
+// ハッシュタグ一覧を表示
+function renderHashTagList() {
+    const container = document.getElementById('hashtag-list-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const title = document.createElement('h5');
+    title.textContent = 'ハッシュタグ一覧';
+    title.className = 'mb-3';
+    container.appendChild(title);
+    
+    const tagContainer = document.createElement('div');
+    tagContainer.className = 'hashtag-list';
+    
+    allHashTags.forEach(tag => {
+        const tagButton = document.createElement('button');
+        tagButton.className = 'hashtag-button';
+        tagButton.textContent = tag;
+        
+        if (currentFilterTag === tag) {
+            tagButton.classList.add('active');
+        }
+        
+        tagButton.onclick = () => {
+            if (currentFilterTag === tag) {
+                clearHashTagFilter();
+            } else {
+                applyHashTagFilter(tag);
+            }
+        };
+        
+        tagContainer.appendChild(tagButton);
+    });
+    
+    container.appendChild(tagContainer);
+}
+
+// ハッシュタグをクリック可能なリンクに変換
+function convertHashTagsToLinks(hashTagString) {
+    if (!hashTagString) return '';
+    
+    const tags = extractHashTags(hashTagString);
+    return tags.map(tag => {
+        return `<a href="#" onclick="applyHashTagFilter('${tag}'); return false;" style="margin-right: 0.25rem; color: #0d6efd; text-decoration: none;">${tag}</a>`;
+    }).join(' ');
+}
+
+// ハッシュタグフィルターを適用
+function applyHashTagFilter(tag) {
+    currentFilterTag = tag;
+    generateCards(basicInfoData, singleDataGlobal, tag);
+    renderHashTagList();
+    showFilterUI(tag);
+    updateJumpMenu(tag);
+}
+
+// フィルターをクリア
+function clearHashTagFilter() {
+    currentFilterTag = null;
+    generateCards(basicInfoData, singleDataGlobal, null);
+    renderHashTagList();
+    hideFilterUI();
+    updateJumpMenu(null);
+}
+
+// フィルターUI表示
+function showFilterUI(tag) {
+    const container = document.getElementById('filter-ui-container');
+    if (!container) return;
+    
+    container.style.display = 'block';
+    container.innerHTML = `
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <span>表示中: <strong>${tag}</strong></span>
+            <button class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">フィルター解除</button>
+        </div>
+    `;
+}
+
+// フィルターUI非表示
+function hideFilterUI() {
+    const container = document.getElementById('filter-ui-container');
+    if (!container) return;
+    
+    container.style.display = 'none';
+    container.innerHTML = '';
+}
+
+// ジャンプメニューを更新
+function updateJumpMenu(filterTag) {
+    const dropdownMenu = document.querySelector('#jumpMenuButton + .dropdown-menu');
+    if (!dropdownMenu) return;
+    
+    if (filterTag) {
+        dropdownMenu.innerHTML = `
+            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#filter-ui-container">フィルター結果</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#footer">フッター</a></li>
+        `;
+    } else {
+        dropdownMenu.innerHTML = `
+            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#common">共通コンテンツ</a></li>
+            <li><a class="dropdown-item" href="#kevin">けびんケビンソン</a></li>
+            <li><a class="dropdown-item" href="#ryo">イイダリョウ</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#footer">フッター</a></li>
+        `;
+    }
+}
+
+// CSV解析関数（基本情報用）
 function parseBasicInfoCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -55,7 +205,7 @@ function parseBasicInfoCSV(csvText) {
     const categoryIndex = headers.indexOf('category');
     const siteTitleIndex = headers.indexOf('siteTitle');
     const breadcrumbsIndex = headers.indexOf('breadcrumbs');
-    const commentIndex = headers.indexOf('comment');
+    const hashTagIndex = headers.indexOf('hashTag');
     const siteUrlIndex = headers.indexOf('siteUrl');
     const imageIndex = headers.indexOf('image');
     const subImageIndex = headers.indexOf('sub-image');
@@ -64,7 +214,6 @@ function parseBasicInfoCSV(csvText) {
     for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
         
-        // cmp2000は除外
         if (values[keyIndex] === 'cmp2000') continue;
         
         if (values[keyIndex] && values[categoryIndex] && 
@@ -74,10 +223,10 @@ function parseBasicInfoCSV(csvText) {
                 category: values[categoryIndex],
                 siteTitle: values[siteTitleIndex],
                 breadcrumbs: values[breadcrumbsIndex],
-                comment: values[commentIndex] || '',
+                hashTag: values[hashTagIndex] || '',
                 siteUrl: values[siteUrlIndex],
                 image: values[imageIndex] || '',
-                subImage: values[subImageIndex] || '',  // sub-imageフィールド追加
+                subImage: values[subImageIndex] || '',
                 logo: values[logoIndex] || ''
             });
         }
@@ -86,7 +235,7 @@ function parseBasicInfoCSV(csvText) {
     return items;
 }
 
-// CSV解析関数（multi用：key,breadcrumbs,siteUrl,title,link,date）
+// CSV解析関数（multi用）
 function parseMultiCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -102,8 +251,6 @@ function parseMultiCSV(csvText) {
     for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
         
-        // 必須フィールド（key, breadcrumbs, siteUrl, title, date）が埋まっているかチェック
-        // linkは空白でも可（オプション）
         if (values[keyIndex] && values[breadcrumbsIndex] && values[siteUrlIndex] && 
             values[titleIndex] && values[dateIndex]) {
             items.push({
@@ -111,7 +258,7 @@ function parseMultiCSV(csvText) {
                 breadcrumbs: values[breadcrumbsIndex],
                 siteUrl: values[siteUrlIndex],
                 title: values[titleIndex],
-                link: values[linkIndex] || '',  // 空白の場合は空文字列
+                link: values[linkIndex] || '',
                 pubDate: values[dateIndex]
             });
         }
@@ -120,7 +267,7 @@ function parseMultiCSV(csvText) {
     return items;
 }
 
-// CSV解析関数（single用：key,title,link,date）
+// CSV解析関数（single用）
 function parseSingleCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -134,13 +281,12 @@ function parseSingleCSV(csvText) {
     for (let i = 1; i < lines.length; i++) {
         const values = lines[i].split(',').map(v => v.trim());
         
-        // keyとtitleのみ必須、linkとdateは空白OK
         if (values[keyIndex] && values[titleIndex]) {
             items.push({
                 key: values[keyIndex],
                 title: values[titleIndex],
-                link: values[linkIndex] || '',  // 空白の場合は空文字列
-                pubDate: values[dateIndex] || ''  // 空白の場合は空文字列
+                link: values[linkIndex] || '',
+                pubDate: values[dateIndex] || ''
             });
         }
     }
@@ -148,7 +294,7 @@ function parseSingleCSV(csvText) {
     return items;
 }
 
-// CSV解析関数（contribution用：date,count）
+// CSV解析関数（contribution用）
 function parseContributionCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -171,18 +317,25 @@ function parseContributionCSV(csvText) {
     return items;
 }
 
-// カード自動生成関数
-function generateCards(basicInfo, singleData) {
-    // categoryごとにグループ化
+// カード自動生成関数（フィルター対応）
+function generateCards(basicInfo, singleData, filterTag = null) {
+    let filteredInfo = basicInfo;
+    if (filterTag) {
+        filteredInfo = basicInfo.filter(item => {
+            if (!item.hashTag) return false;
+            const tags = extractHashTags(item.hashTag);
+            return tags.includes(filterTag);
+        });
+    }
+    
     const groupedByCategory = {};
-    basicInfo.forEach(item => {
+    filteredInfo.forEach(item => {
         if (!groupedByCategory[item.category]) {
             groupedByCategory[item.category] = [];
         }
         groupedByCategory[item.category].push(item);
     });
     
-    // keyごとにsingleDataをグループ化
     const singleDataByKey = {};
     singleData.forEach(item => {
         if (!singleDataByKey[item.key]) {
@@ -191,12 +344,10 @@ function generateCards(basicInfo, singleData) {
         singleDataByKey[item.key].push(item);
     });
     
-    // 最新記事がNEW!!対象かを判定する関数
     function isNewArticle(key) {
         const articles = singleDataByKey[key];
         if (!articles || articles.length === 0) return false;
         
-        // 最新の記事（最初の記事）の日付を取得
         const latestArticle = articles[0];
         const articleDate = new Date(latestArticle.pubDate);
         const today = new Date();
@@ -206,36 +357,33 @@ function generateCards(basicInfo, singleData) {
         return diffDays <= NEW_BADGE_DAYS;
     }
     
-    // containerを探す
     const container = document.getElementById('card-content-container');
     if (!container) return;
     
-    // 各categoryごとにセクションとカードを生成
+    container.innerHTML = '';
+    
     Object.entries(groupedByCategory).forEach(([category, items]) => {
-        // セクションタイトル
         const sectionTitle = document.createElement('h3');
         sectionTitle.className = 'section-title';
         sectionTitle.textContent = category;
         container.appendChild(sectionTitle);
         
-        // カードコンテナ
         const cardContainer = document.createElement('div');
         cardContainer.className = 'card-container';
         
-        // 各サイトのカードを生成
         items.forEach(site => {
             const cardWrapper = document.createElement('div');
             cardWrapper.className = 'card-wrapper';
             
-            // NEW!!バッジのHTML（条件に合う場合のみ表示）
             const newBadgeHtml = isNewArticle(site.key) 
                 ? '<span class="badge bg-danger new-badge">New!!</span>' 
                 : '';
             
-            // sub-imageがある場合の表示HTML
             const subImageHtml = site.subImage 
                 ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
                 : '';
+            
+            const hashTagHtml = site.hashTag ? `<small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small>` : '';
             
             cardWrapper.innerHTML = `
                 <div class="card">
@@ -252,7 +400,7 @@ function generateCards(basicInfo, singleData) {
                         </p>
                         <div class="d-flex justify-content-between align-items-center">
                             <a href="${site.siteUrl}" class="btn btn-primary" target="_blank">Go to Site</a>
-                            <small class="text-muted">${site.comment}</small>
+                            ${hashTagHtml}
                         </div>
                     </div>
                 </div>
@@ -262,7 +410,6 @@ function generateCards(basicInfo, singleData) {
         
         container.appendChild(cardContainer);
         
-        // セクションにIDを追加（ジャンプ用）
         if (category === '共通コンテンツ') {
             sectionTitle.id = 'common';
         } else if (category === 'けびんケビンソン') {
@@ -271,37 +418,32 @@ function generateCards(basicInfo, singleData) {
             sectionTitle.id = 'ryo';
         }
         
-        // 区切り線
         const hr = document.createElement('hr');
         container.appendChild(hr);
     });
+    
+    if (singleData) {
+        loadSingleFeeds(singleData, filteredInfo.map(item => item.key));
+    }
 }
 
 function loadFeeds(multiData, singleData) {
-    // ========================
-    // 複数サイトフィード（multi）の表示
-    // ========================
     const multiContainer = document.getElementById('multi-rss-feed-container');
     
     if (multiContainer) {
-        // 上位件数のみ表示（CSVで既にソート済みだが念のため）
         multiData.slice(0, multiMaxLength).forEach(item => {
-            // 日付が空白の場合はスキップ
             if (!item.pubDate) return;
             
             const date = new Date(item.pubDate);
             const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
             const articleElement = document.createElement('div');
             
-            // タイトル部分（linkが空白かどうかで分岐）
             let titleSpan = '';
             if (item.link) {
-                // リンクあり
                 titleSpan = `<a href="${item.link}" target="_blank">
                     <span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle;">${item.title}</span>
                 </a>`;
             } else {
-                // リンクなし（テキストのみ）
                 titleSpan = `<span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle;">${item.title}</span>`;
             }
             
@@ -322,10 +464,10 @@ function loadFeeds(multiData, singleData) {
         });
     }
     
-    // ========================
-    // 単独サイトフィード（single）の表示
-    // ========================
-    // keyごとにグループ化
+    loadSingleFeeds(singleData);
+}
+
+function loadSingleFeeds(singleData, filterKeys = null) {
     const groupedByKey = {};
     singleData.forEach(item => {
         if (!groupedByKey[item.key]) {
@@ -334,38 +476,34 @@ function loadFeeds(multiData, singleData) {
         groupedByKey[item.key].push(item);
     });
     
-    // 各keyごとに表示
     Object.entries(groupedByKey).forEach(([key, items]) => {
+        if (filterKeys && !filterKeys.includes(key)) return;
+        
         const containerId = `single-rss-feed-container-${key}`;
         const singleContainer = document.getElementById(containerId);
         
         if (singleContainer) {
-            // 上位件数のみ表示（CSVで既にソート済みだが念のため）
+            singleContainer.innerHTML = '';
+            
             items.slice(0, singleMaxLength).forEach(item => {
                 const articleElement = document.createElement('div');
                 
-                // 日付のフォーマット（dateが空白でない場合のみ）
                 let dateHtml = '';
                 if (item.pubDate) {
                     const date = new Date(item.pubDate);
-                    // 有効な日付かチェック
                     if (!isNaN(date.getTime())) {
                         const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
                         dateHtml = `<span style="margin-bottom: 0.25rem">${formattedDate}</span>`;
                     }
                 }
                 
-                // タイトル部分（linkが空白かどうかで分岐）
                 let titleHtml = '';
                 if (item.link) {
-                    // リンクあり
                     titleHtml = `<a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a>`;
                 } else {
-                    // リンクなし（テキストのみ）
                     titleHtml = `<p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p>`;
                 }
                 
-                // HTML生成（dateがある場合とない場合で改行を調整）
                 if (dateHtml) {
                     articleElement.innerHTML = `${dateHtml}${titleHtml}`;
                 } else {
@@ -383,22 +521,18 @@ function generateContributionGraph(contributionData) {
     const container = document.getElementById('contribution-graph');
     if (!container) return;
     
-    // データをマップに変換（日付 -> カウント）
     const dataMap = {};
     contributionData.forEach(item => {
         dataMap[item.date] = item.count;
     });
     
-    // 今日の日付から1年前までの期間を計算
     const today = new Date();
     const oneYearAgo = new Date(today);
     oneYearAgo.setFullYear(today.getFullYear() - 1);
     
-    // 日曜日に調整（グラフは日曜日から始まる）
     const startDate = new Date(oneYearAgo);
     startDate.setDate(startDate.getDate() - startDate.getDay());
     
-    // カウント数に応じたレベルを決定（GitHub風）
     function getLevel(count) {
         if (count === 0) return 0;
         if (count <= 2) return 1;
@@ -407,7 +541,6 @@ function generateContributionGraph(contributionData) {
         return 4;
     }
     
-    // 日付をフォーマット
     function formatDate(date) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -415,11 +548,9 @@ function generateContributionGraph(contributionData) {
         return `${year}/${month}/${day}`;
     }
     
-    // 週のデータを生成（今日の日付まで確実に含まれるように）
     const weeks = [];
     let currentDate = new Date(startDate);
     
-    // 今日の日付を含む週まで生成
     while (currentDate <= today) {
         const days = [];
         for (let day = 0; day < 7; day++) {
@@ -433,7 +564,6 @@ function generateContributionGraph(contributionData) {
             });
             currentDate.setDate(currentDate.getDate() + 1);
             
-            // 今日を超えたら週の途中でも抜ける
             if (currentDate > today) {
                 break;
             }
@@ -441,11 +571,9 @@ function generateContributionGraph(contributionData) {
         weeks.push(days);
     }
     
-    // グラフ構造を作成
     const graphContainer = document.createElement('div');
     graphContainer.className = 'contribution-graph-container';
     
-    // 年ラベルを生成
     const yearsRow = document.createElement('div');
     yearsRow.className = 'contribution-years';
     yearsRow.style.position = 'relative';
@@ -457,7 +585,6 @@ function generateContributionGraph(contributionData) {
         const firstDay = week[0].date;
         const year = firstDay.getFullYear();
         
-        // 最初の週、または年が変わったときに年ラベルを表示
         if (weekIndex === 0 || year !== lastYear) {
             const yearLabel = document.createElement('div');
             yearLabel.className = 'contribution-year';
@@ -471,7 +598,6 @@ function generateContributionGraph(contributionData) {
     
     graphContainer.appendChild(yearsRow);
     
-    // 月ラベルを生成
     const monthsRow = document.createElement('div');
     monthsRow.className = 'contribution-months';
     monthsRow.style.position = 'relative';
@@ -485,13 +611,11 @@ function generateContributionGraph(contributionData) {
         const month = firstDay.getMonth();
         const year = firstDay.getFullYear();
         
-        // 年が変わった場合は月の表示をリセット
         if (year !== lastYear) {
             lastMonth = -1;
             lastYear = year;
         }
         
-        // 月が変わったときラベルを表示
         if (month !== lastMonth) {
             const monthLabel = document.createElement('div');
             monthLabel.className = 'contribution-month';
@@ -505,19 +629,16 @@ function generateContributionGraph(contributionData) {
     
     graphContainer.appendChild(monthsRow);
     
-    // メインコンテンツ
     const mainContent = document.createElement('div');
     mainContent.className = 'contribution-main';
     mainContent.style.position = 'relative';
     mainContent.style.zIndex = '1';
     
-    // 曜日ラベル（月・水・金のみ表示、位置を修正）
     const weekdays = document.createElement('div');
     weekdays.className = 'contribution-weekdays';
     ['日', '月', '火', '水', '木', '金', '土'].forEach((day, index) => {
         const weekday = document.createElement('div');
         weekday.className = 'contribution-weekday';
-        // 月・水・金のみ表示
         if (index === 1 || index === 3 || index === 5) {
             weekday.textContent = day;
         }
@@ -525,11 +646,9 @@ function generateContributionGraph(contributionData) {
     });
     mainContent.appendChild(weekdays);
     
-    // 週のコンテナ
     const weeksContainer = document.createElement('div');
     weeksContainer.className = 'contribution-weeks';
     
-    // 各週を生成
     weeks.forEach(week => {
         const weekElement = document.createElement('div');
         weekElement.className = 'contribution-week';
@@ -540,7 +659,6 @@ function generateContributionGraph(contributionData) {
             dayElement.dataset.date = day.dateStr;
             dayElement.dataset.count = day.count;
             
-            // ホバー時のツールチップ
             dayElement.addEventListener('mouseenter', (e) => {
                 const tooltip = document.createElement('div');
                 tooltip.className = 'contribution-tooltip';
@@ -569,7 +687,6 @@ function generateContributionGraph(contributionData) {
     graphContainer.appendChild(mainContent);
     container.appendChild(graphContainer);
     
-    // グラフ生成後に右端にスクロール
     setTimeout(() => {
         const graphWrapper = document.querySelector('.contribution-graph-wrapper');
         if (graphWrapper) {
@@ -578,7 +695,7 @@ function generateContributionGraph(contributionData) {
     }, 100);
 }
 
-// ヘッダースクロール効果の初期化
+// 初期化関数
 function initHeaderScroll() {
     const header = document.getElementById('main-header');
     
@@ -601,15 +718,11 @@ function initHeaderScroll() {
             }
         };
         
-        // passive: true でパフォーマンス向上（特にモバイル）
         window.addEventListener('scroll', onScroll, { passive: true });
-        
-        // 初回実行
         updateHeader();
     }
 }
 
-// 現在年を更新
 function updateCurrentYear() {
     const currentYearSpan = document.getElementById('current-year');
     if (currentYearSpan) {
@@ -618,7 +731,6 @@ function updateCurrentYear() {
     }
 }
 
-// ページ読み込み時の初期化
 document.addEventListener('DOMContentLoaded', () => {
     initHeaderScroll();
     updateCurrentYear();
