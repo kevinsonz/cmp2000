@@ -5,6 +5,7 @@ const singleMaxLength = 10;
 const NEW_BADGE_DAYS = 30;
 
 // 公開スプレッドシートのCSV URL
+const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
 const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
 const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
 const PUBLIC_CONTRIBUTION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=928202728&single=true&output=csv';
@@ -37,12 +38,13 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
     console.log('オンラインモードで実行中');
     
     Promise.all([
+        fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_CONTRIBUTION_CSV_URL).then(response => response.text())
     ])
-    .then(([multiCsvText, singleCsvText, contributionCsvText]) => {
-        const basicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
+    .then(([basicCsvText, multiCsvText, singleCsvText, contributionCsvText]) => {
+        const basicInfo = parseBasicInfoCSV(basicCsvText);
         const multiData = parseMultiCSV(multiCsvText);
         const singleData = parseSingleCSV(singleCsvText);
         const contributionData = parseContributionCSV(contributionCsvText);
@@ -362,65 +364,124 @@ function generateCards(basicInfo, singleData, filterTag = null) {
     
     container.innerHTML = '';
     
-    Object.entries(groupedByCategory).forEach(([category, items]) => {
-        const sectionTitle = document.createElement('h3');
-        sectionTitle.className = 'section-title';
-        sectionTitle.textContent = category;
-        container.appendChild(sectionTitle);
-        
+    // フィルター時は全カードを1つのコンテナに並べる
+    if (filterTag) {
         const cardContainer = document.createElement('div');
         cardContainer.className = 'card-container';
         
-        items.forEach(site => {
-            const cardWrapper = document.createElement('div');
-            cardWrapper.className = 'card-wrapper';
-            
-            const newBadgeHtml = isNewArticle(site.key) 
-                ? '<span class="badge bg-danger new-badge">New!!</span>' 
-                : '';
-            
-            const subImageHtml = site.subImage 
-                ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
-                : '';
-            
-            const hashTagHtml = site.hashTag ? `<small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small>` : '';
-            
-            cardWrapper.innerHTML = `
-                <div class="card">
-                    <a href="${site.siteUrl}" target="_blank" style="position: relative; overflow: hidden; height: 200px; display: block; text-decoration: none;">
-                        <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
-                        ${newBadgeHtml}
-                        ${subImageHtml}
-                        <img src="${site.logo}" alt="logo" class="card-logo-img">
-                    </a>
-                    <div class="card-body">
-                        <h5 class="card-title">${site.siteTitle}</h5>
-                        <p class="card-text">
-                            <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
-                        </p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <a href="${site.siteUrl}" class="btn btn-primary" target="_blank">Go to Site</a>
-                            ${hashTagHtml}
+        // カテゴリ順序を維持するためのソート
+        const categoryOrder = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
+        const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
+            return categoryOrder.indexOf(a) - categoryOrder.indexOf(b);
+        });
+        
+        sortedCategories.forEach(category => {
+            const items = groupedByCategory[category];
+            items.forEach(site => {
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = 'card-wrapper';
+                
+                const newBadgeHtml = isNewArticle(site.key) 
+                    ? '<span class="badge bg-danger new-badge">New!!</span>' 
+                    : '';
+                
+                const subImageHtml = site.subImage 
+                    ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
+                    : '';
+                
+                const hashTagHtml = site.hashTag ? `<small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small>` : '';
+                
+                // カテゴリ名を小さめの文字で表示
+                const categoryBadgeHtml = `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">${category}</small>`;
+                
+                cardWrapper.innerHTML = `
+                    <div class="card">
+                        <a href="${site.siteUrl}" target="_blank" style="position: relative; overflow: hidden; height: 200px; display: block; text-decoration: none;">
+                            <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
+                            ${newBadgeHtml}
+                            ${subImageHtml}
+                            <img src="${site.logo}" alt="logo" class="card-logo-img">
+                        </a>
+                        <div class="card-body">
+                            ${categoryBadgeHtml}
+                            <h5 class="card-title">${site.siteTitle}</h5>
+                            <p class="card-text">
+                                <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="${site.siteUrl}" class="btn btn-primary" target="_blank">Go to Site</a>
+                                ${hashTagHtml}
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            cardContainer.appendChild(cardWrapper);
+                `;
+                cardContainer.appendChild(cardWrapper);
+            });
         });
         
         container.appendChild(cardContainer);
-        
-        if (category === '共通コンテンツ') {
-            sectionTitle.id = 'common';
-        } else if (category === 'けびんケビンソン') {
-            sectionTitle.id = 'kevin';
-        } else if (category === 'イイダリョウ') {
-            sectionTitle.id = 'ryo';
-        }
-        
-        const hr = document.createElement('hr');
-        container.appendChild(hr);
-    });
+    } else {
+        // 通常表示（カテゴリごとにセクション分け）
+        Object.entries(groupedByCategory).forEach(([category, items]) => {
+            const sectionTitle = document.createElement('h3');
+            sectionTitle.className = 'section-title';
+            sectionTitle.textContent = category;
+            container.appendChild(sectionTitle);
+            
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'card-container';
+            
+            items.forEach(site => {
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = 'card-wrapper';
+                
+                const newBadgeHtml = isNewArticle(site.key) 
+                    ? '<span class="badge bg-danger new-badge">New!!</span>' 
+                    : '';
+                
+                const subImageHtml = site.subImage 
+                    ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
+                    : '';
+                
+                const hashTagHtml = site.hashTag ? `<small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small>` : '';
+                
+                cardWrapper.innerHTML = `
+                    <div class="card">
+                        <a href="${site.siteUrl}" target="_blank" style="position: relative; overflow: hidden; height: 200px; display: block; text-decoration: none;">
+                            <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
+                            ${newBadgeHtml}
+                            ${subImageHtml}
+                            <img src="${site.logo}" alt="logo" class="card-logo-img">
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">${site.siteTitle}</h5>
+                            <p class="card-text">
+                                <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="${site.siteUrl}" class="btn btn-primary" target="_blank">Go to Site</a>
+                                ${hashTagHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cardContainer.appendChild(cardWrapper);
+            });
+            
+            container.appendChild(cardContainer);
+            
+            if (category === '共通コンテンツ') {
+                sectionTitle.id = 'common';
+            } else if (category === 'けびんケビンソン') {
+                sectionTitle.id = 'kevin';
+            } else if (category === 'イイダリョウ') {
+                sectionTitle.id = 'ryo';
+            }
+            
+            const hr = document.createElement('hr');
+            container.appendChild(hr);
+        });
+    }
     
     if (singleData) {
         loadSingleFeeds(singleData, filteredInfo.map(item => item.key));

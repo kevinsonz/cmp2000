@@ -134,3 +134,5 @@ dist
 
 # テストデータ
 test-data.js
+basic-info.js
+about-data.js
