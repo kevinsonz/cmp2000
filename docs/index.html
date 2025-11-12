@@ -17,11 +17,9 @@
     <!-- カスタムスタイルシート -->
     <link rel="stylesheet" href="./style.css">
 
-    <!-- 基本情報データ -->
-    <script src="./basic-info.js"></script>
-
-    <!-- テストデータ（ローカル開発用のみ、GitHub Pagesには不要） -->
-    <script src="./test-data.js"></script>
+    <!-- ローカル開発用データ（GitHub Pagesでは404になるが問題なし） -->
+    <script src="./basic-info.js" onerror="console.log('ローカルデータなし: オンラインモードで動作します')"></script>
+    <script src="./test-data.js" onerror="console.log('テストデータなし: オンラインモードで動作します')"></script>
 
     <!-- カスタムスクリプト（defer属性でHTML解析後に実行） -->
     <script src="./script.js" defer></script>

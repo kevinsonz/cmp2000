@@ -34,7 +34,7 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
     loadFeeds(multiData, singleData);
     generateContributionGraph(contributionData);
     renderHashTagList();
-} else if (typeof BASIC_INFO_CSV !== 'undefined') {
+} else {
     console.log('オンラインモードで実行中');
     
     Promise.all([
@@ -61,8 +61,6 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
     .catch(error => {
         console.error('公開CSVの読み込みに失敗しました:', error);
     });
-} else {
-    console.error('basic-info.jsが読み込まれていません。');
 }
 
 // ハッシュタグ抽出（半角・全角スペース対応）

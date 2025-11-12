@@ -17,9 +17,9 @@
     <!-- カスタムスタイルシート -->
     <link rel="stylesheet" href="./style.css">
 
-    <!-- データファイル -->
-    <script src="./basic-info.js"></script>
-    <script src="./about-data.js"></script>
+    <!-- ローカル開発用データ（GitHub Pagesでは404になるが問題なし） -->
+    <script src="./basic-info.js" onerror="console.log('ローカルデータなし: オンラインモードで動作します')"></script>
+    <script src="./about-data.js" onerror="console.log('アバウトデータなし: オンラインモードで動作します')"></script>
     
     <!-- about専用スクリプト（defer属性でHTML解析後に実行） -->
     <script src="./about-script.js" defer></script>
