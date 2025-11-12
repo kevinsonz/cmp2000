@@ -387,7 +387,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                     ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
                     : '';
                 
-                const hashTagHtml = site.hashTag ? `<small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small>` : '';
+                const hashTagHtml = site.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small></div>` : '';
                 
                 // カテゴリ名を小さめの文字で表示
                 const categoryBadgeHtml = `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">${category}</small>`;
@@ -406,8 +406,8 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                             <p class="card-text">
                                 <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
                             </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <a href="${site.siteUrl}" class="btn btn-primary" target="_blank">Go to Site</a>
+                            <div class="card-action-area">
+                                <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
                                 ${hashTagHtml}
                             </div>
                         </div>
@@ -441,7 +441,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                     ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
                     : '';
                 
-                const hashTagHtml = site.hashTag ? `<small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small>` : '';
+                const hashTagHtml = site.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small></div>` : '';
                 
                 cardWrapper.innerHTML = `
                     <div class="card">
@@ -456,8 +456,8 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                             <p class="card-text">
                                 <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
                             </p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <a href="${site.siteUrl}" class="btn btn-primary" target="_blank">Go to Site</a>
+                            <div class="card-action-area">
+                                <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
                                 ${hashTagHtml}
                             </div>
                         </div>

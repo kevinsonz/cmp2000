@@ -190,6 +190,53 @@
     }
 }
 
+/* カード内のアクションエリア（ボタン＋ハッシュタグ）のスタイル */
+.card-action-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* ボタンとハッシュタグの間隔 */
+}
+
+.card-action-button {
+    flex-shrink: 0; /* ボタンが縮まないようにする */
+    min-width: 100px; /* 最小幅を確保 */
+}
+
+.card-hashtag-area {
+    flex: 1;
+    min-width: 0; /* flexアイテムの縮小を許可 */
+    overflow-x: auto; /* 横スクロール有効化 */
+    overflow-y: hidden;
+    white-space: nowrap; /* 改行させない */
+    
+    /* スクロールバーのスタイル（Webkit系ブラウザ） */
+    scrollbar-width: thin;
+    scrollbar-color: #dee2e6 transparent;
+}
+
+.card-hashtag-area::-webkit-scrollbar {
+    height: 6px;
+}
+
+.card-hashtag-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.card-hashtag-area::-webkit-scrollbar-thumb {
+    background-color: #dee2e6;
+    border-radius: 3px;
+}
+
+.card-hashtag-area::-webkit-scrollbar-thumb:hover {
+    background-color: #adb5bd;
+}
+
+.card-hashtag-area a {
+    display: inline-block;
+    margin-right: 0.25rem;
+}
+
+
 /* コントリビューショングラフのスタイル */
 .contribution-graph-wrapper {
     overflow-x: auto;
