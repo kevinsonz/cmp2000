@@ -135,6 +135,14 @@ function applyHashTagFilter(tag) {
     renderHashTagList();
     showFilterUI(tag);
     updateJumpMenu(tag);
+    
+    // フィルターUI表示位置にスムーズスクロール
+    setTimeout(() => {
+        const filterContainer = document.getElementById('filter-ui-container');
+        if (filterContainer) {
+            filterContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
 }
 
 // フィルターをクリア
@@ -144,6 +152,14 @@ function clearHashTagFilter() {
     renderHashTagList();
     hideFilterUI();
     updateJumpMenu(null);
+    
+    // 「共通コンテンツ」セクションにスムーズスクロール
+    setTimeout(() => {
+        const commonSection = document.getElementById('common');
+        if (commonSection) {
+            commonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
 }
 
 // フィルターUI表示

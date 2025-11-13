@@ -239,7 +239,13 @@ function applyHashTagFilter(tag) {
     generateHashTagList(allTags, tag);
     updateJumpMenu(tag);
     
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // フィルターUI表示位置にスムーズスクロール
+    setTimeout(() => {
+        const filterContainer = document.getElementById('filter-ui-container');
+        if (filterContainer) {
+            filterContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
 }
 
 // ハッシュタグフィルターを解除する関数
@@ -253,7 +259,13 @@ function clearHashTagFilter() {
     generateHashTagList(allTags);
     updateJumpMenu(null);
     
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // 「共通コンテンツ」セクションにスムーズスクロール
+    setTimeout(() => {
+        const commonSection = document.getElementById('common');
+        if (commonSection) {
+            commonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
 }
 
 // ハッシュタグをクリック可能なリンクに変換する関数
