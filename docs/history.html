@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMP2000 Official Portal - History</title>
+    
+    <!-- ファビコン -->
+    <link rel="icon" type="image/png" href="./images/cmp2000-favicon.png">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    
+    <!-- Bootstrap JavaScript Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+
+    <!-- カスタムスタイルシート -->
+    <link rel="stylesheet" href="./style.css">
+
+    <!-- ローカル開発用データ（GitHub Pagesでは404になるが問題なし） -->
+    <script src="./history-data.js" onerror="console.log('ローカルデータなし: オンラインモードで動作します')"></script>
+
+    <!-- カスタムスクリプト（defer属性でHTML解析後に実行） -->
+    <script src="./history-script.js" defer></script>
+</head>
+
+<body class="bg-light" id="history">
+    <!-- ページヘッダー（固定） -->
+    <header id="main-header" class="sticky-top bg-light border-bottom">
+        <h1 class="text-center py-3 mb-0">CMP2000 Official Portal</h1>
+    </header>
+
+    <!-- ページメニュー -->
+    <div class="page-menu-wrapper">
+        <div class="page-menu">
+            <a href="index.html" class="page-menu-item">Home</a>
+            <span class="page-menu-separator">|</span>
+            <a href="about.html" class="page-menu-item">About</a>
+            <span class="page-menu-separator">|</span>
+            <a href="history.html" class="page-menu-item active">History</a>
+        </div>
+    </div>
+
+    <!-- ポータルへ戻るボタン -->
+    <div class="page-container text-center mt-3">
+        <a href="index.html" class="btn btn-outline-primary">
+            ← ポータルページへ戻る
+        </a>
+    </div>
+
+    <!-- 期間設定UI -->
+    <div class="page-container mt-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <strong>表示期間の設定</strong>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="startYearSlider" class="form-label">
+                            開始年: <strong id="startYearDisplay">-</strong>
+                        </label>
+                        <input type="range" class="form-range" id="startYearSlider" min="1998" max="2025" value="2015">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="endYearSlider" class="form-label">
+                            終了年: <strong id="endYearDisplay">-</strong>
+                        </label>
+                        <input type="range" class="form-range" id="endYearSlider" min="1998" max="2025" value="2025">
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary" id="applyYearRange">表示を更新</button>
+                    <button class="btn btn-secondary ms-2" id="resetYearRange">リセット</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 年表テーブル -->
+    <div class="page-container mt-4">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover history-table" id="historyTable">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th class="year-column">Year</th>
+                        <th>📰 夕刊中年マカチン</th>
+                        <th>📁 CMP2000</th>
+                        <th>👤 けびんケビンソン</th>
+                        <th>💻 イイダリョウ</th>
+                        <th>📌 その他</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <!-- JavaScriptで動的に生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ジャンプメニュー（Bootstrap dropdown使用） -->
+    <div class="dropup position-fixed bottom-0 end-0 m-3" style="z-index: 1000;">
+        <button class="btn btn-primary rounded-circle shadow" type="button" id="jumpMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="width: 60px; height: 60px;">
+            ☰
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" id="jumpMenuList" aria-labelledby="jumpMenuButton">
+            <!-- JavaScriptで動的に生成 -->
+        </ul>
+    </div>
+
+    <!-- フッター -->
+    <footer id="footer" class="text-center py-4 mt-5 border-top bg-light">
+        <p class="mb-0 text-muted">
+            <small>&copy; 2000-<span id="current-year"></span> CMP2000</small>
+        </p>
+    </footer>
+</body>
+</html>

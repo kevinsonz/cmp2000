@@ -551,3 +551,112 @@
         font-size: 0.85rem;
     }
 }
+
+/* =================================
+   History.html専用のスタイル
+   ================================= */
+
+/* 年表テーブルのスタイル */
+.history-table {
+    background-color: white;
+    min-width: 800px; /* スマホで横スクロールするための最小幅 */
+}
+
+.history-table thead th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* カテゴリ列の最小幅設定（準均等レイアウト） */
+.history-table thead th:not(.year-column) {
+    min-width: 180px;
+    width: 20%; /* 5列で均等に */
+}
+
+.history-table tbody td {
+    vertical-align: top;
+    padding: 0.75rem; /* 少し控えめに調整 */
+}
+
+/* ゼブラストライプ（奇数行に薄い背景色） */
+.history-table tbody tr:nth-child(odd) {
+    background-color: #f8f9fa;
+}
+
+/* 空のセルのスタイル（ゼブラストライプより優先） */
+.history-table tbody td:empty,
+.history-table tbody td.empty-cell {
+    background-color: #f0f0f0 !important;
+}
+
+/* 年の列のスタイル */
+.year-column {
+    background-color: #e9ecef;
+    width: 100px;
+    min-width: 100px;
+}
+
+/* 年表リストのスタイル */
+.history-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.history-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    line-height: 1.6;
+}
+
+.history-list li:last-child {
+    border-bottom: none;
+}
+
+.history-link {
+    text-decoration: none;
+    color: #0d6efd;
+    word-break: break-word;
+}
+
+.history-link:hover {
+    text-decoration: underline;
+}
+
+/* テーブルレスポンシブラッパー */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* スライダーのスタイル調整 */
+.form-range {
+    cursor: pointer;
+}
+
+/* レスポンシブ対応（History） */
+@media (max-width: 768px) {
+    .history-table {
+        font-size: 0.9rem;
+    }
+    
+    .history-table tbody td {
+        padding: 0.5rem; /* さらに控えめに */
+    }
+    
+    .year-column {
+        width: 80px;
+        min-width: 80px;
+        font-size: 0.85rem;
+    }
+    
+    .history-list li {
+        padding: 0.4rem 0;
+        font-size: 0.85rem;
+    }
+}
