@@ -559,7 +559,8 @@
 /* 年表テーブルのスタイル */
 .history-table {
     background-color: white;
-    min-width: 800px; /* スマホで横スクロールするための最小幅 */
+    width: 100%;
+    table-layout: auto;
 }
 
 /* 等幅フォントのスタイル */
@@ -580,9 +581,29 @@
     z-index: 10;
 }
 
-/* カテゴリ列の最小幅設定（2列レイアウト用） */
+/* Articleヘッダーセルのスタイル */
+.article-header-cell {
+    padding: 0.5rem !important;
+}
+
+.article-header-cell .d-flex {
+    gap: 0.5rem;
+}
+
+.article-header-cell span {
+    flex-shrink: 0;
+}
+
+.article-header-cell button {
+    flex-shrink: 0;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    white-space: nowrap;
+}
+
+/* カテゴリ列の設定 */
 .history-table thead th:not(.year-column) {
-    min-width: 400px;
+    width: auto;
 }
 
 .history-table tbody td {
@@ -594,6 +615,7 @@
 .article-column {
     line-height: 1.8;
     word-wrap: break-word;
+    word-break: break-word;
 }
 
 /* カテゴリアイコンのスタイル */
@@ -664,13 +686,25 @@
     }
     
     .year-column {
-        width: 80px;
-        min-width: 80px;
+        width: 70px;
+        min-width: 70px;
         font-size: 0.85rem;
     }
     
     .monospace-font {
         font-size: 0.85rem;
+    }
+    
+    /* スマホでのヘッダーボタン調整 */
+    .article-header-cell button {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .article-header-cell .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
     }
 }
 

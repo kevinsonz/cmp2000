@@ -32,7 +32,7 @@ const PUBLIC_HISTORY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1
 let historyData = [];
 let currentStartYear = MAX_YEAR - DEFAULT_YEAR_RANGE;
 let currentEndYear = MAX_YEAR;
-let currentCategoryFilters = []; // 適用済みのフィルター（空=すべて表示）
+let currentCategoryFilters = null; // 適用済みのフィルター（null=すべて表示、空配列=何も表示しない）
 let temporaryCategoryFilters = []; // 一時的な選択状態（適用前）
 
 // 環境判定
@@ -126,6 +126,12 @@ function initializePage() {
     // 「適用」ボタンのイベントリスナー
     document.getElementById('applyCategoryFilter').addEventListener('click', applyCategoryFilter);
     
+    // 「全て選択」ボタンのイベントリスナー
+    document.getElementById('selectAllCategoriesBtn').addEventListener('click', selectAllCategories);
+    
+    // 「全て解除」ボタンのイベントリスナー
+    document.getElementById('deselectAllCategoriesBtn').addEventListener('click', deselectAllCategories);
+    
     // カテゴリフィルターボタンのイベントリスナー
     document.querySelectorAll('.category-filter-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -148,7 +154,14 @@ function initializePage() {
     categoryFilterCollapse.addEventListener('shown.bs.collapse', function() {
         document.getElementById('categoryFilterIcon').textContent = '－';
         // 開いたときに一時選択状態を現在の適用済み状態に同期
-        temporaryCategoryFilters = [...currentCategoryFilters];
+        // null（全て表示状態）の場合は、全てのカテゴリを選択状態にする
+        // 空配列（何も表示しない状態）の場合は、空のまま
+        // 配列に要素がある場合は、その要素をコピー
+        if (currentCategoryFilters === null) {
+            temporaryCategoryFilters = [...CATEGORIES];
+        } else {
+            temporaryCategoryFilters = [...currentCategoryFilters];
+        }
         updateCategoryButtonStates();
     });
     categoryFilterCollapse.addEventListener('hidden.bs.collapse', function() {
@@ -224,7 +237,7 @@ function resetYearRange() {
 
 // すべて表示
 function showAllCategories() {
-    currentCategoryFilters = [];
+    currentCategoryFilters = null; // nullは全て表示を意味する
     temporaryCategoryFilters = [];
     
     // ボタンのアクティブ状態をすべて解除
@@ -243,6 +256,18 @@ function showAllCategories() {
     if (categoryFilterCollapse) {
         categoryFilterCollapse.hide();
     }
+}
+
+// 全て選択（一時選択のみ、適用しない）
+function selectAllCategories() {
+    temporaryCategoryFilters = [...CATEGORIES];
+    updateCategoryButtonStates();
+}
+
+// 全て解除（一時選択のみ、適用しない）
+function deselectAllCategories() {
+    temporaryCategoryFilters = [];
+    updateCategoryButtonStates();
 }
 
 // 一時的なカテゴリフィルターのトグル（複数選択対応、まだ適用しない）
@@ -310,8 +335,10 @@ function updateCategoryButtonStates() {
 function updateCategoryFilterLabel() {
     let labelText = '';
     
-    if (currentCategoryFilters.length === 0) {
+    if (currentCategoryFilters === null) {
         labelText = 'カテゴリフィルター (すべて表示中)';
+    } else if (currentCategoryFilters.length === 0) {
+        labelText = 'カテゴリフィルター (何も選択されていません)';
     } else if (currentCategoryFilters.length === 1) {
         const icon = CATEGORY_ICONS[currentCategoryFilters[0]] || '';
         labelText = `カテゴリフィルター (${icon} ${currentCategoryFilters[0]})`;
@@ -334,8 +361,18 @@ function generateHistoryTable() {
     historyData.forEach(item => {
         if (item.year >= currentStartYear && item.year <= currentEndYear) {
             // カテゴリフィルターを適用
-            if (currentCategoryFilters.length > 0 && !currentCategoryFilters.includes(item.category)) {
-                return;
+            // null: 全て表示
+            // 空配列: 何も表示しない
+            // 配列に要素あり: そのカテゴリのみ表示
+            if (currentCategoryFilters !== null) {
+                if (currentCategoryFilters.length === 0) {
+                    // 空配列の場合は何も表示しない
+                    return;
+                }
+                if (!currentCategoryFilters.includes(item.category)) {
+                    // 選択されていないカテゴリはスキップ
+                    return;
+                }
             }
             
             if (!groupedData[item.year]) {

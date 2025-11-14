@@ -53,9 +53,9 @@
         </a>
     </div>
 
-    <!-- Articleタイトル -->
+    <!-- Historyタイトル -->
     <div class="page-container text-center mt-3">
-        <h2>Article</h2>
+        <h2>History</h2>
     </div>
 
     <!-- 期間設定UI（折り畳み可能） -->
@@ -101,8 +101,8 @@
     <!-- カテゴリフィルターUI（折り畳み可能） -->
     <div class="page-container mt-4">
         <div class="card">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <button class="btn btn-link text-start text-decoration-none flex-grow-1 d-flex justify-content-between align-items-center" 
+            <div class="card-header bg-white">
+                <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center p-2" 
                         type="button" 
                         data-bs-toggle="collapse" 
                         data-bs-target="#categoryFilterCollapse" 
@@ -112,7 +112,6 @@
                     <strong id="categoryFilterLabel">カテゴリフィルター (すべて表示中)</strong>
                     <span id="categoryFilterIcon">＋</span>
                 </button>
-                <button class="btn btn-sm btn-outline-primary ms-2" id="showAllBtn">すべて表示</button>
             </div>
             <div class="collapse" id="categoryFilterCollapse">
                 <div class="card-body">
@@ -123,7 +122,9 @@
                         <button class="btn btn-outline-secondary category-filter-btn" data-category="イイダリョウ">💻 イイダリョウ</button>
                         <button class="btn btn-outline-secondary category-filter-btn" data-category="その他">📌 その他</button>
                     </div>
-                    <div class="text-center mt-3">
+                    <div class="d-flex gap-2 justify-content-center mt-3 flex-wrap">
+                        <button class="btn btn-sm btn-secondary" id="selectAllCategoriesBtn">全て選択</button>
+                        <button class="btn btn-sm btn-secondary" id="deselectAllCategoriesBtn">全て解除</button>
                         <button class="btn btn-primary" id="applyCategoryFilter">適用</button>
                     </div>
                     <div class="text-center mt-2">
@@ -141,7 +142,12 @@
                 <thead class="table-light sticky-top">
                     <tr>
                         <th class="year-column">Year</th>
-                        <th>Article</th>
+                        <th class="article-header-cell">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Article</span>
+                                <button class="btn btn-sm btn-outline-primary" id="showAllBtn">すべて表示</button>
+                            </div>
+                        </th>
                     </tr>
                 </thead>
                 <tbody id="historyTableBody">
