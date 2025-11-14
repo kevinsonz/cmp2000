@@ -618,6 +618,11 @@
     word-break: break-word;
 }
 
+/* 記事がない年のセルのスタイル */
+.empty-year-cell {
+    background-color: #f0f0f0 !important;
+}
+
 /* カテゴリアイコンのスタイル */
 .category-icon {
     display: inline-block;

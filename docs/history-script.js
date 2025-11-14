@@ -350,7 +350,7 @@ function updateCategoryFilterLabel() {
     document.getElementById('categoryFilterLabel').textContent = labelText;
 }
 
-// 年表テーブル生成（2列形式）
+// 年表テーブル生成（2列形式、記事がない年も表示）
 function generateHistoryTable() {
     const tbody = document.getElementById('historyTableBody');
     tbody.innerHTML = '';
@@ -382,11 +382,8 @@ function generateHistoryTable() {
         }
     });
     
-    // 年を昇順でソート
-    const years = Object.keys(groupedData).map(y => parseInt(y)).sort((a, b) => a - b);
-    
-    // テーブル行を生成
-    years.forEach(year => {
+    // 表示範囲の全ての年を生成（記事がない年も含む）
+    for (let year = currentStartYear; year <= currentEndYear; year++) {
         const row = document.createElement('tr');
         row.id = `year-${year}`;
         
@@ -402,63 +399,69 @@ function generateHistoryTable() {
         
         const items = groupedData[year];
         
-        // カテゴリ順でソート
-        items.sort((a, b) => {
-            return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
-        });
-        
-        // 各アイテムを「｜」で区切って表示
-        const articleText = items.map(item => {
-            const icon = CATEGORY_ICONS[item.category] || '';
-            const iconSpan = document.createElement('span');
-            iconSpan.textContent = icon;
-            iconSpan.className = 'category-icon clickable';
-            iconSpan.style.cursor = 'pointer';
-            iconSpan.setAttribute('data-category', item.category);
-            iconSpan.setAttribute('title', `${item.category}のみ表示`);
-            iconSpan.addEventListener('click', function(e) {
-                e.preventDefault();
-                selectSingleCategory(item.category);
+        if (items && items.length > 0) {
+            // 記事がある場合
+            // カテゴリ順でソート
+            items.sort((a, b) => {
+                return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
             });
             
-            const wrapper = document.createElement('span');
-            wrapper.appendChild(iconSpan);
+            // 各アイテムを「｜」で区切って表示
+            const articleText = items.map(item => {
+                const icon = CATEGORY_ICONS[item.category] || '';
+                const iconSpan = document.createElement('span');
+                iconSpan.textContent = icon;
+                iconSpan.className = 'category-icon clickable';
+                iconSpan.style.cursor = 'pointer';
+                iconSpan.setAttribute('data-category', item.category);
+                iconSpan.setAttribute('title', `${item.category}のみ表示`);
+                iconSpan.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    selectSingleCategory(item.category);
+                });
+                
+                const wrapper = document.createElement('span');
+                wrapper.appendChild(iconSpan);
+                
+                if (item.link) {
+                    const link = document.createElement('a');
+                    link.href = item.link;
+                    link.target = '_blank';
+                    link.textContent = item.contents;
+                    link.className = 'history-link';
+                    wrapper.appendChild(link);
+                } else {
+                    const text = document.createTextNode(item.contents);
+                    wrapper.appendChild(text);
+                }
+                
+                return wrapper;
+            });
             
-            if (item.link) {
-                const link = document.createElement('a');
-                link.href = item.link;
-                link.target = '_blank';
-                link.textContent = item.contents;
-                link.className = 'history-link';
-                wrapper.appendChild(link);
-            } else {
-                const text = document.createTextNode(item.contents);
-                wrapper.appendChild(text);
-            }
-            
-            return wrapper;
-        });
-        
-        // 各アイテムを「｜」で区切って追加
-        articleText.forEach((itemElement, index) => {
-            articleCell.appendChild(itemElement);
-            if (index < articleText.length - 1) {
-                const separator = document.createElement('span');
-                separator.textContent = ' ｜ ';
-                separator.className = 'separator';
-                articleCell.appendChild(separator);
-            }
-        });
+            // 各アイテムを「｜」で区切って追加
+            articleText.forEach((itemElement, index) => {
+                articleCell.appendChild(itemElement);
+                if (index < articleText.length - 1) {
+                    const separator = document.createElement('span');
+                    separator.textContent = ' ｜ ';
+                    separator.className = 'separator';
+                    articleCell.appendChild(separator);
+                }
+            });
+        } else {
+            // 記事がない場合は空のセルで背景色を薄い灰色に
+            articleCell.classList.add('empty-year-cell');
+        }
         
         row.appendChild(articleCell);
         tbody.appendChild(row);
-    });
+    }
     
     // ジャンプメニューを更新
     updateJumpMenu();
 }
 
-// ジャンプメニューの更新
+// ジャンプメニューの更新（記事が存在する年を対象、開始年から5年単位）
 function updateJumpMenu() {
     const jumpMenuList = document.getElementById('jumpMenuList');
     jumpMenuList.innerHTML = '';
@@ -473,29 +476,50 @@ function updateJumpMenu() {
     divider1.innerHTML = '<hr class="dropdown-divider">';
     jumpMenuList.appendChild(divider1);
     
-    // 5年刻みのジャンプポイントを生成
-    const jumpYears = [];
-    
-    // 開始年から5年刻みで追加
-    let currentJumpYear = Math.ceil(currentStartYear / 5) * 5;
-    
-    while (currentJumpYear <= currentEndYear) {
-        // 表示範囲内の年のみ追加
-        if (currentJumpYear >= currentStartYear) {
-            jumpYears.push(currentJumpYear);
+    // 記事が存在する年を収集
+    const yearsWithData = new Set();
+    historyData.forEach(item => {
+        if (item.year >= currentStartYear && item.year <= currentEndYear) {
+            // カテゴリフィルターを考慮
+            if (currentCategoryFilters !== null) {
+                if (currentCategoryFilters.length === 0) {
+                    return;
+                }
+                if (!currentCategoryFilters.includes(item.category)) {
+                    return;
+                }
+            }
+            yearsWithData.add(item.year);
         }
-        currentJumpYear += 5;
-    }
+    });
     
-    // 終了年が5の倍数でない場合、終了年も追加
-    if (currentEndYear % 5 !== 0 && jumpYears[jumpYears.length - 1] !== currentEndYear) {
-        jumpYears.push(currentEndYear);
+    // 開始年を基準に5年単位でジャンプポイントを生成
+    const jumpYears = [];
+    const sortedYears = Array.from(yearsWithData).sort((a, b) => a - b);
+    
+    if (sortedYears.length > 0) {
+        // 開始年から5年ごとにチェック
+        for (let baseYear = currentStartYear; baseYear <= currentEndYear; baseYear += 5) {
+            // この5年間に記事がある年を探す
+            const yearInRange = sortedYears.find(y => y >= baseYear && y < baseYear + 5);
+            if (yearInRange) {
+                jumpYears.push(yearInRange);
+            }
+        }
     }
     
     // ジャンプメニューに追加
     jumpYears.forEach(year => {
         const yearItem = document.createElement('li');
-        yearItem.innerHTML = `<a class="dropdown-item" href="#year-${year}">${year}年</a>`;
+        const link = document.createElement('a');
+        link.className = 'dropdown-item';
+        link.href = `#year-${year}`;
+        link.textContent = `${year}年`;
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            scrollToYear(year);
+        });
+        yearItem.appendChild(link);
         jumpMenuList.appendChild(yearItem);
     });
     
@@ -508,6 +532,24 @@ function updateJumpMenu() {
     const footerItem = document.createElement('li');
     footerItem.innerHTML = '<a class="dropdown-item" href="#footer">フッター</a>';
     jumpMenuList.appendChild(footerItem);
+}
+
+// 指定した年にスクロール（年の頭の文字が見える位置）
+function scrollToYear(year) {
+    const element = document.getElementById(`year-${year}`);
+    if (element) {
+        const headerHeight = document.getElementById('main-header').offsetHeight;
+        const tableHeaderHeight = document.querySelector('.history-table thead').offsetHeight;
+        const offset = headerHeight + tableHeaderHeight + 10; // 余裕を持たせる
+        
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - offset;
+        
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+    }
 }
 
 // 現在年を更新
