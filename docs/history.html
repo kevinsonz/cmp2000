@@ -11,6 +11,11 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     
+    <!-- Google Fonts: BIZ UDGothic (日本語等幅フォント) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&display=swap" rel="stylesheet">
+    
     <!-- Bootstrap JavaScript Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 
@@ -44,34 +49,86 @@
     <!-- ポータルへ戻るボタン -->
     <div class="page-container text-center mt-3">
         <a href="index.html" class="btn btn-outline-primary">
-            ← ポータルページへ戻る
+            ← 📁 ポータルページへ戻る
         </a>
     </div>
 
-    <!-- 期間設定UI -->
+    <!-- Articleタイトル -->
+    <div class="page-container text-center mt-3">
+        <h2>Article</h2>
+    </div>
+
+    <!-- 期間設定UI（折り畳み可能） -->
     <div class="page-container mt-4">
         <div class="card">
             <div class="card-header bg-white">
-                <strong>表示期間の設定</strong>
+                <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#yearRangeCollapse" 
+                        aria-expanded="false" 
+                        aria-controls="yearRangeCollapse"
+                        id="yearRangeToggleBtn">
+                    <strong id="yearRangeLabel">表示期間の設定 (－年 ～ －年)</strong>
+                    <span id="yearRangeIcon">＋</span>
+                </button>
             </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="startYearSlider" class="form-label">
-                            開始年: <strong id="startYearDisplay">-</strong>
-                        </label>
-                        <input type="range" class="form-range" id="startYearSlider" min="1998" max="2025" value="2015">
+            <div class="collapse" id="yearRangeCollapse">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="startYearSlider" class="form-label">
+                                開始年: <strong id="startYearDisplay">-</strong>
+                            </label>
+                            <input type="range" class="form-range" id="startYearSlider" min="1998" max="2025" value="2015">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="endYearSlider" class="form-label">
+                                終了年: <strong id="endYearDisplay">-</strong>
+                            </label>
+                            <input type="range" class="form-range" id="endYearSlider" min="1998" max="2025" value="2025">
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <label for="endYearSlider" class="form-label">
-                            終了年: <strong id="endYearDisplay">-</strong>
-                        </label>
-                        <input type="range" class="form-range" id="endYearSlider" min="1998" max="2025" value="2025">
+                    <div class="text-center mt-3">
+                        <button class="btn btn-primary" id="applyYearRange">表示を更新</button>
+                        <button class="btn btn-secondary ms-2" id="resetYearRange">リセット</button>
                     </div>
                 </div>
-                <div class="text-center mt-3">
-                    <button class="btn btn-primary" id="applyYearRange">表示を更新</button>
-                    <button class="btn btn-secondary ms-2" id="resetYearRange">リセット</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- カテゴリフィルターUI（折り畳み可能） -->
+    <div class="page-container mt-4">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <button class="btn btn-link text-start text-decoration-none flex-grow-1 d-flex justify-content-between align-items-center" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#categoryFilterCollapse" 
+                        aria-expanded="false" 
+                        aria-controls="categoryFilterCollapse"
+                        id="categoryFilterToggleBtn">
+                    <strong id="categoryFilterLabel">カテゴリフィルター (すべて表示中)</strong>
+                    <span id="categoryFilterIcon">＋</span>
+                </button>
+                <button class="btn btn-sm btn-outline-primary ms-2" id="showAllBtn">すべて表示</button>
+            </div>
+            <div class="collapse" id="categoryFilterCollapse">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <button class="btn btn-outline-secondary category-filter-btn" data-category="夕刊中年マカチン">📰 夕刊中年マカチン</button>
+                        <button class="btn btn-outline-secondary category-filter-btn" data-category="CMP2000">📁 CMP2000</button>
+                        <button class="btn btn-outline-secondary category-filter-btn" data-category="けびんケビンソン">👤 けびんケビンソン</button>
+                        <button class="btn btn-outline-secondary category-filter-btn" data-category="イイダリョウ">💻 イイダリョウ</button>
+                        <button class="btn btn-outline-secondary category-filter-btn" data-category="その他">📌 その他</button>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-primary" id="applyCategoryFilter">適用</button>
+                    </div>
+                    <div class="text-center mt-2">
+                        <small class="text-muted">※複数選択可能です</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -84,11 +141,7 @@
                 <thead class="table-light sticky-top">
                     <tr>
                         <th class="year-column">Year</th>
-                        <th>📰 夕刊中年マカチン</th>
-                        <th>📁 CMP2000</th>
-                        <th>👤 けびんケビンソン</th>
-                        <th>💻 イイダリョウ</th>
-                        <th>📌 その他</th>
+                        <th>Article</th>
                     </tr>
                 </thead>
                 <tbody id="historyTableBody">

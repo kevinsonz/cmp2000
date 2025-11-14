@@ -562,6 +562,14 @@
     min-width: 800px; /* スマホで横スクロールするための最小幅 */
 }
 
+/* 等幅フォントのスタイル */
+.monospace-font {
+    /* 日本語対応の等幅フォント */
+    font-family: 'BIZ UDGothic', 'MS Gothic', 'Osaka-Mono', 'Courier New', Courier, monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+}
+
 .history-table thead th {
     background-color: #f8f9fa;
     font-weight: bold;
@@ -572,15 +580,37 @@
     z-index: 10;
 }
 
-/* カテゴリ列の最小幅設定（準均等レイアウト） */
+/* カテゴリ列の最小幅設定（2列レイアウト用） */
 .history-table thead th:not(.year-column) {
-    min-width: 180px;
-    width: 20%; /* 5列で均等に */
+    min-width: 400px;
 }
 
 .history-table tbody td {
     vertical-align: top;
     padding: 0.75rem; /* 少し控えめに調整 */
+}
+
+/* Article列のスタイル */
+.article-column {
+    line-height: 1.8;
+    word-wrap: break-word;
+}
+
+/* カテゴリアイコンのスタイル */
+.category-icon {
+    display: inline-block;
+    margin-right: 0.3rem;
+    text-decoration: none;
+}
+
+.category-icon:hover {
+    opacity: 0.7;
+    text-decoration: underline;
+}
+
+/* セパレーターのスタイル */
+.separator {
+    color: #6c757d;
 }
 
 /* ゼブラストライプ（奇数行に薄い背景色） */
@@ -601,23 +631,7 @@
     min-width: 100px;
 }
 
-/* 年表リストのスタイル */
-.history-list {
-    list-style: none;
-    padding-left: 0;
-    margin-bottom: 0;
-}
-
-.history-list li {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f0f0f0;
-    line-height: 1.6;
-}
-
-.history-list li:last-child {
-    border-bottom: none;
-}
-
+/* 年表リンクのスタイル */
 .history-link {
     text-decoration: none;
     color: #0d6efd;
@@ -655,8 +669,34 @@
         font-size: 0.85rem;
     }
     
-    .history-list li {
-        padding: 0.4rem 0;
+    .monospace-font {
         font-size: 0.85rem;
     }
+}
+
+/* カテゴリフィルターボタンのスタイル */
+.category-filter-btn {
+    transition: all 0.2s ease;
+}
+
+.category-filter-btn.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+.category-filter-btn:hover {
+    background-color: #0b5ed7;
+    color: white;
+    border-color: #0a58ca;
+}
+
+/* すべて表示ボタンのスタイル */
+#showAllBtn {
+    white-space: nowrap;
+}
+
+#showAllBtn:hover {
+    background-color: #0d6efd;
+    color: white;
 }

@@ -222,6 +222,7 @@ function updateJumpMenu(filterTag) {
             <li><a class="dropdown-item" href="#ryo">イイダリョウ</a></li>
             <li><a class="dropdown-item" href="#staff">スタッフ</a></li>
             <li><a class="dropdown-item" href="#family">ファミリー</a></li>
+            <li><a class="dropdown-item" href="#special-thanks">スペシャルサンクス</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#footer">フッター</a></li>
         `;
@@ -421,13 +422,20 @@ function generateAboutPage(filterTag = null) {
                     const archiveItem = document.createElement('li');
                     archiveItem.className = 'archive-item';
                     
-                    const archiveLink = document.createElement('a');
-                    archiveLink.href = archive.siteUrl;
-                    archiveLink.target = '_blank';
-                    archiveLink.className = 'site-link';
-                    archiveLink.textContent = archive.siteTitle;
-                    
-                    archiveItem.appendChild(archiveLink);
+                    // siteUrlが空白の場合はリンクなしテキスト、それ以外はリンク
+                    if (archive.siteUrl && archive.siteUrl.trim() !== '' && archive.siteUrl !== '#') {
+                        const archiveLink = document.createElement('a');
+                        archiveLink.href = archive.siteUrl;
+                        archiveLink.target = '_blank';
+                        archiveLink.className = 'site-link';
+                        archiveLink.textContent = archive.siteTitle;
+                        archiveItem.appendChild(archiveLink);
+                    } else {
+                        const archiveText = document.createElement('span');
+                        archiveText.textContent = archive.siteTitle;
+                        archiveText.style.color = '#6c757d';
+                        archiveItem.appendChild(archiveText);
+                    }
                     
                     // ロゴがあれば表示
                     if (archive.logo) {
@@ -458,8 +466,8 @@ function generateAboutPage(filterTag = null) {
         }
     });
     
-    // スタッフとファミリーのセクション（並列に表示）
-    ['スタッフ', 'ファミリー'].forEach(familyCategory => {
+    // スタッフ、ファミリー、スペシャルサンクスのセクション（並列に表示）
+    ['スタッフ', 'ファミリー', 'スペシャルサンクス'].forEach(familyCategory => {
         if (familyByCategory[familyCategory]) {
             const sectionCard = document.createElement('div');
             sectionCard.className = 'section-card card';
@@ -469,6 +477,8 @@ function generateAboutPage(filterTag = null) {
                 sectionCard.id = 'staff';
             } else if (familyCategory === 'ファミリー') {
                 sectionCard.id = 'family';
+            } else if (familyCategory === 'スペシャルサンクス') {
+                sectionCard.id = 'special-thanks';
             }
             
             const sectionHeader = document.createElement('div');

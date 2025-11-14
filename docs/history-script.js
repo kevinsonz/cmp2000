@@ -32,6 +32,8 @@ const PUBLIC_HISTORY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1
 let historyData = [];
 let currentStartYear = MAX_YEAR - DEFAULT_YEAR_RANGE;
 let currentEndYear = MAX_YEAR;
+let currentCategoryFilters = []; // 適用済みのフィルター（空=すべて表示）
+let temporaryCategoryFilters = []; // 一時的な選択状態（適用前）
 
 // 環境判定
 const isLocalMode = window.location.protocol === 'file:' || (typeof HISTORY_DATA !== 'undefined');
@@ -110,12 +112,48 @@ function initializePage() {
     
     // スライダーの表示を更新
     updateYearDisplay();
+    updateYearRangeLabel();
     
     // イベントリスナーの設定
     document.getElementById('startYearSlider').addEventListener('input', updateYearDisplay);
     document.getElementById('endYearSlider').addEventListener('input', updateYearDisplay);
     document.getElementById('applyYearRange').addEventListener('click', applyYearRange);
     document.getElementById('resetYearRange').addEventListener('click', resetYearRange);
+    
+    // 「すべて表示」ボタンのイベントリスナー
+    document.getElementById('showAllBtn').addEventListener('click', showAllCategories);
+    
+    // 「適用」ボタンのイベントリスナー
+    document.getElementById('applyCategoryFilter').addEventListener('click', applyCategoryFilter);
+    
+    // カテゴリフィルターボタンのイベントリスナー
+    document.querySelectorAll('.category-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            toggleTemporaryCategoryFilter(category);
+        });
+    });
+    
+    // 折り畳みボタンのイベントリスナー
+    const yearRangeCollapse = document.getElementById('yearRangeCollapse');
+    const categoryFilterCollapse = document.getElementById('categoryFilterCollapse');
+    
+    yearRangeCollapse.addEventListener('shown.bs.collapse', function() {
+        document.getElementById('yearRangeIcon').textContent = '－';
+    });
+    yearRangeCollapse.addEventListener('hidden.bs.collapse', function() {
+        document.getElementById('yearRangeIcon').textContent = '＋';
+    });
+    
+    categoryFilterCollapse.addEventListener('shown.bs.collapse', function() {
+        document.getElementById('categoryFilterIcon').textContent = '－';
+        // 開いたときに一時選択状態を現在の適用済み状態に同期
+        temporaryCategoryFilters = [...currentCategoryFilters];
+        updateCategoryButtonStates();
+    });
+    categoryFilterCollapse.addEventListener('hidden.bs.collapse', function() {
+        document.getElementById('categoryFilterIcon').textContent = '＋';
+    });
     
     // 初回テーブル生成
     generateHistoryTable();
@@ -134,6 +172,12 @@ function updateYearDisplay() {
     document.getElementById('endYearDisplay').textContent = endYear + '年';
 }
 
+// 年範囲ラベルの更新
+function updateYearRangeLabel() {
+    document.getElementById('yearRangeLabel').textContent = 
+        `表示期間の設定 (${currentStartYear}年 ～ ${currentEndYear}年)`;
+}
+
 // 年範囲の適用
 function applyYearRange() {
     const startYear = parseInt(document.getElementById('startYearSlider').value);
@@ -147,8 +191,15 @@ function applyYearRange() {
     currentStartYear = startYear;
     currentEndYear = endYear;
     
+    updateYearRangeLabel();
     generateHistoryTable();
     updateJumpMenu();
+    
+    // 折り畳む
+    const yearRangeCollapse = bootstrap.Collapse.getInstance(document.getElementById('yearRangeCollapse'));
+    if (yearRangeCollapse) {
+        yearRangeCollapse.hide();
+    }
 }
 
 // 年範囲のリセット
@@ -160,11 +211,119 @@ function resetYearRange() {
     document.getElementById('endYearSlider').value = currentEndYear;
     
     updateYearDisplay();
+    updateYearRangeLabel();
     generateHistoryTable();
     updateJumpMenu();
+    
+    // 折り畳む
+    const yearRangeCollapse = bootstrap.Collapse.getInstance(document.getElementById('yearRangeCollapse'));
+    if (yearRangeCollapse) {
+        yearRangeCollapse.hide();
+    }
 }
 
-// 年表テーブル生成
+// すべて表示
+function showAllCategories() {
+    currentCategoryFilters = [];
+    temporaryCategoryFilters = [];
+    
+    // ボタンのアクティブ状態をすべて解除
+    document.querySelectorAll('.category-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // ラベルを更新
+    updateCategoryFilterLabel();
+    
+    // テーブルを再生成
+    generateHistoryTable();
+    
+    // 折り畳む
+    const categoryFilterCollapse = bootstrap.Collapse.getInstance(document.getElementById('categoryFilterCollapse'));
+    if (categoryFilterCollapse) {
+        categoryFilterCollapse.hide();
+    }
+}
+
+// 一時的なカテゴリフィルターのトグル（複数選択対応、まだ適用しない）
+function toggleTemporaryCategoryFilter(category) {
+    const index = temporaryCategoryFilters.indexOf(category);
+    
+    if (index === -1) {
+        // カテゴリを追加
+        temporaryCategoryFilters.push(category);
+    } else {
+        // カテゴリを削除
+        temporaryCategoryFilters.splice(index, 1);
+    }
+    
+    // ボタンのアクティブ状態を更新（一時的な選択状態に基づく）
+    updateCategoryButtonStates();
+}
+
+// カテゴリフィルターを適用
+function applyCategoryFilter() {
+    // 一時選択を実際のフィルターに反映
+    currentCategoryFilters = [...temporaryCategoryFilters];
+    
+    // ラベルを更新
+    updateCategoryFilterLabel();
+    
+    // テーブルを再生成
+    generateHistoryTable();
+    
+    // 折り畳む
+    const categoryFilterCollapse = bootstrap.Collapse.getInstance(document.getElementById('categoryFilterCollapse'));
+    if (categoryFilterCollapse) {
+        categoryFilterCollapse.hide();
+    }
+}
+
+// カテゴリを単一選択（アイコンクリック時用）
+function selectSingleCategory(category) {
+    currentCategoryFilters = [category];
+    temporaryCategoryFilters = [category];
+    
+    // ボタンのアクティブ状態を更新
+    updateCategoryButtonStates();
+    
+    // ラベルを更新
+    updateCategoryFilterLabel();
+    
+    // テーブルを再生成
+    generateHistoryTable();
+}
+
+// カテゴリボタンのアクティブ状態を更新（一時選択状態に基づく）
+function updateCategoryButtonStates() {
+    document.querySelectorAll('.category-filter-btn').forEach(btn => {
+        const category = btn.getAttribute('data-category');
+        if (temporaryCategoryFilters.includes(category)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// カテゴリフィルターラベルの更新（適用済みフィルターに基づく）
+function updateCategoryFilterLabel() {
+    let labelText = '';
+    
+    if (currentCategoryFilters.length === 0) {
+        labelText = 'カテゴリフィルター (すべて表示中)';
+    } else if (currentCategoryFilters.length === 1) {
+        const icon = CATEGORY_ICONS[currentCategoryFilters[0]] || '';
+        labelText = `カテゴリフィルター (${icon} ${currentCategoryFilters[0]})`;
+    } else {
+        const icons = currentCategoryFilters.map(cat => CATEGORY_ICONS[cat] || '').join(' ');
+        labelText = `カテゴリフィルター (${icons} ${currentCategoryFilters.length}件選択中)`;
+    }
+    
+    document.getElementById('categoryFilterLabel').textContent = labelText;
+}
+
+// 年表テーブル生成（2列形式）
 function generateHistoryTable() {
     const tbody = document.getElementById('historyTableBody');
     tbody.innerHTML = '';
@@ -174,13 +333,15 @@ function generateHistoryTable() {
     
     historyData.forEach(item => {
         if (item.year >= currentStartYear && item.year <= currentEndYear) {
-            if (!groupedData[item.year]) {
-                groupedData[item.year] = {};
-                CATEGORIES.forEach(cat => {
-                    groupedData[item.year][cat] = [];
-                });
+            // カテゴリフィルターを適用
+            if (currentCategoryFilters.length > 0 && !currentCategoryFilters.includes(item.category)) {
+                return;
             }
-            groupedData[item.year][item.category].push(item);
+            
+            if (!groupedData[item.year]) {
+                groupedData[item.year] = [];
+            }
+            groupedData[item.year].push(item);
         }
     });
     
@@ -194,45 +355,65 @@ function generateHistoryTable() {
         
         // 年のセル
         const yearCell = document.createElement('td');
-        yearCell.className = 'year-column fw-bold text-center';
+        yearCell.className = 'year-column monospace-font fw-bold text-center';
         yearCell.textContent = year + '年';
         row.appendChild(yearCell);
         
-        // 各カテゴリのセル
-        CATEGORIES.forEach(category => {
-            const cell = document.createElement('td');
-            const items = groupedData[year][category];
-            
-            if (items.length > 0) {
-                const ul = document.createElement('ul');
-                ul.className = 'history-list';
-                
-                items.forEach(item => {
-                    const li = document.createElement('li');
-                    
-                    if (item.link) {
-                        const link = document.createElement('a');
-                        link.href = item.link;
-                        link.target = '_blank';
-                        link.textContent = item.contents;
-                        link.className = 'history-link';
-                        li.appendChild(link);
-                    } else {
-                        li.textContent = item.contents;
-                    }
-                    
-                    ul.appendChild(li);
-                });
-                
-                cell.appendChild(ul);
-            } else {
-                // 空のセルにクラスを追加
-                cell.className = 'empty-cell';
-            }
-            
-            row.appendChild(cell);
+        // Article列のセル
+        const articleCell = document.createElement('td');
+        articleCell.className = 'article-column monospace-font';
+        
+        const items = groupedData[year];
+        
+        // カテゴリ順でソート
+        items.sort((a, b) => {
+            return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
         });
         
+        // 各アイテムを「｜」で区切って表示
+        const articleText = items.map(item => {
+            const icon = CATEGORY_ICONS[item.category] || '';
+            const iconSpan = document.createElement('span');
+            iconSpan.textContent = icon;
+            iconSpan.className = 'category-icon clickable';
+            iconSpan.style.cursor = 'pointer';
+            iconSpan.setAttribute('data-category', item.category);
+            iconSpan.setAttribute('title', `${item.category}のみ表示`);
+            iconSpan.addEventListener('click', function(e) {
+                e.preventDefault();
+                selectSingleCategory(item.category);
+            });
+            
+            const wrapper = document.createElement('span');
+            wrapper.appendChild(iconSpan);
+            
+            if (item.link) {
+                const link = document.createElement('a');
+                link.href = item.link;
+                link.target = '_blank';
+                link.textContent = item.contents;
+                link.className = 'history-link';
+                wrapper.appendChild(link);
+            } else {
+                const text = document.createTextNode(item.contents);
+                wrapper.appendChild(text);
+            }
+            
+            return wrapper;
+        });
+        
+        // 各アイテムを「｜」で区切って追加
+        articleText.forEach((itemElement, index) => {
+            articleCell.appendChild(itemElement);
+            if (index < articleText.length - 1) {
+                const separator = document.createElement('span');
+                separator.textContent = ' ｜ ';
+                separator.className = 'separator';
+                articleCell.appendChild(separator);
+            }
+        });
+        
+        row.appendChild(articleCell);
         tbody.appendChild(row);
     });
     
