@@ -393,8 +393,8 @@
     transition: all 0.2s ease;
 }
 
-.hashtag-button:hover {
-    background-color: #dee2e6;
+.hashtag-button:hover:not(.active) {
+    background-color: #cbd3da;
     border-color: #adb5bd;
 }
 
@@ -403,6 +403,11 @@
     color: white;
     border-color: #0d6efd;
     font-weight: bold;
+}
+
+.hashtag-button.active:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
 }
 
 /* フィルターUI表示エリアのスタイル */
@@ -518,6 +523,14 @@
     opacity: 0.8;
 }
 
+.archive-comment {
+    color: #6c757d;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    display: block;
+    margin-top: 0.25rem;
+}
+
 .family-item {
     padding: 0.75rem 0;
     border-bottom: 1px solid #f0f0f0;
@@ -563,13 +576,7 @@
     table-layout: auto;
 }
 
-/* 等幅フォントのスタイル */
-.monospace-font {
-    /* 日本語対応の等幅フォント */
-    font-family: 'BIZ UDGothic', 'MS Gothic', 'Osaka-Mono', 'Courier New', Courier, monospace;
-    font-size: 0.95rem;
-    letter-spacing: 0.02em;
-}
+
 
 .history-table thead th {
     background-color: #f8f9fa;
@@ -618,27 +625,47 @@
     word-break: break-word;
 }
 
+/* 改行スタイル用の記事アイテム */
+.article-item {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.article-item:last-child {
+    border-bottom: none;
+}
+
+/* カテゴリ略称のスタイル */
+.category-abbr {
+    font-weight: bold;
+    color: #0d6efd;
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.category-abbr:hover {
+    text-decoration: underline;
+}
+
 /* 記事がない年のセルのスタイル */
 .empty-year-cell {
     background-color: #f0f0f0 !important;
+}
+
+/* 空白セルのhover時の色（通常の灰色と区別） */
+.history-table tbody tr:hover td.empty-year-cell {
+    background-color: #e0e0e0 !important;
 }
 
 /* カテゴリアイコンのスタイル */
 .category-icon {
     display: inline-block;
     margin-right: 0.3rem;
-    text-decoration: none;
 }
 
-.category-icon:hover {
-    opacity: 0.7;
-    text-decoration: underline;
-}
 
-/* セパレーターのスタイル */
-.separator {
-    color: #6c757d;
-}
 
 /* ゼブラストライプ（奇数行に薄い背景色） */
 .history-table tbody tr:nth-child(odd) {
@@ -696,20 +723,10 @@
         font-size: 0.85rem;
     }
     
-    .monospace-font {
-        font-size: 0.85rem;
-    }
-    
     /* スマホでのヘッダーボタン調整 */
     .article-header-cell button {
         font-size: 0.75rem;
         padding: 0.2rem 0.4rem;
-    }
-    
-    .article-header-cell .d-flex {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.3rem;
     }
 }
 

@@ -20,6 +20,15 @@ const CATEGORY_ICONS = {
     'その他': '📌'
 };
 
+// カテゴリ略称のマッピング
+const CATEGORY_ABBREVIATIONS = {
+    '夕刊中年マカチン': '夕マカ',
+    'CMP2000': 'CMP',
+    'けびんケビンソン': 'けびん',
+    'イイダリョウ': 'リョウ',
+    'その他': 'etc.'
+};
+
 // 年の範囲設定
 const MIN_YEAR = 1998;
 const MAX_YEAR = new Date().getFullYear();
@@ -45,6 +54,7 @@ if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
     initializePage();
 } else {
     console.log('オンラインモードで実行中（History）');
+    
     fetch(PUBLIC_HISTORY_CSV_URL)
         .then(response => response.text())
         .then(csvText => {
@@ -132,9 +142,9 @@ function initializePage() {
     // 「全て解除」ボタンのイベントリスナー
     document.getElementById('deselectAllCategoriesBtn').addEventListener('click', deselectAllCategories);
     
-    // カテゴリフィルターボタンのイベントリスナー
-    document.querySelectorAll('.category-filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+    // チェックボックスのイベントリスナー
+    document.querySelectorAll('.category-filter-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
             const category = this.getAttribute('data-category');
             toggleTemporaryCategoryFilter(category);
         });
@@ -154,15 +164,12 @@ function initializePage() {
     categoryFilterCollapse.addEventListener('shown.bs.collapse', function() {
         document.getElementById('categoryFilterIcon').textContent = '－';
         // 開いたときに一時選択状態を現在の適用済み状態に同期
-        // null（全て表示状態）の場合は、全てのカテゴリを選択状態にする
-        // 空配列（何も表示しない状態）の場合は、空のまま
-        // 配列に要素がある場合は、その要素をコピー
         if (currentCategoryFilters === null) {
             temporaryCategoryFilters = [...CATEGORIES];
         } else {
             temporaryCategoryFilters = [...currentCategoryFilters];
         }
-        updateCategoryButtonStates();
+        updateCheckboxStates();
     });
     categoryFilterCollapse.addEventListener('hidden.bs.collapse', function() {
         document.getElementById('categoryFilterIcon').textContent = '＋';
@@ -240,9 +247,9 @@ function showAllCategories() {
     currentCategoryFilters = null; // nullは全て表示を意味する
     temporaryCategoryFilters = [];
     
-    // ボタンのアクティブ状態をすべて解除
-    document.querySelectorAll('.category-filter-btn').forEach(btn => {
-        btn.classList.remove('active');
+    // チェックボックスをすべて解除
+    document.querySelectorAll('.category-filter-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
     });
     
     // ラベルを更新
@@ -261,13 +268,13 @@ function showAllCategories() {
 // 全て選択（一時選択のみ、適用しない）
 function selectAllCategories() {
     temporaryCategoryFilters = [...CATEGORIES];
-    updateCategoryButtonStates();
+    updateCheckboxStates();
 }
 
 // 全て解除（一時選択のみ、適用しない）
 function deselectAllCategories() {
     temporaryCategoryFilters = [];
-    updateCategoryButtonStates();
+    updateCheckboxStates();
 }
 
 // 一時的なカテゴリフィルターのトグル（複数選択対応、まだ適用しない）
@@ -281,9 +288,6 @@ function toggleTemporaryCategoryFilter(category) {
         // カテゴリを削除
         temporaryCategoryFilters.splice(index, 1);
     }
-    
-    // ボタンのアクティブ状態を更新（一時的な選択状態に基づく）
-    updateCategoryButtonStates();
 }
 
 // カテゴリフィルターを適用
@@ -304,13 +308,13 @@ function applyCategoryFilter() {
     }
 }
 
-// カテゴリを単一選択（アイコンクリック時用）
+// カテゴリを単一選択（カテゴリ略称クリック時用）
 function selectSingleCategory(category) {
     currentCategoryFilters = [category];
     temporaryCategoryFilters = [category];
     
-    // ボタンのアクティブ状態を更新
-    updateCategoryButtonStates();
+    // チェックボックスの状態を更新
+    updateCheckboxStates();
     
     // ラベルを更新
     updateCategoryFilterLabel();
@@ -319,15 +323,11 @@ function selectSingleCategory(category) {
     generateHistoryTable();
 }
 
-// カテゴリボタンのアクティブ状態を更新（一時選択状態に基づく）
-function updateCategoryButtonStates() {
-    document.querySelectorAll('.category-filter-btn').forEach(btn => {
-        const category = btn.getAttribute('data-category');
-        if (temporaryCategoryFilters.includes(category)) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
+// チェックボックスの状態を更新（一時選択状態に基づく）
+function updateCheckboxStates() {
+    document.querySelectorAll('.category-filter-checkbox').forEach(checkbox => {
+        const category = checkbox.getAttribute('data-category');
+        checkbox.checked = temporaryCategoryFilters.includes(category);
     });
 }
 
@@ -350,7 +350,7 @@ function updateCategoryFilterLabel() {
     document.getElementById('categoryFilterLabel').textContent = labelText;
 }
 
-// 年表テーブル生成（2列形式、記事がない年も表示）
+// 年表テーブル生成（改行スタイル、記事がない年も表示）
 function generateHistoryTable() {
     const tbody = document.getElementById('historyTableBody');
     tbody.innerHTML = '';
@@ -361,9 +361,6 @@ function generateHistoryTable() {
     historyData.forEach(item => {
         if (item.year >= currentStartYear && item.year <= currentEndYear) {
             // カテゴリフィルターを適用
-            // null: 全て表示
-            // 空配列: 何も表示しない
-            // 配列に要素あり: そのカテゴリのみ表示
             if (currentCategoryFilters !== null) {
                 if (currentCategoryFilters.length === 0) {
                     // 空配列の場合は何も表示しない
@@ -389,13 +386,13 @@ function generateHistoryTable() {
         
         // 年のセル
         const yearCell = document.createElement('td');
-        yearCell.className = 'year-column monospace-font fw-bold text-center';
+        yearCell.className = 'year-column fw-bold text-center';
         yearCell.textContent = year + '年';
         row.appendChild(yearCell);
         
         // Article列のセル
         const articleCell = document.createElement('td');
-        articleCell.className = 'article-column monospace-font';
+        articleCell.className = 'article-column';
         
         const items = groupedData[year];
         
@@ -406,47 +403,50 @@ function generateHistoryTable() {
                 return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
             });
             
-            // 各アイテムを「｜」で区切って表示
-            const articleText = items.map(item => {
+            // 各アイテムを改行で表示
+            items.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'article-item';
+                
                 const icon = CATEGORY_ICONS[item.category] || '';
+                const abbr = CATEGORY_ABBREVIATIONS[item.category] || item.category;
+                
+                // アイコン
                 const iconSpan = document.createElement('span');
                 iconSpan.textContent = icon;
-                iconSpan.className = 'category-icon clickable';
-                iconSpan.style.cursor = 'pointer';
-                iconSpan.setAttribute('data-category', item.category);
-                iconSpan.setAttribute('title', `${item.category}のみ表示`);
-                iconSpan.addEventListener('click', function(e) {
+                iconSpan.className = 'category-icon';
+                itemDiv.appendChild(iconSpan);
+                
+                // カテゴリ略称（クリック可能）
+                const abbrSpan = document.createElement('span');
+                abbrSpan.textContent = `[${abbr}]`;
+                abbrSpan.className = 'category-abbr clickable';
+                abbrSpan.style.cursor = 'pointer';
+                abbrSpan.style.fontWeight = 'bold';
+                abbrSpan.style.marginLeft = '0.25rem';
+                abbrSpan.style.marginRight = '0.25rem';
+                abbrSpan.style.color = '#0d6efd';
+                abbrSpan.setAttribute('title', `${item.category}のみ表示`);
+                abbrSpan.addEventListener('click', function(e) {
                     e.preventDefault();
                     selectSingleCategory(item.category);
                 });
+                itemDiv.appendChild(abbrSpan);
                 
-                const wrapper = document.createElement('span');
-                wrapper.appendChild(iconSpan);
-                
+                // 記事内容
                 if (item.link) {
                     const link = document.createElement('a');
                     link.href = item.link;
                     link.target = '_blank';
                     link.textContent = item.contents;
                     link.className = 'history-link';
-                    wrapper.appendChild(link);
+                    itemDiv.appendChild(link);
                 } else {
                     const text = document.createTextNode(item.contents);
-                    wrapper.appendChild(text);
+                    itemDiv.appendChild(text);
                 }
                 
-                return wrapper;
-            });
-            
-            // 各アイテムを「｜」で区切って追加
-            articleText.forEach((itemElement, index) => {
-                articleCell.appendChild(itemElement);
-                if (index < articleText.length - 1) {
-                    const separator = document.createElement('span');
-                    separator.textContent = ' ｜ ';
-                    separator.className = 'separator';
-                    articleCell.appendChild(separator);
-                }
+                articleCell.appendChild(itemDiv);
             });
         } else {
             // 記事がない場合は空のセルで背景色を薄い灰色に

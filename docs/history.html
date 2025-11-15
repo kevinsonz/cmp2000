@@ -11,11 +11,6 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     
-    <!-- Google Fonts: BIZ UDGothic (日本語等幅フォント) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic&display=swap" rel="stylesheet">
-    
     <!-- Bootstrap JavaScript Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 
@@ -46,108 +41,123 @@
         </div>
     </div>
 
-    <!-- ポータルへ戻るボタン -->
+    <!-- メインコンテンツ -->
     <div class="page-container">
         <div class="mb-3 text-center">
-            <a href="index.html" class="btn btn-outline-primary">
-                ← 📁 ポータルページへ戻る
-            </a>
+            <a href="index.html" class="btn btn-outline-primary">← 🏠 ポータルページへ戻る</a>
         </div>
-    </div>
-
-    <!-- Historyタイトル -->
-    <div class="page-container text-center">
-        <h2>History</h2>
-    </div>
-
-    <!-- 期間設定UI（折り畳み可能） -->
-    <div class="page-container mt-3">
-        <div class="card">
-            <div class="card-header bg-white">
-                <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center" 
-                        type="button" 
-                        data-bs-toggle="collapse" 
-                        data-bs-target="#yearRangeCollapse" 
-                        aria-expanded="false" 
-                        aria-controls="yearRangeCollapse"
-                        id="yearRangeToggleBtn">
-                    <strong id="yearRangeLabel">表示期間の設定 (－年 ～ －年)</strong>
-                    <span id="yearRangeIcon">＋</span>
-                </button>
-            </div>
-            <div class="collapse" id="yearRangeCollapse">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="startYearSlider" class="form-label">
-                                開始年: <strong id="startYearDisplay">-</strong>
-                            </label>
-                            <input type="range" class="form-range" id="startYearSlider" min="1998" max="2025" value="2015">
+        
+        <h2 class="text-center mb-3">History</h2>
+        
+        <!-- 期間設定UI（折り畳み可能） -->
+        <div class="mb-3">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center p-2" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#yearRangeCollapse" 
+                            aria-expanded="false" 
+                            aria-controls="yearRangeCollapse"
+                            id="yearRangeToggleBtn">
+                        <strong id="yearRangeLabel">表示期間の設定 (○年 ～ ○年)</strong>
+                        <span id="yearRangeIcon">＋</span>
+                    </button>
+                </div>
+                <div class="collapse" id="yearRangeCollapse">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="startYearSlider" class="form-label">
+                                    開始年: <strong id="startYearDisplay">-</strong>
+                                </label>
+                                <input type="range" class="form-range" id="startYearSlider" min="1998" max="2025" value="2015">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="endYearSlider" class="form-label">
+                                    終了年: <strong id="endYearDisplay">-</strong>
+                                </label>
+                                <input type="range" class="form-range" id="endYearSlider" min="1998" max="2025" value="2025">
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label for="endYearSlider" class="form-label">
-                                終了年: <strong id="endYearDisplay">-</strong>
-                            </label>
-                            <input type="range" class="form-range" id="endYearSlider" min="1998" max="2025" value="2025">
+                        <div class="text-center mt-3">
+                            <button class="btn btn-primary" id="applyYearRange">表示を更新</button>
+                            <button class="btn btn-secondary ms-2" id="resetYearRange">リセット</button>
                         </div>
-                    </div>
-                    <div class="text-center mt-3">
-                        <button class="btn btn-primary" id="applyYearRange">表示を更新</button>
-                        <button class="btn btn-secondary ms-2" id="resetYearRange">リセット</button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- カテゴリフィルターUI（折り畳み可能） -->
-    <div class="page-container mt-3">
-        <div class="card">
-            <div class="card-header bg-white">
-                <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center p-2" 
-                        type="button" 
-                        data-bs-toggle="collapse" 
-                        data-bs-target="#categoryFilterCollapse" 
-                        aria-expanded="false" 
-                        aria-controls="categoryFilterCollapse"
-                        id="categoryFilterToggleBtn">
-                    <strong id="categoryFilterLabel">カテゴリフィルター (すべて表示中)</strong>
-                    <span id="categoryFilterIcon">＋</span>
-                </button>
-            </div>
-            <div class="collapse" id="categoryFilterCollapse">
-                <div class="card-body">
-                    <div class="d-flex flex-wrap gap-2 justify-content-center">
-                        <button class="btn btn-outline-secondary category-filter-btn" data-category="夕刊中年マカチン">📰 夕刊中年マカチン</button>
-                        <button class="btn btn-outline-secondary category-filter-btn" data-category="CMP2000">📁 CMP2000</button>
-                        <button class="btn btn-outline-secondary category-filter-btn" data-category="けびんケビンソン">👤 けびんケビンソン</button>
-                        <button class="btn btn-outline-secondary category-filter-btn" data-category="イイダリョウ">💻 イイダリョウ</button>
-                        <button class="btn btn-outline-secondary category-filter-btn" data-category="その他">📌 その他</button>
-                    </div>
-                    <div class="d-flex gap-2 justify-content-center mt-3 flex-wrap">
-                        <button class="btn btn-sm btn-secondary" id="selectAllCategoriesBtn">全て選択</button>
-                        <button class="btn btn-sm btn-secondary" id="deselectAllCategoriesBtn">全て解除</button>
-                        <button class="btn btn-primary" id="applyCategoryFilter">適用</button>
-                    </div>
-                    <div class="text-center mt-2">
-                        <small class="text-muted">※複数選択可能です</small>
+        <!-- カテゴリフィルターUI（折り畳み可能） -->
+        <div class="mb-3">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center p-2" 
+                            type="button" 
+                            data-bs-toggle="collapse" 
+                            data-bs-target="#categoryFilterCollapse" 
+                            aria-expanded="false" 
+                            aria-controls="categoryFilterCollapse"
+                            id="categoryFilterToggleBtn">
+                        <strong id="categoryFilterLabel">カテゴリフィルター (すべて表示中)</strong>
+                        <span id="categoryFilterIcon">＋</span>
+                    </button>
+                </div>
+                <div class="collapse" id="categoryFilterCollapse">
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-夕刊中年マカチン" data-category="夕刊中年マカチン">
+                                <label class="form-check-label" for="filter-夕刊中年マカチン">
+                                    📰 夕刊中年マカチン
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-CMP2000" data-category="CMP2000">
+                                <label class="form-check-label" for="filter-CMP2000">
+                                    📁 CMP2000
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-けびんケビンソン" data-category="けびんケビンソン">
+                                <label class="form-check-label" for="filter-けびんケビンソン">
+                                    👤 けびんケビンソン
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-イイダリョウ" data-category="イイダリョウ">
+                                <label class="form-check-label" for="filter-イイダリョウ">
+                                    💻 イイダリョウ
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-その他" data-category="その他">
+                                <label class="form-check-label" for="filter-その他">
+                                    📌 その他
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-center mt-3 flex-wrap">
+                            <button class="btn btn-sm btn-secondary" id="selectAllCategoriesBtn">全て選択</button>
+                            <button class="btn btn-sm btn-secondary" id="deselectAllCategoriesBtn">全て解除</button>
+                            <button class="btn btn-primary" id="applyCategoryFilter">適用</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 年表テーブル -->
-    <div class="page-container mt-3">
+        <!-- 年表テーブル -->
         <div class="table-responsive">
             <table class="table table-bordered table-hover history-table" id="historyTable">
                 <thead class="table-light sticky-top">
                     <tr>
                         <th class="year-column">Year</th>
                         <th class="article-header-cell">
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center flex-nowrap">
                                 <span>Article</span>
-                                <button class="btn btn-sm btn-outline-primary" id="showAllBtn">すべて表示</button>
+                                <button class="btn btn-sm btn-outline-primary flex-shrink-0" id="showAllBtn">すべて表示</button>
                             </div>
                         </th>
                     </tr>

@@ -61,9 +61,27 @@ function parseArchiveCSV(csvText) {
     const hashTagIndex = headers.indexOf('hashTag');
     const siteUrlIndex = headers.indexOf('siteUrl');
     const logoIndex = headers.indexOf('logo');
+    const commentIndex = headers.indexOf('comment');
     
     for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
+        const line = lines[i];
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        // カンマ区切りの解析（コメント内のカンマを考慮）
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
         
         if (values[categoryIndex] && values[siteTitleIndex]) {
             items.push({
@@ -71,7 +89,8 @@ function parseArchiveCSV(csvText) {
                 siteTitle: values[siteTitleIndex],
                 hashTag: values[hashTagIndex] || '',
                 siteUrl: values[siteUrlIndex] || '#',
-                logo: values[logoIndex] || ''
+                logo: values[logoIndex] || '',
+                comment: values[commentIndex] || ''
             });
         }
     }
@@ -184,9 +203,11 @@ function showFilterUI(tag) {
     
     container.style.display = 'block';
     container.innerHTML = `
-        <div class="alert alert-info d-flex justify-content-between align-items-center">
-            <span>表示中: <strong>${tag}</strong></span>
-            <button class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">フィルター解除</button>
+        <div class="alert alert-info d-flex justify-content-between align-items-center mb-3" role="alert">
+            <span>フィルタ適用中: <strong>${tag}</strong></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearHashTagFilter()">
+                フィルタを解除
+            </button>
         </div>
     `;
 }
@@ -200,155 +221,106 @@ function hideFilterUI() {
     container.innerHTML = '';
 }
 
-// ジャンプメニューを更新
-function updateJumpMenu(filterTag) {
-    const dropdownMenu = document.querySelector('#jumpMenuButton + .dropdown-menu');
-    if (!dropdownMenu) return;
-    
-    if (filterTag) {
-        dropdownMenu.innerHTML = `
-            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#filter-ui-container">フィルター結果</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#footer">フッター</a></li>
-        `;
-    } else {
-        dropdownMenu.innerHTML = `
-            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#common">共通コンテンツ</a></li>
-            <li><a class="dropdown-item" href="#kevin">けびんケビンソン</a></li>
-            <li><a class="dropdown-item" href="#ryo">イイダリョウ</a></li>
-            <li><a class="dropdown-item" href="#staff">スタッフ</a></li>
-            <li><a class="dropdown-item" href="#family">ファミリー</a></li>
-            <li><a class="dropdown-item" href="#special-thanks">スペシャルサンクス</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#footer">フッター</a></li>
-        `;
-    }
-}
-
-// ハッシュタグフィルターを適用する関数
+// ハッシュタグフィルターを適用
 function applyHashTagFilter(tag) {
     currentFilterTag = tag;
-    
-    showFilterUI(tag);
     generateAboutPage(tag);
+    showFilterUI(tag);
     
+    // ハッシュタグボタンの状態を更新
     const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
     generateHashTagList(allTags, tag);
-    updateJumpMenu(tag);
     
-    // フィルターUI表示位置にスムーズスクロール
-    setTimeout(() => {
-        const filterContainer = document.getElementById('filter-ui-container');
-        if (filterContainer) {
-            filterContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 100);
+    // スクロール位置をトップに戻す
+    window.scrollTo(0, 0);
 }
 
-// ハッシュタグフィルターを解除する関数
+// ハッシュタグフィルターをクリア
 function clearHashTagFilter() {
     currentFilterTag = null;
-    
-    hideFilterUI();
     generateAboutPage();
+    hideFilterUI();
     
+    // ハッシュタグボタンの状態を更新
     const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
     generateHashTagList(allTags);
-    updateJumpMenu(null);
     
-    // 「共通コンテンツ」セクションにスムーズスクロール
-    setTimeout(() => {
-        const commonSection = document.getElementById('common');
-        if (commonSection) {
-            commonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 100);
+    // スクロール位置をトップに戻す
+    window.scrollTo(0, 0);
 }
 
-// ハッシュタグをクリック可能なリンクに変換する関数
+// ハッシュタグをリンクに変換する関数
 function convertHashTagsToLinks(hashTagString) {
     if (!hashTagString) return '';
-    
     const tags = parseHashTags(hashTagString);
     return tags.map(tag => {
-        return `<a href="#" onclick="applyHashTagFilter('${tag}'); return false;">${tag}</a>`;
+        return `<a href="#" class="hashtag-link" onclick="event.preventDefault(); applyHashTagFilter('${tag}');">${tag}</a>`;
     }).join(' ');
 }
 
-// Aboutページの生成（フィルタリング対応）
+// アイテムがフィルターに一致するかチェック
+function matchesFilter(item, filterTag) {
+    if (!filterTag) return true;
+    if (!item.hashTag) return false;
+    const tags = parseHashTags(item.hashTag);
+    return tags.includes(filterTag);
+}
+
+// Aboutページを生成する関数（フィルターに対応）
 function generateAboutPage(filterTag = null) {
     const container = document.getElementById('about-content');
     if (!container) return;
     
-    // フィルタリング適用
-    let filteredBasicInfo = allBasicInfo;
-    let filteredArchiveInfo = allArchiveInfo;
-    let filteredFamilyInfo = allFamilyInfo;
-    
-    if (filterTag) {
-        filteredBasicInfo = allBasicInfo.filter(item => {
-            const tags = parseHashTags(item.hashTag);
-            return tags.includes(filterTag);
-        });
-        filteredArchiveInfo = allArchiveInfo.filter(item => {
-            const tags = parseHashTags(item.hashTag);
-            return tags.includes(filterTag);
-        });
-        filteredFamilyInfo = allFamilyInfo.filter(item => {
-            const tags = parseHashTags(item.hashTag);
-            return tags.includes(filterTag);
-        });
-    }
-    
-    // コンテナをクリア
     container.innerHTML = '';
     
-    // カテゴリごとにグループ化
+    // カテゴリーでグループ化（サイト情報）
     const groupedByCategory = {};
-    filteredBasicInfo.forEach(item => {
+    allBasicInfo.forEach(item => {
+        if (!matchesFilter(item, filterTag)) return;
+        
         if (!groupedByCategory[item.category]) {
             groupedByCategory[item.category] = [];
         }
         groupedByCategory[item.category].push(item);
     });
     
-    // アーカイブをカテゴリごとにグループ化
-    const archiveByCategory = {};
-    filteredArchiveInfo.forEach(item => {
-        if (!archiveByCategory[item.category]) {
-            archiveByCategory[item.category] = [];
-        }
-        archiveByCategory[item.category].push(item);
-    });
-    
-    // ファミリーをカテゴリごとにグループ化
+    // カテゴリーでグループ化（ファミリー）
     const familyByCategory = {};
-    filteredFamilyInfo.forEach(item => {
+    allFamilyInfo.forEach(item => {
+        if (!matchesFilter(item, filterTag)) return;
+        
         if (!familyByCategory[item.category]) {
             familyByCategory[item.category] = [];
         }
         familyByCategory[item.category].push(item);
     });
     
-    // 表示順: 共通コンテンツ → けびんケビンソン → イイダリョウ → スタッフ → ファミリー
-    const categories = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
-    
-    // サイト情報のセクション（フィルタリング時はアーカイブも含めて表示）
-    categories.forEach(category => {
-        const hasRegularSites = groupedByCategory[category] && groupedByCategory[category].length > 0;
-        const hasArchive = archiveByCategory[category] && archiveByCategory[category].length > 0;
+    // アーカイブ情報をカテゴリー別に整理
+    const archiveByCategory = {};
+    allArchiveInfo.forEach(item => {
+        if (!matchesFilter(item, filterTag)) return;
         
-        // 通常サイトもアーカイブもある場合、または通常サイトのみの場合
-        if (hasRegularSites || hasArchive) {
+        if (!archiveByCategory[item.category]) {
+            archiveByCategory[item.category] = [];
+        }
+        archiveByCategory[item.category].push(item);
+    });
+    
+    // カテゴリーの順序を定義（けびん、りょう、共通の順）
+    const categoryOrder = ['けびんケビンソン', 'イイダリョウ', '共通'];
+    
+    // カテゴリーごとにセクションを生成
+    categoryOrder.forEach(category => {
+        const siteList = groupedByCategory[category] || [];
+        const archiveList = archiveByCategory[category] || [];
+        
+        // サイトまたはアーカイブがある場合のみセクションを表示
+        if (siteList.length > 0 || archiveList.length > 0) {
             const sectionCard = document.createElement('div');
             sectionCard.className = 'section-card card';
             
             // セクションにIDを追加（ジャンプ用）
-            if (category === '共通コンテンツ') {
+            if (category === '共通') {
                 sectionCard.id = 'common';
             } else if (category === 'けびんケビンソン') {
                 sectionCard.id = 'kevin';
@@ -364,14 +336,16 @@ function generateAboutPage(filterTag = null) {
             const sectionBody = document.createElement('div');
             sectionBody.className = 'section-body';
             
-            // 通常のサイトリスト
-            if (hasRegularSites) {
-                const siteList = document.createElement('ul');
-                siteList.className = 'site-list';
+            // サイト一覧を表示
+            if (siteList.length > 0) {
+                const siteSection = document.createElement('div');
+                siteSection.style.marginBottom = '1rem';
                 
-                // 各サイトを表示
-                groupedByCategory[category].forEach(site => {
-                    const siteItem = document.createElement('li');
+                const siteListDiv = document.createElement('div');
+                siteListDiv.className = 'site-list';
+                
+                siteList.forEach(site => {
+                    const siteItem = document.createElement('div');
                     siteItem.className = 'site-item';
                     
                     const siteLink = document.createElement('a');
@@ -399,28 +373,34 @@ function generateAboutPage(filterTag = null) {
                         siteItem.appendChild(hashTagSpan);
                     }
                     
-                    siteList.appendChild(siteItem);
+                    siteListDiv.appendChild(siteItem);
                 });
                 
-                sectionBody.appendChild(siteList);
+                siteSection.appendChild(siteListDiv);
+                sectionBody.appendChild(siteSection);
             }
             
-            // アーカイブを追加
-            if (hasArchive) {
+            // アーカイブ一覧を表示（サイトの下に）
+            if (archiveList.length > 0) {
                 const archiveSection = document.createElement('div');
-                archiveSection.className = 'archive-section';
                 
-                const archiveTitle = document.createElement('div');
-                archiveTitle.className = 'archive-title';
-                archiveTitle.textContent = '【アーカイブ】';
-                archiveSection.appendChild(archiveTitle);
+                // アーカイブセクションヘッダー
+                const archiveHeader = document.createElement('h6');
+                archiveHeader.textContent = 'アーカイブ';
+                archiveHeader.className = 'archive-header';
+                archiveSection.appendChild(archiveHeader);
                 
-                const archiveList = document.createElement('ul');
-                archiveList.className = 'archive-list';
+                const archiveListDiv = document.createElement('div');
+                archiveListDiv.className = 'archive-list';
                 
-                archiveByCategory[category].forEach(archive => {
-                    const archiveItem = document.createElement('li');
+                archiveList.forEach(archive => {
+                    const archiveItem = document.createElement('div');
                     archiveItem.className = 'archive-item';
+                    archiveItem.style.display = 'block';
+                    
+                    // タイトルとロゴのコンテナ
+                    const titleContainer = document.createElement('div');
+                    titleContainer.style.marginBottom = '0.25rem';
                     
                     // siteUrlが空白の場合はリンクなしテキスト、それ以外はリンク
                     if (archive.siteUrl && archive.siteUrl.trim() !== '' && archive.siteUrl !== '#') {
@@ -429,12 +409,12 @@ function generateAboutPage(filterTag = null) {
                         archiveLink.target = '_blank';
                         archiveLink.className = 'site-link';
                         archiveLink.textContent = archive.siteTitle;
-                        archiveItem.appendChild(archiveLink);
+                        titleContainer.appendChild(archiveLink);
                     } else {
                         const archiveText = document.createElement('span');
                         archiveText.textContent = archive.siteTitle;
                         archiveText.style.color = '#6c757d';
-                        archiveItem.appendChild(archiveText);
+                        titleContainer.appendChild(archiveText);
                     }
                     
                     // ロゴがあれば表示
@@ -443,7 +423,7 @@ function generateAboutPage(filterTag = null) {
                         logoImg.src = archive.logo;
                         logoImg.className = 'logo-img';
                         logoImg.alt = 'logo';
-                        archiveItem.appendChild(logoImg);
+                        titleContainer.appendChild(logoImg);
                     }
                     
                     // ハッシュタグがあれば表示
@@ -451,13 +431,23 @@ function generateAboutPage(filterTag = null) {
                         const hashTagSpan = document.createElement('span');
                         hashTagSpan.className = 'hashtag-display';
                         hashTagSpan.innerHTML = convertHashTagsToLinks(archive.hashTag);
-                        archiveItem.appendChild(hashTagSpan);
+                        titleContainer.appendChild(hashTagSpan);
                     }
                     
-                    archiveList.appendChild(archiveItem);
+                    archiveItem.appendChild(titleContainer);
+                    
+                    // コメントがあれば表示（ファミリーと同じスタイル）
+                    if (archive.comment) {
+                        const commentSpan = document.createElement('span');
+                        commentSpan.className = 'archive-comment';
+                        commentSpan.textContent = archive.comment;
+                        archiveItem.appendChild(commentSpan);
+                    }
+                    
+                    archiveListDiv.appendChild(archiveItem);
                 });
                 
-                archiveSection.appendChild(archiveList);
+                archiveSection.appendChild(archiveListDiv);
                 sectionBody.appendChild(archiveSection);
             }
             
