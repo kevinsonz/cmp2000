@@ -417,21 +417,19 @@ function generateHistoryTable() {
                 iconSpan.className = 'category-icon';
                 itemDiv.appendChild(iconSpan);
                 
-                // カテゴリ略称（クリック可能）
-                const abbrSpan = document.createElement('span');
-                abbrSpan.textContent = `[${abbr}]`;
-                abbrSpan.className = 'category-abbr clickable';
-                abbrSpan.style.cursor = 'pointer';
-                abbrSpan.style.fontWeight = 'bold';
-                abbrSpan.style.marginLeft = '0.25rem';
-                abbrSpan.style.marginRight = '0.25rem';
-                abbrSpan.style.color = '#0d6efd';
-                abbrSpan.setAttribute('title', `${item.category}のみ表示`);
-                abbrSpan.addEventListener('click', function(e) {
+                // カテゴリ略称（ボタンスタイル）
+                const abbrBtn = document.createElement('span');
+                abbrBtn.textContent = abbr;
+                abbrBtn.className = 'btn btn-outline-primary btn-sm category-abbr-btn';
+                abbrBtn.style.cursor = 'pointer';
+                abbrBtn.style.marginLeft = '0.25rem';
+                abbrBtn.style.marginRight = '0.5rem';
+                abbrBtn.setAttribute('title', `${item.category}のみ表示`);
+                abbrBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     selectSingleCategory(item.category);
                 });
-                itemDiv.appendChild(abbrSpan);
+                itemDiv.appendChild(abbrBtn);
                 
                 // 記事内容
                 if (item.link) {
