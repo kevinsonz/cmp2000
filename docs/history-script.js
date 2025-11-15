@@ -42,37 +42,20 @@ let historyData = [];
 let currentStartYear = MAX_YEAR - DEFAULT_YEAR_RANGE;
 let currentEndYear = MAX_YEAR;
 let currentCategoryFilters = [...CATEGORIES]; // すべて選択された状態で初期化
-let yearRangeSlider = null; // noUiSliderのインスタンス
 
 // 環境判定
 const isLocalMode = window.location.protocol === 'file:' || (typeof HISTORY_DATA !== 'undefined');
-
-// 初期化済みフラグ
-let dataLoaded = false;
-let windowLoaded = false;
-
-// 両方の条件が揃ったら初期化
-function tryInitialize() {
-    if (dataLoaded && windowLoaded) {
-        console.log('Both data and window loaded - initializing...');
-        console.log('noUiSlider available:', typeof noUiSlider !== 'undefined');
-        initializePage();
-    }
-}
-
-// window.loadイベント
-window.addEventListener('load', function() {
-    console.log('Window load event fired');
-    windowLoaded = true;
-    tryInitialize();
-});
 
 // 初期化処理
 if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
     console.log('ローカルモードで実行中（History）');
     historyData = parseHistoryCSV(HISTORY_DATA.HISTORY_CSV);
-    dataLoaded = true;
-    tryInitialize();
+    // DOMContentLoadedイベントを待つ
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePage);
+    } else {
+        initializePage();
+    }
 } else {
     console.log('オンラインモードで実行中（History）');
     
@@ -80,8 +63,12 @@ if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
         .then(response => response.text())
         .then(csvText => {
             historyData = parseHistoryCSV(csvText);
-            dataLoaded = true;
-            tryInitialize();
+            // DOMContentLoadedイベントを待つ
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializePage);
+            } else {
+                initializePage();
+            }
         })
         .catch(error => {
             console.error('公開CSVの読み込みに失敗しました:', error);
@@ -134,67 +121,74 @@ function parseHistoryCSV(csvText) {
 
 // ページ初期化
 function initializePage() {
-    console.log('initializePage called');
-    console.log('noUiSlider available:', typeof noUiSlider !== 'undefined');
+    console.log('initializePage called (Native version)');
     
-    // noUiSliderの初期化
-    const sliderElement = document.getElementById('year-range-slider');
-    console.log('Slider element found:', sliderElement !== null);
+    // HTML5ネイティブスライダーの初期化
+    const startSlider = document.getElementById('startYearSlider');
+    const endSlider = document.getElementById('endYearSlider');
+    const sliderTrack = document.getElementById('sliderTrack');
     
-    if (sliderElement && typeof noUiSlider !== 'undefined') {
-        console.log('Initializing noUiSlider...');
-        try {
-            yearRangeSlider = noUiSlider.create(sliderElement, {
-                start: [currentStartYear, currentEndYear],
-                connect: true,
-                step: 1,
-                range: {
-                    'min': MIN_YEAR,
-                    'max': MAX_YEAR
-                },
-                format: {
-                    to: function(value) {
-                        return Math.round(value);
-                    },
-                    from: function(value) {
-                        return Number(value);
-                    }
-                }
-            });
+    if (startSlider && endSlider && sliderTrack) {
+        console.log('Native sliders found');
+        
+        // 初期値を設定
+        startSlider.value = currentStartYear;
+        endSlider.value = currentEndYear;
+        
+        // スライダートラックを更新する関数
+        function updateSliderTrack() {
+            const min = parseInt(startSlider.min);
+            const max = parseInt(startSlider.max);
+            const startVal = parseInt(startSlider.value);
+            const endVal = parseInt(endSlider.value);
             
-            console.log('noUiSlider initialized successfully');
+            const percentStart = ((startVal - min) / (max - min)) * 100;
+            const percentEnd = ((endVal - min) / (max - min)) * 100;
             
-            // スライダーの値が変更されたらリアルタイムで年表を更新
-            yearRangeSlider.on('update', function(values, handle) {
-                const startYear = parseInt(values[0]);
-                const endYear = parseInt(values[1]);
-                
-                // 表示を更新
-                document.getElementById('yearRangeDisplay').textContent = `${startYear}年 ～ ${endYear}年`;
-                
-                // 年範囲が変更された場合のみ年表を更新
-                if (startYear !== currentStartYear || endYear !== currentEndYear) {
-                    currentStartYear = startYear;
-                    currentEndYear = endYear;
-                    generateHistoryTable();
-                    updateJumpMenu();
-                }
-            });
-        } catch (error) {
-            console.error('noUiSlider initialization error:', error);
-            // フォールバック: エラーメッセージを表示
-            sliderElement.innerHTML = '<div class="alert alert-warning">スライダーの読み込みに失敗しました。ローカル環境ではCDNが利用できないため、Webサーバー経由でアクセスしてください。</div>';
+            sliderTrack.style.left = percentStart + '%';
+            sliderTrack.style.width = (percentEnd - percentStart) + '%';
         }
+        
+        // スライダーの値が変更されたらリアルタイムで更新
+        function handleSliderChange() {
+            let startVal = parseInt(startSlider.value);
+            let endVal = parseInt(endSlider.value);
+            
+            // 開始年が終了年より大きい場合は調整
+            if (startVal > endVal) {
+                if (this === startSlider) {
+                    endSlider.value = startVal;
+                    endVal = startVal;
+                } else {
+                    startSlider.value = endVal;
+                    startVal = endVal;
+                }
+            }
+            
+            currentStartYear = startVal;
+            currentEndYear = endVal;
+            
+            // 表示を更新
+            document.getElementById('yearRangeDisplay').textContent = `${currentStartYear}年 ～ ${currentEndYear}年`;
+            
+            // トラックを更新
+            updateSliderTrack();
+            
+            // 年表を更新
+            generateHistoryTable();
+            updateJumpMenu();
+        }
+        
+        // イベントリスナーを追加
+        startSlider.addEventListener('input', handleSliderChange);
+        endSlider.addEventListener('input', handleSliderChange);
+        
+        // 初期表示を更新
+        updateSliderTrack();
+        document.getElementById('yearRangeDisplay').textContent = `${currentStartYear}年 ～ ${currentEndYear}年`;
     } else {
-        console.warn('noUiSlider not available or slider element not found');
-        if (sliderElement) {
-            // フォールバック: noUiSliderが利用できない場合のメッセージ
-            sliderElement.innerHTML = '<div class="alert alert-info">ローカル環境ではスライダーが表示されません。開発サーバーを起動するか、オンライン環境でご確認ください。<br><small>例: <code>python -m http.server 8000</code></small></div>';
-        }
+        console.error('Native slider elements not found');
     }
-    
-    // 初期表示を更新
-    document.getElementById('yearRangeDisplay').textContent = `${currentStartYear}年 ～ ${currentEndYear}年`;
     
     // 「すべて表示」ボタンのイベントリスナー
     document.getElementById('showAllBtn').addEventListener('click', showAllCategories);
