@@ -306,8 +306,8 @@ function generateAboutPage(filterTag = null) {
         archiveByCategory[item.category].push(item);
     });
     
-    // カテゴリーの順序を定義（けびん、りょう、共通の順）
-    const categoryOrder = ['けびんケビンソン', 'イイダリョウ', '共通'];
+    // カテゴリーの順序を定義（共通、けびん、りょうの順）
+    const categoryOrder = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
     
     // カテゴリーごとにセクションを生成
     categoryOrder.forEach(category => {
@@ -320,7 +320,7 @@ function generateAboutPage(filterTag = null) {
             sectionCard.className = 'section-card card';
             
             // セクションにIDを追加（ジャンプ用）
-            if (category === '共通') {
+            if (category === '共通コンテンツ') {
                 sectionCard.id = 'common';
             } else if (category === 'けびんケビンソン') {
                 sectionCard.id = 'kevin';
