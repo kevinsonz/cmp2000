@@ -383,11 +383,20 @@ function generateAboutPage(filterTag = null) {
             // アーカイブ一覧を表示（サイトの下に）
             if (archiveList.length > 0) {
                 const archiveSection = document.createElement('div');
+                archiveSection.className = 'archive-section';
+                // アーカイブセクション全体を囲う
+                archiveSection.style.border = '2px solid #adb5bd';
+                archiveSection.style.borderRadius = '0.5rem';
+                archiveSection.style.padding = '1rem';
+                archiveSection.style.marginTop = '1rem';
+                archiveSection.style.backgroundColor = '#f8f9fa';
                 
                 // アーカイブセクションヘッダー
                 const archiveHeader = document.createElement('h6');
                 archiveHeader.textContent = 'アーカイブ';
                 archiveHeader.className = 'archive-header';
+                archiveHeader.style.marginTop = '0';
+                archiveHeader.style.marginBottom = '0.75rem';
                 archiveSection.appendChild(archiveHeader);
                 
                 const archiveListDiv = document.createElement('div');
@@ -397,6 +406,7 @@ function generateAboutPage(filterTag = null) {
                     const archiveItem = document.createElement('div');
                     archiveItem.className = 'archive-item';
                     archiveItem.style.display = 'block';
+                    archiveItem.style.marginBottom = '0.5rem';
                     
                     // タイトルとロゴのコンテナ
                     const titleContainer = document.createElement('div');
