@@ -47,16 +47,32 @@ let yearRangeSlider = null; // noUiSliderのインスタンス
 // 環境判定
 const isLocalMode = window.location.protocol === 'file:' || (typeof HISTORY_DATA !== 'undefined');
 
+// 初期化済みフラグ
+let dataLoaded = false;
+let windowLoaded = false;
+
+// 両方の条件が揃ったら初期化
+function tryInitialize() {
+    if (dataLoaded && windowLoaded) {
+        console.log('Both data and window loaded - initializing...');
+        console.log('noUiSlider available:', typeof noUiSlider !== 'undefined');
+        initializePage();
+    }
+}
+
+// window.loadイベント
+window.addEventListener('load', function() {
+    console.log('Window load event fired');
+    windowLoaded = true;
+    tryInitialize();
+});
+
 // 初期化処理
 if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
     console.log('ローカルモードで実行中（History）');
     historyData = parseHistoryCSV(HISTORY_DATA.HISTORY_CSV);
-    // DOMContentLoadedイベントを待つ
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializePage);
-    } else {
-        initializePage();
-    }
+    dataLoaded = true;
+    tryInitialize();
 } else {
     console.log('オンラインモードで実行中（History）');
     
@@ -64,12 +80,8 @@ if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
         .then(response => response.text())
         .then(csvText => {
             historyData = parseHistoryCSV(csvText);
-            // DOMContentLoadedイベントを待つ
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initializePage);
-            } else {
-                initializePage();
-            }
+            dataLoaded = true;
+            tryInitialize();
         })
         .catch(error => {
             console.error('公開CSVの読み込みに失敗しました:', error);
