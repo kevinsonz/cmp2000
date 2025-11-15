@@ -496,10 +496,11 @@
 
 .archive-section {
     margin-top: 1rem;
-    padding: 1rem;
+    padding: 1rem 1rem 1rem 1.25rem;
     background-color: #f8f9fa;
     border-radius: 4px;
-    border-left: 3px solid #6c757d;
+    border-left: 4px solid #6c757d;
+    opacity: 0.9;
 }
 
 .archive-title {
@@ -755,4 +756,52 @@
 #showAllBtn:hover {
     background-color: #0d6efd;
     color: white;
+}
+
+/* =================================
+   History.html専用 - noUiSliderスタイル
+   ================================= */
+
+/* noUiSliderのカスタマイズ */
+#year-range-slider {
+    margin: 0 20px;
+}
+
+.noUi-connect {
+    background: #0d6efd;
+}
+
+.noUi-handle {
+    border: 2px solid #0d6efd;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.noUi-handle:before,
+.noUi-handle:after {
+    display: none;
+}
+
+.noUi-tooltip {
+    display: none;
+}
+
+/* カテゴリアイコンのスタイル */
+.category-icon-large {
+    font-size: 1.5rem;
+    transition: opacity 0.3s, filter 0.3s;
+    display: inline-block;
+    cursor: default;
+}
+
+.category-icon-cell {
+    vertical-align: middle;
+}
+
+/* 選択中アイコンの表示 */
+#selectedCategoryIcons {
+    font-size: 1rem;
+    white-space: nowrap;
 }

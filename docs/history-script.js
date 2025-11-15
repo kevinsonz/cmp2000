@@ -14,7 +14,7 @@ const CATEGORIES = [
 // カテゴリアイコンのマッピング
 const CATEGORY_ICONS = {
     '夕刊中年マカチン': '📰',
-    'CMP2000': '📁',
+    'CMP2000': '🏠',
     'けびんケビンソン': '👤',
     'イイダリョウ': '💻',
     'その他': '📌'
@@ -41,8 +41,8 @@ const PUBLIC_HISTORY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1
 let historyData = [];
 let currentStartYear = MAX_YEAR - DEFAULT_YEAR_RANGE;
 let currentEndYear = MAX_YEAR;
-let currentCategoryFilters = null; // 適用済みのフィルター（null=すべて表示、空配列=何も表示しない）
-let temporaryCategoryFilters = []; // 一時的な選択状態（適用前）
+let currentCategoryFilters = [...CATEGORIES]; // すべて選択された状態で初期化
+let yearRangeSlider = null; // noUiSliderのインスタンス
 
 // 環境判定
 const isLocalMode = window.location.protocol === 'file:' || (typeof HISTORY_DATA !== 'undefined');
@@ -51,7 +51,12 @@ const isLocalMode = window.location.protocol === 'file:' || (typeof HISTORY_DATA
 if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
     console.log('ローカルモードで実行中（History）');
     historyData = parseHistoryCSV(HISTORY_DATA.HISTORY_CSV);
-    initializePage();
+    // DOMContentLoadedイベントを待つ
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePage);
+    } else {
+        initializePage();
+    }
 } else {
     console.log('オンラインモードで実行中（History）');
     
@@ -59,7 +64,12 @@ if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
         .then(response => response.text())
         .then(csvText => {
             historyData = parseHistoryCSV(csvText);
-            initializePage();
+            // DOMContentLoadedイベントを待つ
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializePage);
+            } else {
+                initializePage();
+            }
         })
         .catch(error => {
             console.error('公開CSVの読み込みに失敗しました:', error);
@@ -112,29 +122,70 @@ function parseHistoryCSV(csvText) {
 
 // ページ初期化
 function initializePage() {
-    // スライダーの最大値を現在年に設定
-    document.getElementById('startYearSlider').max = MAX_YEAR;
-    document.getElementById('endYearSlider').max = MAX_YEAR;
+    console.log('initializePage called');
+    console.log('noUiSlider available:', typeof noUiSlider !== 'undefined');
     
-    // スライダーの初期値を設定
-    document.getElementById('startYearSlider').value = currentStartYear;
-    document.getElementById('endYearSlider').value = currentEndYear;
+    // noUiSliderの初期化
+    const sliderElement = document.getElementById('year-range-slider');
+    console.log('Slider element found:', sliderElement !== null);
     
-    // スライダーの表示を更新
-    updateYearDisplay();
-    updateYearRangeLabel();
+    if (sliderElement && typeof noUiSlider !== 'undefined') {
+        console.log('Initializing noUiSlider...');
+        try {
+            yearRangeSlider = noUiSlider.create(sliderElement, {
+                start: [currentStartYear, currentEndYear],
+                connect: true,
+                step: 1,
+                range: {
+                    'min': MIN_YEAR,
+                    'max': MAX_YEAR
+                },
+                format: {
+                    to: function(value) {
+                        return Math.round(value);
+                    },
+                    from: function(value) {
+                        return Number(value);
+                    }
+                }
+            });
+            
+            console.log('noUiSlider initialized successfully');
+            
+            // スライダーの値が変更されたらリアルタイムで年表を更新
+            yearRangeSlider.on('update', function(values, handle) {
+                const startYear = parseInt(values[0]);
+                const endYear = parseInt(values[1]);
+                
+                // 表示を更新
+                document.getElementById('yearRangeDisplay').textContent = `${startYear}年 ～ ${endYear}年`;
+                
+                // 年範囲が変更された場合のみ年表を更新
+                if (startYear !== currentStartYear || endYear !== currentEndYear) {
+                    currentStartYear = startYear;
+                    currentEndYear = endYear;
+                    generateHistoryTable();
+                    updateJumpMenu();
+                }
+            });
+        } catch (error) {
+            console.error('noUiSlider initialization error:', error);
+            // フォールバック: エラーメッセージを表示
+            sliderElement.innerHTML = '<div class="alert alert-warning">スライダーの読み込みに失敗しました。ローカル環境ではCDNが利用できないため、Webサーバー経由でアクセスしてください。</div>';
+        }
+    } else {
+        console.warn('noUiSlider not available or slider element not found');
+        if (sliderElement) {
+            // フォールバック: noUiSliderが利用できない場合のメッセージ
+            sliderElement.innerHTML = '<div class="alert alert-info">ローカル環境ではスライダーが表示されません。開発サーバーを起動するか、オンライン環境でご確認ください。<br><small>例: <code>python -m http.server 8000</code></small></div>';
+        }
+    }
     
-    // イベントリスナーの設定
-    document.getElementById('startYearSlider').addEventListener('input', updateYearDisplay);
-    document.getElementById('endYearSlider').addEventListener('input', updateYearDisplay);
-    document.getElementById('applyYearRange').addEventListener('click', applyYearRange);
-    document.getElementById('resetYearRange').addEventListener('click', resetYearRange);
+    // 初期表示を更新
+    document.getElementById('yearRangeDisplay').textContent = `${currentStartYear}年 ～ ${currentEndYear}年`;
     
     // 「すべて表示」ボタンのイベントリスナー
     document.getElementById('showAllBtn').addEventListener('click', showAllCategories);
-    
-    // 「適用」ボタンのイベントリスナー
-    document.getElementById('applyCategoryFilter').addEventListener('click', applyCategoryFilter);
     
     // 「全て選択」ボタンのイベントリスナー
     document.getElementById('selectAllCategoriesBtn').addEventListener('click', selectAllCategories);
@@ -142,212 +193,129 @@ function initializePage() {
     // 「全て解除」ボタンのイベントリスナー
     document.getElementById('deselectAllCategoriesBtn').addEventListener('click', deselectAllCategories);
     
-    // チェックボックスのイベントリスナー
+    // チェックボックスのイベントリスナー（リアルタイム連動）
     document.querySelectorAll('.category-filter-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const category = this.getAttribute('data-category');
-            toggleTemporaryCategoryFilter(category);
+            
+            if (this.checked) {
+                // チェックされた場合、フィルターに追加
+                if (!currentCategoryFilters.includes(category)) {
+                    currentCategoryFilters.push(category);
+                }
+            } else {
+                // チェックが外された場合、フィルターから削除
+                const index = currentCategoryFilters.indexOf(category);
+                if (index > -1) {
+                    currentCategoryFilters.splice(index, 1);
+                }
+            }
+            
+            // アイコンのスタイルを更新
+            updateCategoryIconStyles();
+            
+            // 選択中アイコンの表示を更新
+            updateSelectedCategoryIcons();
+            
+            // リアルタイムで年表を更新
+            generateHistoryTable();
+            updateJumpMenu();
         });
-    });
-    
-    // 折り畳みボタンのイベントリスナー
-    const yearRangeCollapse = document.getElementById('yearRangeCollapse');
-    const categoryFilterCollapse = document.getElementById('categoryFilterCollapse');
-    
-    yearRangeCollapse.addEventListener('shown.bs.collapse', function() {
-        document.getElementById('yearRangeIcon').textContent = '－';
-    });
-    yearRangeCollapse.addEventListener('hidden.bs.collapse', function() {
-        document.getElementById('yearRangeIcon').textContent = '＋';
-    });
-    
-    categoryFilterCollapse.addEventListener('shown.bs.collapse', function() {
-        document.getElementById('categoryFilterIcon').textContent = '－';
-        // 開いたときに一時選択状態を現在の適用済み状態に同期
-        if (currentCategoryFilters === null) {
-            temporaryCategoryFilters = [...CATEGORIES];
-        } else {
-            temporaryCategoryFilters = [...currentCategoryFilters];
-        }
-        updateCheckboxStates();
-    });
-    categoryFilterCollapse.addEventListener('hidden.bs.collapse', function() {
-        document.getElementById('categoryFilterIcon').textContent = '＋';
     });
     
     // 初回テーブル生成
     generateHistoryTable();
+    
+    // 選択中アイコンの表示を更新
+    updateSelectedCategoryIcons();
+    
+    // アイコンのスタイルを初期化
+    updateCategoryIconStyles();
     
     // その他の初期化
     updateCurrentYear();
     initHeaderScroll();
 }
 
-// 年表示の更新
-function updateYearDisplay() {
-    const startYear = parseInt(document.getElementById('startYearSlider').value);
-    const endYear = parseInt(document.getElementById('endYearSlider').value);
-    
-    document.getElementById('startYearDisplay').textContent = startYear + '年';
-    document.getElementById('endYearDisplay').textContent = endYear + '年';
-}
-
-// 年範囲ラベルの更新
-function updateYearRangeLabel() {
-    document.getElementById('yearRangeLabel').textContent = 
-        `表示期間の設定 (${currentStartYear}年 ～ ${currentEndYear}年)`;
-}
-
-// 年範囲の適用
-function applyYearRange() {
-    const startYear = parseInt(document.getElementById('startYearSlider').value);
-    const endYear = parseInt(document.getElementById('endYearSlider').value);
-    
-    if (startYear > endYear) {
-        alert('開始年は終了年より前に設定してください。');
-        return;
-    }
-    
-    currentStartYear = startYear;
-    currentEndYear = endYear;
-    
-    updateYearRangeLabel();
-    generateHistoryTable();
-    updateJumpMenu();
-    
-    // 折り畳む
-    const yearRangeCollapse = bootstrap.Collapse.getInstance(document.getElementById('yearRangeCollapse'));
-    if (yearRangeCollapse) {
-        yearRangeCollapse.hide();
-    }
-}
-
-// 年範囲のリセット
-function resetYearRange() {
-    currentStartYear = MAX_YEAR - DEFAULT_YEAR_RANGE;
-    currentEndYear = MAX_YEAR;
-    
-    document.getElementById('startYearSlider').value = currentStartYear;
-    document.getElementById('endYearSlider').value = currentEndYear;
-    
-    updateYearDisplay();
-    updateYearRangeLabel();
-    generateHistoryTable();
-    updateJumpMenu();
-    
-    // 折り畳む
-    const yearRangeCollapse = bootstrap.Collapse.getInstance(document.getElementById('yearRangeCollapse'));
-    if (yearRangeCollapse) {
-        yearRangeCollapse.hide();
-    }
-}
-
-// すべて表示
+// すべて表示ボタン
 function showAllCategories() {
-    currentCategoryFilters = null; // nullは全て表示を意味する
-    temporaryCategoryFilters = [];
-    
-    // チェックボックスをすべて解除
-    document.querySelectorAll('.category-filter-checkbox').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    
-    // ラベルを更新
-    updateCategoryFilterLabel();
-    
-    // テーブルを再生成
+    currentCategoryFilters = [...CATEGORIES];
+    updateCheckboxStates();
+    updateCategoryIconStyles();
+    updateSelectedCategoryIcons();
     generateHistoryTable();
-    
-    // 折り畳む
-    const categoryFilterCollapse = bootstrap.Collapse.getInstance(document.getElementById('categoryFilterCollapse'));
-    if (categoryFilterCollapse) {
-        categoryFilterCollapse.hide();
-    }
+    updateJumpMenu();
 }
 
-// 全て選択（一時選択のみ、適用しない）
+// 全て選択ボタン
 function selectAllCategories() {
-    temporaryCategoryFilters = [...CATEGORIES];
+    currentCategoryFilters = [...CATEGORIES];
     updateCheckboxStates();
+    updateCategoryIconStyles();
+    updateSelectedCategoryIcons();
+    generateHistoryTable();
+    updateJumpMenu();
 }
 
-// 全て解除（一時選択のみ、適用しない）
+// 全て解除ボタン
 function deselectAllCategories() {
-    temporaryCategoryFilters = [];
+    currentCategoryFilters = [];
     updateCheckboxStates();
-}
-
-// 一時的なカテゴリフィルターのトグル（複数選択対応、まだ適用しない）
-function toggleTemporaryCategoryFilter(category) {
-    const index = temporaryCategoryFilters.indexOf(category);
-    
-    if (index === -1) {
-        // カテゴリを追加
-        temporaryCategoryFilters.push(category);
-    } else {
-        // カテゴリを削除
-        temporaryCategoryFilters.splice(index, 1);
-    }
-}
-
-// カテゴリフィルターを適用
-function applyCategoryFilter() {
-    // 一時選択を実際のフィルターに反映
-    currentCategoryFilters = [...temporaryCategoryFilters];
-    
-    // ラベルを更新
-    updateCategoryFilterLabel();
-    
-    // テーブルを再生成
+    updateCategoryIconStyles();
+    updateSelectedCategoryIcons();
     generateHistoryTable();
-    
-    // 折り畳む
-    const categoryFilterCollapse = bootstrap.Collapse.getInstance(document.getElementById('categoryFilterCollapse'));
-    if (categoryFilterCollapse) {
-        categoryFilterCollapse.hide();
-    }
+    updateJumpMenu();
 }
 
-// カテゴリを単一選択（カテゴリ略称クリック時用）
-function selectSingleCategory(category) {
-    currentCategoryFilters = [category];
-    temporaryCategoryFilters = [category];
-    
-    // チェックボックスの状態を更新
-    updateCheckboxStates();
-    
-    // ラベルを更新
-    updateCategoryFilterLabel();
-    
-    // テーブルを再生成
-    generateHistoryTable();
-}
-
-// チェックボックスの状態を更新（一時選択状態に基づく）
+// チェックボックスの状態を更新
 function updateCheckboxStates() {
     document.querySelectorAll('.category-filter-checkbox').forEach(checkbox => {
         const category = checkbox.getAttribute('data-category');
-        checkbox.checked = temporaryCategoryFilters.includes(category);
+        checkbox.checked = currentCategoryFilters.includes(category);
     });
 }
 
-// カテゴリフィルターラベルの更新（適用済みフィルターに基づく）
-function updateCategoryFilterLabel() {
-    let labelText = '';
+// 単一カテゴリのみを選択
+function selectSingleCategory(category) {
+    currentCategoryFilters = [category];
+    updateCheckboxStates();
+    updateCategoryIconStyles();
+    updateSelectedCategoryIcons();
+    generateHistoryTable();
+    updateJumpMenu();
+}
+
+// カテゴリアイコンのスタイルを更新（選択/非選択）
+function updateCategoryIconStyles() {
+    CATEGORIES.forEach(category => {
+        const iconElement = document.getElementById(`icon-${category}`);
+        if (iconElement) {
+            if (currentCategoryFilters.includes(category)) {
+                iconElement.style.opacity = '1';
+                iconElement.style.filter = 'none';
+            } else {
+                iconElement.style.opacity = '0.3';
+                iconElement.style.filter = 'grayscale(100%)';
+            }
+        }
+    });
+}
+
+// 選択中カテゴリのアイコンを年表ヘッダーに表示
+function updateSelectedCategoryIcons() {
+    const container = document.getElementById('selectedCategoryIcons');
+    if (!container) return;
     
-    if (currentCategoryFilters === null) {
-        labelText = 'カテゴリフィルター (すべて表示中)';
-    } else if (currentCategoryFilters.length === 0) {
-        labelText = 'カテゴリフィルター (何も選択されていません)';
-    } else if (currentCategoryFilters.length === 1) {
-        const icon = CATEGORY_ICONS[currentCategoryFilters[0]] || '';
-        labelText = `カテゴリフィルター (${icon} ${currentCategoryFilters[0]})`;
+    if (currentCategoryFilters.length === 0) {
+        container.textContent = '(フィルタなし)';
     } else {
-        const icons = currentCategoryFilters.map(cat => CATEGORY_ICONS[cat] || '').join(' ');
-        labelText = `カテゴリフィルター (${icons} ${currentCategoryFilters.length}件選択中)`;
+        // カテゴリの順序を維持してアイコンを表示
+        const icons = CATEGORIES
+            .filter(cat => currentCategoryFilters.includes(cat))
+            .map(cat => CATEGORY_ICONS[cat] || '')
+            .join(' ');
+        container.textContent = icons;
     }
-    
-    document.getElementById('categoryFilterLabel').textContent = labelText;
 }
 
 // 年表テーブル生成（改行スタイル、記事がない年も表示）
@@ -361,15 +329,13 @@ function generateHistoryTable() {
     historyData.forEach(item => {
         if (item.year >= currentStartYear && item.year <= currentEndYear) {
             // カテゴリフィルターを適用
-            if (currentCategoryFilters !== null) {
-                if (currentCategoryFilters.length === 0) {
-                    // 空配列の場合は何も表示しない
-                    return;
-                }
-                if (!currentCategoryFilters.includes(item.category)) {
-                    // 選択されていないカテゴリはスキップ
-                    return;
-                }
+            if (currentCategoryFilters.length === 0) {
+                // 空配列の場合は何も表示しない
+                return;
+            }
+            if (!currentCategoryFilters.includes(item.category)) {
+                // 選択されていないカテゴリはスキップ
+                return;
             }
             
             if (!groupedData[item.year]) {
@@ -479,13 +445,11 @@ function updateJumpMenu() {
     historyData.forEach(item => {
         if (item.year >= currentStartYear && item.year <= currentEndYear) {
             // カテゴリフィルターを考慮
-            if (currentCategoryFilters !== null) {
-                if (currentCategoryFilters.length === 0) {
-                    return;
-                }
-                if (!currentCategoryFilters.includes(item.category)) {
-                    return;
-                }
+            if (currentCategoryFilters.length === 0) {
+                return;
+            }
+            if (!currentCategoryFilters.includes(item.category)) {
+                return;
             }
             yearsWithData.add(item.year);
         }

@@ -212,6 +212,35 @@ function showFilterUI(tag) {
     `;
 }
 
+// ジャンプメニューを更新
+function updateJumpMenu(filterTag) {
+    const dropdownMenu = document.querySelector('#jumpMenuButton + .dropdown-menu');
+    if (!dropdownMenu) return;
+    
+    if (filterTag) {
+        dropdownMenu.innerHTML = `
+            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#filter-ui-container">フィルター結果</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#footer">フッター</a></li>
+        `;
+    } else {
+        dropdownMenu.innerHTML = `
+            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#common">共通コンテンツ</a></li>
+            <li><a class="dropdown-item" href="#kevin">けびんケビンソン</a></li>
+            <li><a class="dropdown-item" href="#ryo">イイダリョウ</a></li>
+            <li><a class="dropdown-item" href="#staff">スタッフ</a></li>
+            <li><a class="dropdown-item" href="#family">ファミリー</a></li>
+            <li><a class="dropdown-item" href="#special-thanks">スペシャルサンクス</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#footer">フッター</a></li>
+        `;
+    }
+}
+
 // フィルターUIを非表示
 function hideFilterUI() {
     const container = document.getElementById('filter-ui-container');
@@ -231,8 +260,16 @@ function applyHashTagFilter(tag) {
     const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
     generateHashTagList(allTags, tag);
     
-    // スクロール位置をトップに戻す
-    window.scrollTo(0, 0);
+    // ジャンプメニューを更新
+    updateJumpMenu(tag);
+    
+    // フィルターUI表示位置にスムーズスクロール
+    setTimeout(() => {
+        const filterContainer = document.getElementById('filter-ui-container');
+        if (filterContainer) {
+            filterContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
 }
 
 // ハッシュタグフィルターをクリア
@@ -245,8 +282,16 @@ function clearHashTagFilter() {
     const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
     generateHashTagList(allTags);
     
-    // スクロール位置をトップに戻す
-    window.scrollTo(0, 0);
+    // ジャンプメニューを更新
+    updateJumpMenu(null);
+    
+    // 「共通コンテンツ」セクションにスムーズスクロール
+    setTimeout(() => {
+        const commonSection = document.getElementById('common');
+        if (commonSection) {
+            commonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
 }
 
 // ハッシュタグをリンクに変換する関数
@@ -542,6 +587,7 @@ function initializeAboutPage() {
         generateAboutPage();
         updateCurrentYear();
         initHeaderScroll();
+        updateJumpMenu(null);
     } else {
         console.log('オンラインモードで実行中（About）');
         
@@ -558,6 +604,7 @@ function initializeAboutPage() {
             generateAboutPage();
             updateCurrentYear();
             initHeaderScroll();
+            updateJumpMenu(null);
         })
         .catch(error => {
             console.error('公開CSVの読み込みに失敗しました:', error);
