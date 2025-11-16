@@ -32,7 +32,7 @@ const CATEGORY_ABBREVIATIONS = {
 // 年の範囲設定
 const MIN_YEAR = 1998;
 const MAX_YEAR = new Date().getFullYear();
-const DEFAULT_YEAR_RANGE = 25; // デフォルトで直近10年
+const DEFAULT_YEAR_RANGE = 30; // デフォルトで直近10年
 
 // 公開スプレッドシートのCSV URL
 const PUBLIC_HISTORY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=2103644132&single=true&output=csv';
