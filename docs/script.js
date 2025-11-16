@@ -708,17 +708,21 @@ function generateContributionGraph(contributionData) {
     
     let lastYear = -1;
     weeks.forEach((week, weekIndex) => {
-        const firstDay = week[0].date;
-        const year = firstDay.getFullYear();
-        
-        if (weekIndex === 0 || year !== lastYear) {
-            const yearLabel = document.createElement('div');
-            yearLabel.className = 'contribution-year';
-            yearLabel.textContent = `${year}年`;
-            yearLabel.style.position = 'absolute';
-            yearLabel.style.left = `${25 + weekIndex * 14}px`;
-            yearsRow.appendChild(yearLabel);
-            lastYear = year;
+        // 週の中で年が変わるかチェック
+        for (let i = 0; i < week.length; i++) {
+            const day = week[i];
+            const year = day.date.getFullYear();
+            
+            if (weekIndex === 0 || year !== lastYear) {
+                const yearLabel = document.createElement('div');
+                yearLabel.className = 'contribution-year';
+                yearLabel.textContent = `${year}年`;
+                yearLabel.style.position = 'absolute';
+                yearLabel.style.left = `${25 + weekIndex * 13}px`;
+                yearsRow.appendChild(yearLabel);
+                lastYear = year;
+                break;
+            }
         }
     });
     
@@ -743,7 +747,7 @@ function generateContributionGraph(contributionData) {
                 monthLabel.className = 'contribution-month';
                 monthLabel.textContent = `${month + 1}月`;
                 monthLabel.style.position = 'absolute';
-                monthLabel.style.left = `${25 + weekIndex * 14}px`;
+                monthLabel.style.left = `${25 + weekIndex * 13}px`;
                 monthsRow.appendChild(monthLabel);
                 lastMonth = month;
                 break;

@@ -679,6 +679,11 @@
     }
 }
 
+/* 年選択セレクトボックスの無効化オプションスタイル */
+select option:disabled {
+    color: #ccc;
+}
+
 /* すべて表示ボタンのスタイル */
 #showAllBtn {
     white-space: nowrap;

@@ -128,23 +128,99 @@ function parseHistoryCSV(csvText) {
     return items;
 }
 
+// 年のセレクトボックスを初期化
+function initializeYearSelects() {
+    const startYearSelect = document.getElementById('startYearSelect');
+    const endYearSelect = document.getElementById('endYearSelect');
+    
+    if (!startYearSelect || !endYearSelect) return;
+    
+    // 選択肢を生成（新しい年から古い年の順）
+    for (let year = MAX_YEAR; year >= MIN_YEAR; year--) {
+        const startOption = document.createElement('option');
+        startOption.value = year;
+        startOption.textContent = `${year}年`;
+        startYearSelect.appendChild(startOption);
+        
+        const endOption = document.createElement('option');
+        endOption.value = year;
+        endOption.textContent = `${year}年`;
+        endYearSelect.appendChild(endOption);
+    }
+    
+    // 初期値を設定
+    startYearSelect.value = currentStartYear;
+    endYearSelect.value = currentEndYear;
+    
+    // 変更イベントリスナーを追加
+    startYearSelect.addEventListener('change', onStartYearChange);
+    endYearSelect.addEventListener('change', onEndYearChange);
+    
+    // 初期状態で選択肢を更新
+    updateYearSelectOptions();
+}
+
+// 開始年が変更された時の処理
+function onStartYearChange() {
+    const startYearSelect = document.getElementById('startYearSelect');
+    const endYearSelect = document.getElementById('endYearSelect');
+    
+    const startYear = parseInt(startYearSelect.value);
+    const endYear = parseInt(endYearSelect.value);
+    
+    // 開始年 > 終了年 の場合、終了年を開始年に合わせる
+    if (startYear > endYear) {
+        endYearSelect.value = startYear;
+    }
+    
+    updateYearSelectOptions();
+}
+
+// 終了年が変更された時の処理
+function onEndYearChange() {
+    const startYearSelect = document.getElementById('startYearSelect');
+    const endYearSelect = document.getElementById('endYearSelect');
+    
+    const startYear = parseInt(startYearSelect.value);
+    const endYear = parseInt(endYearSelect.value);
+    
+    // 開始年 > 終了年 の場合、開始年を終了年に合わせる
+    if (startYear > endYear) {
+        startYearSelect.value = endYear;
+    }
+    
+    updateYearSelectOptions();
+}
+
+// セレクトボックスの選択肢を更新（有効な年のみ選択可能に）
+function updateYearSelectOptions() {
+    const startYearSelect = document.getElementById('startYearSelect');
+    const endYearSelect = document.getElementById('endYearSelect');
+    
+    if (!startYearSelect || !endYearSelect) return;
+    
+    const startYear = parseInt(startYearSelect.value);
+    const endYear = parseInt(endYearSelect.value);
+    
+    // 開始年の選択肢を更新（終了年以前のみ有効）
+    Array.from(startYearSelect.options).forEach(option => {
+        const year = parseInt(option.value);
+        option.disabled = year > endYear;
+    });
+    
+    // 終了年の選択肢を更新（開始年以降のみ有効）
+    Array.from(endYearSelect.options).forEach(option => {
+        const year = parseInt(option.value);
+        option.disabled = year < startYear;
+    });
+}
+
 // ページ初期化
 function initializePage() {
     console.log('initializePage called');
     
-    // 年の入力フィールドの設定
-    const startYearInput = document.getElementById('startYearInput');
-    const endYearInput = document.getElementById('endYearInput');
-    
-    if (startYearInput && endYearInput) {
-        startYearInput.min = MIN_YEAR;
-        startYearInput.max = MAX_YEAR;
-        startYearInput.value = currentStartYear;
-        
-        endYearInput.min = MIN_YEAR;
-        endYearInput.max = MAX_YEAR;
-        endYearInput.value = currentEndYear;
-    }
+    // 年のセレクトボックスの初期化
+    initializeYearSelects();
     
     // カテゴリーフィルターリストを生成
     generateCategoryFilterList();
@@ -222,29 +298,12 @@ function deselectAllInFilter() {
 
 // 「適用」ボタン
 function applyFilter() {
-    // 年の範囲を取得
-    const startYearInput = document.getElementById('startYearInput');
-    const endYearInput = document.getElementById('endYearInput');
+    // 年の範囲を取得（セレクトボックスの連動により矛盾は発生しない）
+    const startYearSelect = document.getElementById('startYearSelect');
+    const endYearSelect = document.getElementById('endYearSelect');
     
-    let startYear = parseInt(startYearInput.value);
-    let endYear = parseInt(endYearInput.value);
-    
-    // バリデーション
-    if (isNaN(startYear) || startYear < MIN_YEAR || startYear > MAX_YEAR) {
-        startYear = MIN_YEAR;
-        startYearInput.value = startYear;
-    }
-    if (isNaN(endYear) || endYear < MIN_YEAR || endYear > MAX_YEAR) {
-        endYear = MAX_YEAR;
-        endYearInput.value = endYear;
-    }
-    if (startYear > endYear) {
-        const temp = startYear;
-        startYear = endYear;
-        endYear = temp;
-        startYearInput.value = startYear;
-        endYearInput.value = endYear;
-    }
+    const startYear = parseInt(startYearSelect.value);
+    const endYear = parseInt(endYearSelect.value);
     
     // カテゴリーフィルターを取得
     const selectedCategories = [];
@@ -282,9 +341,9 @@ function applyFilter() {
 
 // 「キャンセル」ボタン
 function cancelFilter() {
-    // 入力フィールドを現在の設定に戻す
-    document.getElementById('startYearInput').value = currentStartYear;
-    document.getElementById('endYearInput').value = currentEndYear;
+    // セレクトボックスを現在の設定に戻す
+    document.getElementById('startYearSelect').value = currentStartYear;
+    document.getElementById('endYearSelect').value = currentEndYear;
     document.getElementById('showEmptyYearsCheck').checked = currentShowEmptyYears;
     document.getElementById('sortNewestFirstCheck').checked = currentSortNewestFirst;
     
@@ -292,6 +351,9 @@ function cancelFilter() {
     document.querySelectorAll('.filter-category-checkbox').forEach(checkbox => {
         checkbox.checked = currentCategoryFilters.includes(checkbox.dataset.category);
     });
+    
+    // 選択肢を更新
+    updateYearSelectOptions();
     
     // アコーディオンを閉じる
     const filterSettings = document.getElementById('filterSettings');
