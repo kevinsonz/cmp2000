@@ -14,6 +14,12 @@
     <!-- Bootstrap JavaScript Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 
+    <!-- noUiSlider CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" integrity="sha512-qveKnGrvOChbSzAdtSs8p69eoLegyh+1hwOMbmpCViIwj7rn4oJjdmMvWOuyQlTOZgTlZA0N2PXA7iA8/2QGYA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- noUiSlider JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js" integrity="sha512-UOJe4paV6hYWBnS0c9GnIRH8PLm2nFK22uhfAvsTIqd3uwnWsVri1OPl+f0MbmCO20dRb0i1srpdKgYI15fKVA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
     <!-- カスタムスタイルシート -->
     <link rel="stylesheet" href="./style.css">
 
@@ -21,74 +27,7 @@
     <script src="./history-data.js" onerror="console.log('ローカルデータなし: オンラインモードで動作します')"></script>
 
     <!-- カスタムスクリプト（defer属性でHTML解析後に実行） -->
-    <script src="./history-script-native.js" defer></script>
-    
-    <style>
-        /* ダブルレンジスライダーのカスタムスタイル */
-        .double-range-slider {
-            position: relative;
-            width: 100%;
-            height: 50px;
-            padding: 0 10px;
-        }
-        
-        .double-range-slider input[type="range"] {
-            position: absolute;
-            width: calc(100% - 20px);
-            height: 5px;
-            background: transparent;
-            pointer-events: none;
-            -webkit-appearance: none;
-            appearance: none;
-        }
-        
-        .double-range-slider input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #0d6efd;
-            cursor: pointer;
-            pointer-events: all;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .double-range-slider input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #0d6efd;
-            cursor: pointer;
-            pointer-events: all;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .double-range-slider input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 5px;
-            background: #dee2e6;
-            border-radius: 3px;
-        }
-        
-        .double-range-slider input[type="range"]::-moz-range-track {
-            width: 100%;
-            height: 5px;
-            background: #dee2e6;
-            border-radius: 3px;
-        }
-        
-        .slider-track {
-            position: absolute;
-            height: 5px;
-            background: #0d6efd;
-            border-radius: 3px;
-            top: 22px;
-            pointer-events: none;
-        }
-    </style>
+    <script src="./history-script.js" defer></script>
 </head>
 
 <body class="bg-light" id="history">
@@ -123,11 +62,7 @@
                     <div class="mb-3 text-center">
                         <strong id="yearRangeLabel">表示期間: <span id="yearRangeDisplay">-</span></strong>
                     </div>
-                    <div class="double-range-slider">
-                        <div class="slider-track" id="sliderTrack"></div>
-                        <input type="range" id="startYearSlider" min="1998" max="2025" value="2015" step="1">
-                        <input type="range" id="endYearSlider" min="1998" max="2025" value="2025" step="1">
-                    </div>
+                    <div id="year-range-slider" class="mb-3"></div>
                 </div>
             </div>
         </div>
