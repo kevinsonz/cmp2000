@@ -367,9 +367,12 @@ function parseContributionCSV(csvText) {
 
 // カード自動生成関数（フィルター対応）
 function generateCards(basicInfo, singleData, filterTag = null) {
-    let filteredInfo = basicInfo;
+    // cmp2000を除外
+    let filteredInfo = basicInfo.filter(item => item.key !== 'cmp2000');
+    
+    // ハッシュタグフィルターを適用
     if (filterTag) {
-        filteredInfo = basicInfo.filter(item => {
+        filteredInfo = filteredInfo.filter(item => {
             if (!item.hashTag) return false;
             const tags = extractHashTags(item.hashTag);
             return tags.includes(filterTag);
