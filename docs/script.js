@@ -589,7 +589,20 @@ function loadSingleFeeds(singleData, keys) {
         const feedContainer = document.getElementById(`single-rss-feed-container-${key}`);
         if (!feedContainer) return;
         
-        const filteredData = singleData.filter(item => item.key === key).slice(0, singleMaxLength);
+        const filteredData = singleData
+            .filter(item => item.key === key)
+            .sort((a, b) => {
+                // 日付なし項目を最上位に
+                if (!a.pubDate && !b.pubDate) return 0;
+                if (!a.pubDate) return -1;
+                if (!b.pubDate) return 1;
+                
+                // 日付あり項目は新しい順（降順）
+                const dateA = new Date(a.pubDate);
+                const dateB = new Date(b.pubDate);
+                return dateB - dateA;
+            })
+            .slice(0, singleMaxLength);
         
         filteredData.forEach(item => {
             if (!item.title) return;
@@ -717,26 +730,24 @@ function generateContributionGraph(contributionData) {
     monthsRow.style.height = '18px';
     monthsRow.style.marginBottom = '5px';
     
-    lastYear = -1;
     let lastMonth = -1;
     weeks.forEach((week, weekIndex) => {
-        const firstDay = week[0].date;
-        const month = firstDay.getMonth();
-        const year = firstDay.getFullYear();
-        
-        if (year !== lastYear) {
-            lastMonth = -1;
-            lastYear = year;
-        }
-        
-        if (month !== lastMonth) {
-            const monthLabel = document.createElement('div');
-            monthLabel.className = 'contribution-month';
-            monthLabel.textContent = `${month + 1}月`;
-            monthLabel.style.position = 'absolute';
-            monthLabel.style.left = `${25 + weekIndex * 14}px`;
-            monthsRow.appendChild(monthLabel);
-            lastMonth = month;
+        // 週の中で最初に表示される月を見つける
+        for (let i = 0; i < week.length; i++) {
+            const day = week[i];
+            const month = day.date.getMonth();
+            
+            // 新しい月の最初の出現
+            if (month !== lastMonth) {
+                const monthLabel = document.createElement('div');
+                monthLabel.className = 'contribution-month';
+                monthLabel.textContent = `${month + 1}月`;
+                monthLabel.style.position = 'absolute';
+                monthLabel.style.left = `${25 + weekIndex * 14}px`;
+                monthsRow.appendChild(monthLabel);
+                lastMonth = month;
+                break;
+            }
         }
     });
     
