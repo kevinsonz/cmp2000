@@ -28,9 +28,27 @@ function parseBasicInfoCSV(csvText) {
     const hashTagIndex = headers.indexOf('hashTag');
     const siteUrlIndex = headers.indexOf('siteUrl');
     const logoIndex = headers.indexOf('logo');
+    const commentIndex = headers.indexOf('comment');
     
     for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
+        const line = lines[i];
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        // カンマ区切りの解析（コメント内のカンマを考慮）
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
         
         // cmp2000は除外
         if (values[keyIndex] === 'cmp2000') continue;
@@ -42,7 +60,8 @@ function parseBasicInfoCSV(csvText) {
                 siteTitle: values[siteTitleIndex],
                 hashTag: values[hashTagIndex] || '',
                 siteUrl: values[siteUrlIndex] || '#',
-                logo: values[logoIndex] || ''
+                logo: values[logoIndex] || '',
+                comment: values[commentIndex] || ''
             });
         }
     }
@@ -253,15 +272,19 @@ function hideFilterUI() {
 // ハッシュタグフィルターを適用
 function applyHashTagFilter(tag) {
     currentFilterTag = tag;
-    generateAboutPage(tag);
-    showFilterUI(tag);
     
-    // ハッシュタグボタンの状態を更新
-    const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
-    generateHashTagList(allTags, tag);
+    // フィルター適用してページを再生成
+    generateAboutPage(tag);
+    
+    // フィルターUIを表示
+    showFilterUI(tag);
     
     // ジャンプメニューを更新
     updateJumpMenu(tag);
+    
+    // ハッシュタグ一覧の状態を更新
+    const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
+    generateHashTagList(allTags, tag);
     
     // フィルターUI表示位置にスムーズスクロール
     setTimeout(() => {
@@ -275,8 +298,15 @@ function applyHashTagFilter(tag) {
 // ハッシュタグフィルターをクリア
 function clearHashTagFilter() {
     currentFilterTag = null;
+    
+    // フィルターなしでページを再生成
     generateAboutPage();
+    
+    // フィルターUIを非表示
     hideFilterUI();
+    
+    // ジャンプメニューを更新
+    updateJumpMenu(null);
     
     // ハッシュタグボタンの状態を更新
     const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
@@ -392,6 +422,12 @@ function generateAboutPage(filterTag = null) {
                 siteList.forEach(site => {
                     const siteItem = document.createElement('div');
                     siteItem.className = 'site-item';
+                    siteItem.style.display = 'block';
+                    siteItem.style.marginBottom = '0.5rem';
+                    
+                    // タイトルとロゴのコンテナ
+                    const titleContainer = document.createElement('div');
+                    titleContainer.style.marginBottom = '0.25rem';
                     
                     const siteLink = document.createElement('a');
                     siteLink.href = site.siteUrl;
@@ -399,15 +435,15 @@ function generateAboutPage(filterTag = null) {
                     siteLink.className = 'site-link';
                     siteLink.textContent = site.siteTitle;
                     
-                    siteItem.appendChild(siteLink);
+                    titleContainer.appendChild(siteLink);
                     
-                    // ロゴがあれば表示
-                    if (site.logo) {
+                    // logo列が空白でない場合のみロゴを表示
+                    if (site.logo && site.logo.trim() !== '') {
                         const logoImg = document.createElement('img');
                         logoImg.src = site.logo;
                         logoImg.className = 'logo-img';
                         logoImg.alt = 'logo';
-                        siteItem.appendChild(logoImg);
+                        titleContainer.appendChild(logoImg);
                     }
                     
                     // ハッシュタグがあれば表示
@@ -415,7 +451,17 @@ function generateAboutPage(filterTag = null) {
                         const hashTagSpan = document.createElement('span');
                         hashTagSpan.className = 'hashtag-display';
                         hashTagSpan.innerHTML = convertHashTagsToLinks(site.hashTag);
-                        siteItem.appendChild(hashTagSpan);
+                        titleContainer.appendChild(hashTagSpan);
+                    }
+                    
+                    siteItem.appendChild(titleContainer);
+                    
+                    // コメントがあれば表示（archiveと同じスタイル）
+                    if (site.comment && site.comment.trim() !== '') {
+                        const commentSpan = document.createElement('span');
+                        commentSpan.className = 'archive-comment';
+                        commentSpan.textContent = site.comment;
+                        siteItem.appendChild(commentSpan);
                     }
                     
                     siteListDiv.appendChild(siteItem);
@@ -652,7 +698,24 @@ function initHeaderScroll() {
     }
 }
 
+// タイトルクリックでスクロール機能
+function initHeaderTitleClick() {
+    const header = document.getElementById('main-header');
+    const h1 = header ? header.querySelector('h1') : null;
+    
+    if (h1) {
+        h1.style.cursor = 'pointer';
+        h1.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+}
+
 // ページ読み込み時の初期化
 document.addEventListener('DOMContentLoaded', () => {
     initializeAboutPage();
+    initHeaderTitleClick();
 });

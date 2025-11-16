@@ -211,7 +211,7 @@ function updateJumpMenu(filterTag) {
     }
 }
 
-// CSV解析関数（基本情報用）
+// CSV解析関数（基本情報用） - comment列対応
 function parseBasicInfoCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -226,24 +226,40 @@ function parseBasicInfoCSV(csvText) {
     const imageIndex = headers.indexOf('image');
     const subImageIndex = headers.indexOf('sub-image');
     const logoIndex = headers.indexOf('logo');
+    const commentIndex = headers.indexOf('comment');
     
     for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
+        const line = lines[i];
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
         
-        if (values[keyIndex] === 'cmp2000') continue;
+        // カンマ区切りの解析（コメント内のカンマを考慮）
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
         
-        if (values[keyIndex] && values[categoryIndex] && 
-            values[siteTitleIndex] && values[breadcrumbsIndex] && values[siteUrlIndex]) {
+        if (values[keyIndex] && values[categoryIndex]) {
             items.push({
                 key: values[keyIndex],
                 category: values[categoryIndex],
-                siteTitle: values[siteTitleIndex],
-                breadcrumbs: values[breadcrumbsIndex],
+                siteTitle: values[siteTitleIndex] || '',
+                breadcrumbs: values[breadcrumbsIndex] || '',
                 hashTag: values[hashTagIndex] || '',
-                siteUrl: values[siteUrlIndex],
+                siteUrl: values[siteUrlIndex] || '',
                 image: values[imageIndex] || '',
                 subImage: values[subImageIndex] || '',
-                logo: values[logoIndex] || ''
+                logo: values[logoIndex] || '',
+                comment: commentIndex >= 0 ? (values[commentIndex] || '') : ''
             });
         }
     }
@@ -251,7 +267,7 @@ function parseBasicInfoCSV(csvText) {
     return items;
 }
 
-// CSV解析関数（multi用）
+// CSV解析関数（Multi用）
 function parseMultiCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -265,17 +281,33 @@ function parseMultiCSV(csvText) {
     const dateIndex = headers.indexOf('date');
     
     for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
+        const line = lines[i];
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
         
-        if (values[keyIndex] && values[breadcrumbsIndex] && values[siteUrlIndex] && 
-            values[titleIndex] && values[dateIndex]) {
+        // カンマ区切りの解析（タイトル内のカンマを考慮）
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        
+        if (values[keyIndex] && values[titleIndex]) {
             items.push({
                 key: values[keyIndex],
-                breadcrumbs: values[breadcrumbsIndex],
-                siteUrl: values[siteUrlIndex],
-                title: values[titleIndex],
+                breadcrumbs: values[breadcrumbsIndex] || '',
+                siteUrl: values[siteUrlIndex] || '',
+                title: values[titleIndex] || '',
                 link: values[linkIndex] || '',
-                pubDate: values[dateIndex]
+                pubDate: values[dateIndex] || ''
             });
         }
     }
@@ -283,7 +315,7 @@ function parseMultiCSV(csvText) {
     return items;
 }
 
-// CSV解析関数（single用）
+// CSV解析関数（Single用）
 function parseSingleCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -310,7 +342,7 @@ function parseSingleCSV(csvText) {
     return items;
 }
 
-// CSV解析関数（contribution用）
+// CSV解析関数（Contribution用）
 function parseContributionCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
@@ -403,6 +435,11 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                     ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
                     : '';
                 
+                // logo列が空白でない場合のみロゴを表示
+                const logoHtml = (site.logo && site.logo.trim() !== '')
+                    ? `<img src="${site.logo}" alt="logo" class="card-logo-img">`
+                    : '';
+                
                 const hashTagHtml = site.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small></div>` : '';
                 
                 // カテゴリ名を小さめの文字で表示
@@ -414,7 +451,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                             <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
                             ${newBadgeHtml}
                             ${subImageHtml}
-                            <img src="${site.logo}" alt="logo" class="card-logo-img">
+                            ${logoHtml}
                         </a>
                         <div class="card-body">
                             ${categoryBadgeHtml}
@@ -457,6 +494,11 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                     ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
                     : '';
                 
+                // logo列が空白でない場合のみロゴを表示
+                const logoHtml = (site.logo && site.logo.trim() !== '')
+                    ? `<img src="${site.logo}" alt="logo" class="card-logo-img">`
+                    : '';
+                
                 const hashTagHtml = site.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small></div>` : '';
                 
                 cardWrapper.innerHTML = `
@@ -465,7 +507,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                             <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
                             ${newBadgeHtml}
                             ${subImageHtml}
-                            <img src="${site.logo}" alt="logo" class="card-logo-img">
+                            ${logoHtml}
                         </a>
                         <div class="card-body">
                             <h5 class="card-title">${site.siteTitle}</h5>
@@ -519,75 +561,68 @@ function loadFeeds(multiData, singleData) {
                     <span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle;">${item.title}</span>
                 </a>`;
             } else {
-                titleSpan = `<span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle;">${item.title}</span>`;
+                titleSpan = `<span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle; color: #6c757d;">${item.title}</span>`;
             }
             
-            articleElement.innerHTML = `
-            <p style="margin-bottom: 0.25rem">
-                <span style="display: inline-block; width: 15rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle;">
-                    <a href="${item.siteUrl}" target="_blank"><strong>${item.breadcrumbs}</strong></a>
-                </span>
-                <span style="display: inline-block; width: 7.5rem; vertical-align: middle;">
-                     - ${formattedDate} 
-                </span>
-                <span style="vertical-align: middle;">
-                    ${titleSpan}
-                </span>
-            </p>
-            `;
+            const today = new Date();
+            const diffTime = today - date;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            let newBadge = '';
+            if (diffDays <= NEW_BADGE_DAYS) {
+                newBadge = '<span class="badge bg-danger" style="margin-right: 0.5rem;">New!!</span>';
+            }
+            
+            articleElement.innerHTML = `${newBadge}<span style="color: #6c757d; margin-right: 0.5rem;">${formattedDate}</span>${titleSpan}`;
+            articleElement.style.marginBottom = '0.5rem';
+            
             multiContainer.appendChild(articleElement);
         });
     }
-    
-    loadSingleFeeds(singleData);
 }
 
-function loadSingleFeeds(singleData, filterKeys = null) {
-    const groupedByKey = {};
-    singleData.forEach(item => {
-        if (!groupedByKey[item.key]) {
-            groupedByKey[item.key] = [];
-        }
-        groupedByKey[item.key].push(item);
-    });
-    
-    Object.entries(groupedByKey).forEach(([key, items]) => {
-        if (filterKeys && !filterKeys.includes(key)) return;
+function loadSingleFeeds(singleData, keys) {
+    keys.forEach(key => {
+        const feedContainer = document.getElementById(`single-rss-feed-container-${key}`);
+        if (!feedContainer) return;
         
-        const containerId = `single-rss-feed-container-${key}`;
-        const singleContainer = document.getElementById(containerId);
+        const filteredData = singleData.filter(item => item.key === key).slice(0, singleMaxLength);
         
-        if (singleContainer) {
-            singleContainer.innerHTML = '';
+        filteredData.forEach(item => {
+            if (!item.title) return;
             
-            items.slice(0, singleMaxLength).forEach(item => {
-                const articleElement = document.createElement('div');
+            const articleElement = document.createElement('div');
+            articleElement.style.marginBottom = '0.4rem';
+            articleElement.style.fontSize = '0.9rem';
+            
+            let dateSpan = '';
+            if (item.pubDate) {
+                const date = new Date(item.pubDate);
+                const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
                 
-                let dateHtml = '';
-                if (item.pubDate) {
-                    const date = new Date(item.pubDate);
-                    if (!isNaN(date.getTime())) {
-                        const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-                        dateHtml = `<span style="margin-bottom: 0.25rem">${formattedDate}</span>`;
-                    }
+                const today = new Date();
+                const diffTime = today - date;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                let newBadge = '';
+                if (diffDays <= NEW_BADGE_DAYS) {
+                    newBadge = '<span class="badge bg-danger" style="margin-right: 0.35rem; font-size: 0.65rem;">New!!</span>';
                 }
                 
-                let titleHtml = '';
-                if (item.link) {
-                    titleHtml = `<a href="${item.link}" target="_blank"><p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p></a>`;
-                } else {
-                    titleHtml = `<p style="line-height: 1.25; margin-bottom: 0.25rem">${item.title}</p>`;
-                }
-                
-                if (dateHtml) {
-                    articleElement.innerHTML = `${dateHtml}${titleHtml}`;
-                } else {
-                    articleElement.innerHTML = titleHtml;
-                }
-                
-                singleContainer.appendChild(articleElement);
-            });
-        }
+                dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
+            }
+            
+            let titleSpan = '';
+            if (item.link) {
+                titleSpan = `<a href="${item.link}" target="_blank" style="color: #0d6efd; font-size: 0.9rem;">${item.title}</a>`;
+            } else {
+                titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${item.title}</span>`;
+            }
+            
+            articleElement.innerHTML = `${dateSpan}${titleSpan}`;
+            
+            feedContainer.appendChild(articleElement);
+        });
     });
 }
 
@@ -770,7 +805,7 @@ function generateContributionGraph(contributionData) {
     }, 100);
 }
 
-// 初期化関数
+// ヘッダー初期化
 function initHeaderScroll() {
     const header = document.getElementById('main-header');
     
@@ -798,6 +833,22 @@ function initHeaderScroll() {
     }
 }
 
+// タイトルクリックでスクロール機能
+function initHeaderTitleClick() {
+    const header = document.getElementById('main-header');
+    const h1 = header ? header.querySelector('h1') : null;
+    
+    if (h1) {
+        h1.style.cursor = 'pointer';
+        h1.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+}
+
 function updateCurrentYear() {
     const currentYearSpan = document.getElementById('current-year');
     if (currentYearSpan) {
@@ -808,5 +859,6 @@ function updateCurrentYear() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initHeaderScroll();
+    initHeaderTitleClick();
     updateCurrentYear();
 });

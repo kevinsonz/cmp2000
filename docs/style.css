@@ -198,62 +198,109 @@
 }
 
 .card-action-button {
-    flex-shrink: 0; /* ボタンが縮まないようにする */
-    min-width: 100px; /* 最小幅を確保 */
+    flex-shrink: 0;
 }
 
-.card-hashtag-area {
-    flex: 1;
-    min-width: 0; /* flexアイテムの縮小を許可 */
-    overflow-x: auto; /* 横スクロール有効化 */
-    overflow-y: hidden;
-    white-space: nowrap; /* 改行させない */
-    
-    /* スクロールバーのスタイル（Webkit系ブラウザ） */
-    scrollbar-width: thin;
-    scrollbar-color: #dee2e6 transparent;
+.card-hashtag {
+    flex-grow: 1;
+    font-size: 0.85rem;
+    line-height: 1.3;
+    word-break: break-word;
 }
 
-.card-hashtag-area::-webkit-scrollbar {
-    height: 6px;
-}
-
-.card-hashtag-area::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.card-hashtag-area::-webkit-scrollbar-thumb {
-    background-color: #dee2e6;
-    border-radius: 3px;
-}
-
-.card-hashtag-area::-webkit-scrollbar-thumb:hover {
-    background-color: #adb5bd;
-}
-
-.card-hashtag-area a {
-    display: inline-block;
+.card-hashtag a {
+    color: #0d6efd;
+    text-decoration: none;
     margin-right: 0.25rem;
 }
 
+.card-hashtag a:hover {
+    text-decoration: underline;
+}
+
+/* RSSとSingle記事のスタイル */
+.rss-article-item,
+.single-article-item {
+    padding: 0.4rem 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.rss-article-item:last-child,
+.single-article-item:last-child {
+    border-bottom: none;
+}
+
+.rss-article-date,
+.single-article-date {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+}
+
+.rss-article-link,
+.single-article-link {
+    color: #0d6efd;
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.rss-article-link:hover,
+.single-article-link:hover {
+    text-decoration: underline;
+}
+
+.rss-article-text,
+.single-article-text {
+    color: #495057;
+}
 
 /* コントリビューショングラフのスタイル */
 .contribution-graph-wrapper {
     overflow-x: auto;
     overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px;
     background-color: white;
-    padding: 20px;
     border-radius: 6px;
-    border: 1px solid #d0d7de;
-    position: relative;
-    z-index: 1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.contribution-graph {
-    display: inline-flex;
+.contribution-graph-container {
+    display: inline-block;
+    min-width: 100%;
+}
+
+.contribution-year,
+.contribution-month {
+    font-size: 11px;
+    color: #666;
+}
+
+.contribution-main {
+    display: flex;
+    gap: 3px;
+}
+
+.contribution-weekdays {
+    display: flex;
     flex-direction: column;
     gap: 3px;
-    min-width: fit-content;
+    margin-right: 5px;
+}
+
+.contribution-weekday {
+    height: 10px;
+    font-size: 9px;
+    color: #666;
+    display: flex;
+    align-items: center;
+}
+
+.contribution-weeks {
+    display: flex;
+    gap: 3px;
 }
 
 .contribution-week {
@@ -263,20 +310,17 @@
 }
 
 .contribution-day {
-    width: 11px;
-    height: 11px;
+    width: 10px;
+    height: 10px;
     border-radius: 2px;
     cursor: pointer;
-    position: relative;
-    transition: all 0.1s ease;
+    transition: transform 0.1s ease;
 }
 
 .contribution-day:hover {
-    outline: 2px solid rgba(0, 0, 0, 0.3);
-    outline-offset: 0px;
+    transform: scale(1.2);
 }
 
-/* コントリビューションレベルの色（GitHub風） */
 .contribution-day.level-0 {
     background-color: #ebedf0;
 }
@@ -297,94 +341,29 @@
     background-color: #216e39;
 }
 
-/* ツールチップ */
 .contribution-tooltip {
-    position: absolute;
+    position: fixed;
     background-color: rgba(0, 0, 0, 0.8);
     color: white;
-    padding: 6px 10px;
-    border-radius: 4px;
+    padding: 4px 8px;
+    border-radius: 3px;
     font-size: 12px;
-    white-space: nowrap;
     pointer-events: none;
-    z-index: 1000;
+    z-index: 9999;
+    white-space: nowrap;
     display: none;
 }
 
-.contribution-graph-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0px;
-    align-items: flex-start;
-}
-
-.contribution-years {
-    display: flex;
-    margin-bottom: 2px;
-    padding-left: 0px;
-    position: relative;
-    min-height: 20px;
-}
-
-.contribution-year {
-    font-size: 11px;
-    color: #57606a;
-    font-weight: bold;
-    white-space: nowrap;
-}
-
-.contribution-months {
-    display: flex;
-    margin-bottom: 10px;
-    padding-left: 0px;
-    position: relative;
-    min-height: 18px;
-}
-
-.contribution-month {
-    font-size: 11px;
-    color: #57606a;
-    white-space: nowrap;
-}
-
-.contribution-main {
-    display: flex;
-    gap: 10px;
-}
-
-.contribution-weekdays {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding-top: 0px;
-}
-
-.contribution-weekday {
-    height: 11px;
-    font-size: 9px;
-    color: #57606a;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 5px;
-    min-width: 25px;
-}
-
-.contribution-weeks {
-    display: flex;
-    gap: 3px;
-}
 /* ハッシュタグ一覧のスタイル */
 .hashtag-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     justify-content: center;
-    margin-top: 1rem;
 }
 
 .hashtag-button {
-    background-color: #e9ecef;
+    background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 20px;
     padding: 0.4rem 1rem;
@@ -393,8 +372,8 @@
     transition: all 0.2s ease;
 }
 
-.hashtag-button:hover:not(.active) {
-    background-color: #cbd3da;
+.hashtag-button:hover {
+    background-color: #e9ecef;
     border-color: #adb5bd;
 }
 
@@ -402,29 +381,69 @@
     background-color: #0d6efd;
     color: white;
     border-color: #0d6efd;
+}
+
+/* =================================
+   About.html専用のスタイル
+   ================================= */
+
+/* 理念セクション */
+.philosophy-section {
+    max-width: 960px;
+}
+
+/* セクションカード */
+.section-card {
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.section-header {
+    background-color: #0d6efd;
+    color: white;
+    padding: 1rem;
+    font-size: 1.3rem;
     font-weight: bold;
+    text-align: center;
 }
 
-.hashtag-button.active:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
+.section-body {
+    padding: 1.5rem;
 }
 
-/* フィルターUI表示エリアのスタイル */
-#filter-ui-container {
-    scroll-margin-top: 100px;
+/* サイトリスト */
+.site-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
 }
 
-/* about.html用のハッシュタグセクションスタイル */
-.hashtag-list-section {
-    padding: 2rem 0;
-    background-color: #f8f9fa;
-    margin-top: 2rem;
+.site-item {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f0f0f0;
 }
 
+.site-item:last-child {
+    border-bottom: none;
+}
+
+.site-link {
+    text-decoration: none;
+    color: #0d6efd;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.site-link:hover {
+    color: #0a58ca;
+    text-decoration: underline;
+}
+
+/* ハッシュタグ表示 */
 .hashtag-display {
-    margin-left: 0.5rem;
     font-size: 0.85rem;
+    margin-left: 0.5rem;
 }
 
 .hashtag-display a {
@@ -437,66 +456,8 @@
     text-decoration: underline;
 }
 
-/* =================================
-   About.html専用のスタイル
-   ================================= */
-
-/* セクションカード用のスタイル */
-.section-card {
-    margin-bottom: 2rem;
-    scroll-margin-top: 100px; /* ヘッダー分のオフセット */
-}
-
-.section-header {
-    background-color: #f8f9fa;
-    padding: 0.75rem 1rem;
-    border-bottom: 2px solid #dee2e6;
-    font-weight: bold;
-    font-size: 1.2rem;
-    color: #212529;
-}
-
-.section-body {
-    padding: 1rem;
-}
-
-.site-list {
-    list-style: none;
-    padding-left: 0;
-    margin-bottom: 0;
-}
-
-.site-item {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.site-item:last-child {
-    border-bottom: none;
-}
-
-.site-link {
-    text-decoration: none;
-    color: #0d6efd;
-    margin-right: 0.5rem;
-}
-
-.site-link:hover {
-    text-decoration: underline;
-}
-
-.site-comment {
-    color: #6c757d;
-    font-size: 0.85rem;
-    margin-left: 0.5rem;
-}
-
+/* アーカイブセクション */
 .archive-section {
-    margin-top: 1rem;
-    padding: 1rem 1rem 1rem 1.25rem;
     background-color: #f8f9fa;
     border-radius: 4px;
     border-left: 4px solid #6c757d;
@@ -577,8 +538,6 @@
     table-layout: auto;
 }
 
-
-
 .history-table thead th {
     background-color: #f8f9fa;
     font-weight: bold;
@@ -616,7 +575,7 @@
 
 .history-table tbody td {
     vertical-align: top;
-    padding: 0.75rem; /* 少し控えめに調整 */
+    padding: 0.75rem;
 }
 
 /* Article列のスタイル */
@@ -636,18 +595,10 @@
     border-bottom: none;
 }
 
-/* カテゴリ略称のスタイル */
-.category-abbr {
+/* カテゴリ略称ボタンのスタイル */
+.category-abbr-btn {
     font-weight: bold;
-    color: #0d6efd;
-    margin-left: 0.25rem;
-    margin-right: 0.25rem;
     cursor: pointer;
-    text-decoration: none;
-}
-
-.category-abbr:hover {
-    text-decoration: underline;
 }
 
 /* 記事がない年のセルのスタイル */
@@ -655,18 +606,15 @@
     background-color: #f0f0f0 !important;
 }
 
-/* 空白セルのhover時の色（通常の灰色と区別） */
+/* hover時の色を薄い青に変更 */
+.history-table tbody tr:hover td:not(.empty-year-cell) {
+    background-color: #cfe2ff !important;
+}
+
+/* 空白セルのhover時の色 */
 .history-table tbody tr:hover td.empty-year-cell {
     background-color: #e0e0e0 !important;
 }
-
-/* カテゴリアイコンのスタイル */
-.category-icon {
-    display: inline-block;
-    margin-right: 0.3rem;
-}
-
-
 
 /* ゼブラストライプ（奇数行に薄い背景色） */
 .history-table tbody tr:nth-child(odd) {
@@ -703,11 +651,6 @@
     -webkit-overflow-scrolling: touch;
 }
 
-/* スライダーのスタイル調整 */
-.form-range {
-    cursor: pointer;
-}
-
 /* レスポンシブ対応（History） */
 @media (max-width: 768px) {
     .history-table {
@@ -715,7 +658,7 @@
     }
     
     .history-table tbody td {
-        padding: 0.5rem; /* さらに控えめに */
+        padding: 0.5rem;
     }
     
     .year-column {
@@ -731,23 +674,6 @@
     }
 }
 
-/* カテゴリフィルターボタンのスタイル */
-.category-filter-btn {
-    transition: all 0.2s ease;
-}
-
-.category-filter-btn.active {
-    background-color: #0d6efd;
-    color: white;
-    border-color: #0d6efd;
-}
-
-.category-filter-btn:hover {
-    background-color: #0b5ed7;
-    color: white;
-    border-color: #0a58ca;
-}
-
 /* すべて表示ボタンのスタイル */
 #showAllBtn {
     white-space: nowrap;
@@ -756,48 +682,6 @@
 #showAllBtn:hover {
     background-color: #0d6efd;
     color: white;
-}
-
-/* =================================
-   History.html専用 - noUiSliderスタイル
-   ================================= */
-
-/* noUiSliderのカスタマイズ */
-#year-range-slider {
-    margin: 0 20px;
-}
-
-.noUi-connect {
-    background: #0d6efd;
-}
-
-.noUi-handle {
-    border: 2px solid #0d6efd;
-    border-radius: 50%;
-    background: #fff;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.noUi-handle:before,
-.noUi-handle:after {
-    display: none;
-}
-
-.noUi-tooltip {
-    display: none;
-}
-
-/* カテゴリアイコンのスタイル */
-.category-icon-large {
-    font-size: 1.5rem;
-    transition: opacity 0.3s, filter 0.3s;
-    display: inline-block;
-    cursor: default;
-}
-
-.category-icon-cell {
-    vertical-align: middle;
 }
 
 /* 選択中アイコンの表示 */

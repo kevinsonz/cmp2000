@@ -14,19 +14,13 @@
     <!-- Bootstrap JavaScript Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
 
-    <!-- noUiSlider CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css" integrity="sha512-**qveKnGrvOChbSzAdtSs8p69eoLegyh+1hwOMbmpCViIwj7rn4oJjdmMvWOuyQlTOZgTlZA0N2PXA7iA8/2TUYA==**" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
-    <!-- noUiSlider JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js" integrity="sha512-**UOJe4paV6hYWBnS0c9GnIRH8PLm2nFK22uhfAvsTIqd3uwnWsVri1OPn5fJYdLtGY3wB11LGHJ4yPU1WFJeBYQ==**" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
     <!-- カスタムスタイルシート -->
     <link rel="stylesheet" href="./style.css">
 
     <!-- ローカル開発用データ（GitHub Pagesでは404になるが問題なし） -->
     <script src="./history-data.js" onerror="console.log('ローカルデータなし: オンラインモードで動作します')"></script>
 
-    <!-- カスタムスクリプト（defer属性でHTML解析後に実行） -->
+    <!-- カスタムスクリプト（deferで後から実行） -->
     <script src="./history-script.js" defer></script>
 </head>
 
@@ -55,79 +49,69 @@
         
         <h2 class="text-center mb-3">History</h2>
         
-        <!-- 期間設定UI -->
+        <!-- フィルター設定UI（アコーディオン） -->
         <div class="mb-3">
             <div class="card">
-                <div class="card-body">
-                    <div class="mb-3 text-center">
-                        <strong id="yearRangeLabel">表示期間: <span id="yearRangeDisplay">-</span></strong>
-                    </div>
-                    <div id="year-range-slider" class="mb-3"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- カテゴリフィルターUI -->
-        <div class="mb-3">
-            <div class="card">
-                <div class="card-body p-0">
-                    <table class="table table-borderless mb-0">
-                        <tbody>
-                            <tr>
-                                <td class="ps-3" style="width: 100px;"><strong>カテゴリ</strong></td>
-                                <td class="px-2 text-center category-icon-cell" style="width: 60px;"><span id="icon-夕刊中年マカチン" class="category-icon-large">📰</span></td>
-                                <td class="px-2 text-center category-icon-cell" style="width: 60px;"><span id="icon-CMP2000" class="category-icon-large">🏠</span></td>
-                                <td class="px-2 text-center category-icon-cell" style="width: 60px;"><span id="icon-けびんケビンソン" class="category-icon-large">👤</span></td>
-                                <td class="px-2 text-center category-icon-cell" style="width: 60px;"><span id="icon-イイダリョウ" class="category-icon-large">💻</span></td>
-                                <td class="px-2 text-center category-icon-cell" style="width: 60px;"><span id="icon-その他" class="category-icon-large">📌</span></td>
-                                <td class="text-end pe-3">
-                                    <button class="btn btn-sm btn-outline-secondary" id="deselectAllCategoriesBtn">全解除</button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-3"><strong>フィルタ</strong></td>
-                                <td class="px-2 text-center">
-                                    <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-夕刊中年マカチン" data-category="夕刊中年マカチン" checked>
-                                </td>
-                                <td class="px-2 text-center">
-                                    <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-CMP2000" data-category="CMP2000" checked>
-                                </td>
-                                <td class="px-2 text-center">
-                                    <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-けびんケビンソン" data-category="けびんケビンソン" checked>
-                                </td>
-                                <td class="px-2 text-center">
-                                    <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-イイダリョウ" data-category="イイダリョウ" checked>
-                                </td>
-                                <td class="px-2 text-center">
-                                    <input class="form-check-input category-filter-checkbox" type="checkbox" id="filter-その他" data-category="その他" checked>
-                                </td>
-                                <td class="text-end pe-3">
-                                    <button class="btn btn-sm btn-outline-secondary" id="selectAllCategoriesBtn">全選択</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- 折り畳み可能な補足情報 -->
-                <div class="card-footer bg-white border-top">
+                <div class="card-header bg-white">
                     <button class="btn btn-link w-100 text-start text-decoration-none p-0" 
                             type="button" 
                             data-bs-toggle="collapse" 
-                            data-bs-target="#categoryLegendCollapse" 
+                            data-bs-target="#filterSettings" 
                             aria-expanded="false" 
-                            aria-controls="categoryLegendCollapse">
-                        <small class="text-muted">▼ カテゴリ名を表示</small>
+                            aria-controls="filterSettings">
+                        <strong>⚙️ フィルター設定</strong>
                     </button>
-                    <div class="collapse" id="categoryLegendCollapse">
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <strong>📰</strong> 夕刊中年マカチン（夕マカ） / 
-                                <strong>🏠</strong> CMP2000（CMP） / 
-                                <strong>👤</strong> けびんケビンソン（けびん） / 
-                                <strong>💻</strong> イイダリョウ（リョウ） / 
-                                <strong>📌</strong> その他（etc.）
-                            </small>
+                </div>
+                <div class="collapse" id="filterSettings">
+                    <div class="card-body">
+                        <!-- 年の範囲設定 -->
+                        <div class="mb-4">
+                            <h6 class="mb-3"><strong>表示期間</strong></h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="startYearInput" class="form-label">開始年</label>
+                                    <input type="number" class="form-control" id="startYearInput" min="1998" step="1">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="endYearInput" class="form-label">終了年</label>
+                                    <input type="number" class="form-control" id="endYearInput" min="1998" step="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- カテゴリーフィルター -->
+                        <div class="mb-4">
+                            <h6 class="mb-3"><strong>カテゴリー</strong></h6>
+                            <div class="d-flex justify-content-end mb-2">
+                                <button class="btn btn-sm btn-outline-secondary me-2" id="filterSelectAllBtn">全選択</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="filterDeselectAllBtn">全解除</button>
+                            </div>
+                            <div id="categoryFilterList">
+                                <!-- JavaScriptで動的に生成 -->
+                            </div>
+                        </div>
+
+                        <!-- 表示オプション -->
+                        <div class="mb-4">
+                            <h6 class="mb-3"><strong>表示オプション</strong></h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="showEmptyYearsCheck" checked>
+                                <label class="form-check-label" for="showEmptyYearsCheck">
+                                    中身が空白の年も表示する
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="sortNewestFirstCheck" checked>
+                                <label class="form-check-label" for="sortNewestFirstCheck">
+                                    新しい記事から古い記事の順に並べる（新→古）
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 適用・キャンセルボタン -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <button class="btn btn-secondary" id="filterCancelBtn">キャンセル</button>
+                            <button class="btn btn-primary" id="filterApplyBtn">適用</button>
                         </div>
                     </div>
                 </div>
