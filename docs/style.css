@@ -8,13 +8,56 @@
 #main-header h1 {
     font-size: 2.5rem;
     transition: font-size 0.3s ease, padding 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ヘッダーアイコン */
+.header-icon {
+    height: 2.5rem;
+    width: auto;
+    transition: height 0.3s ease;
 }
 
 /* スクロール時の小さいヘッダー */
+#main-header.scrolled {
+    text-align: left;
+    padding-left: 1rem;
+}
+
 #main-header.scrolled h1 {
     font-size: 1.5rem;
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
+    justify-content: flex-start;
+}
+
+#main-header.scrolled .header-icon {
+    height: 1.5rem;
+}
+
+/* 改行制御 */
+@media (max-width: 576px) {
+    #main-header h1 {
+        font-size: 2rem;
+    }
+    
+    .header-icon {
+        height: 2rem;
+    }
+    
+    .header-text-cmp {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .header-text-official {
+        width: 100%;
+        text-align: center;
+    }
 }
 
 /* クリック可能な要素のスタイル */
@@ -275,6 +318,7 @@
 .contribution-graph-container {
     display: inline-block;
     min-width: 100%;
+    padding-right: 20px; /* スマホで右端の余白を追加 */
 }
 
 .contribution-year,
@@ -293,6 +337,11 @@
     flex-direction: column;
     gap: 3px;
     margin-right: 5px;
+}
+
+.contribution-weekdays-right {
+    margin-right: 0;
+    margin-left: 5px;
 }
 
 .contribution-weekday {
@@ -359,6 +408,35 @@
     display: none;
 }
 
+/* PCでの右側の隙間を調整 */
+@media (min-width: 769px) {
+    .contribution-graph-container {
+        padding-right: 10px;
+    }
+    
+    /* PCではグラフを中央寄せ */
+    .contribution-graph-wrapper {
+        display: flex;
+        justify-content: center;
+    }
+}
+
+/* より広い画面（1024px以上）では、グラフを少し大きく */
+@media (min-width: 1024px) {
+    /* グラフコンテナの幅を制限して余白を減らす */
+    .contribution-graph-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px 10px; /* 拡大による余白を確保 */
+    }
+    
+    /* グラフ全体を1.2倍に拡大 */
+    .contribution-graph-container {
+        transform: scale(1.2);
+        transform-origin: center center;
+    }
+}
+
 /* ハッシュタグ一覧のスタイル */
 .hashtag-list {
     display: flex;
@@ -400,17 +478,20 @@
 /* セクションカード */
 .section-card {
     margin-bottom: 1.5rem;
-    border-radius: 8px;
-    overflow: hidden;
+    border: none; /* 外枠を削除 */
+    border-radius: 0; /* 角丸も削除 */
+    overflow: visible;
+    box-shadow: none; /* 影も削除 */
 }
 
 .section-header {
-    background-color: #0d6efd;
-    color: white;
+    background-color: #f8f9fa; /* 青から通常の背景色に変更 */
+    color: #212529; /* テキスト色も黒に */
     padding: 1rem;
     font-size: 1.3rem;
     font-weight: bold;
     text-align: center;
+    border-bottom: 2px solid #dee2e6; /* 下線を追加 */
 }
 
 .section-body {
@@ -676,6 +757,22 @@
     .article-header-cell button {
         font-size: 0.75rem;
         padding: 0.2rem 0.4rem;
+    }
+    
+    /* スマホでの表の横スクロール対応 */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    /* カテゴリアイコンエリアのスクロール対応 */
+    .article-header-cell .d-flex {
+        overflow: visible;
+    }
+    
+    #selectedCategoryIcons {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
     }
 }
 

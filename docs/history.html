@@ -27,7 +27,13 @@
 <body class="bg-light" id="history">
     <!-- ページヘッダー（固定） -->
     <header id="main-header" class="sticky-top bg-light border-bottom">
-        <h1 class="text-center py-3 mb-0">CMP2000 Official Portal</h1>
+        <h1 class="text-center py-3 mb-0">
+            <a href="https://kevinsonz.github.io/cmp2000/" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+                <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon">
+                <span class="header-text-cmp">CMP2000</span>
+                <span class="header-text-official">Official Portal</span>
+            </a>
+        </h1>
     </header>
 
     <!-- ページメニュー -->
@@ -98,17 +104,35 @@
                         <!-- 表示オプション -->
                         <div class="mb-4">
                             <h6 class="mb-3"><strong>表示オプション</strong></h6>
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="showEmptyYearsCheck" checked>
-                                <label class="form-check-label" for="showEmptyYearsCheck">
-                                    中身が空白の年も表示する
-                                </label>
+                            <div class="mb-3">
+                                <label class="form-label d-block">空白年の表示：</label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="showEmptyYears" id="showEmptyYearsOn" value="on" checked>
+                                    <label class="form-check-label" for="showEmptyYearsOn">
+                                        [+] On
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="showEmptyYears" id="showEmptyYearsOff" value="off">
+                                    <label class="form-check-label" for="showEmptyYearsOff">
+                                        [-] Off
+                                    </label>
+                                </div>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="sortNewestFirstCheck" checked>
-                                <label class="form-check-label" for="sortNewestFirstCheck">
-                                    新しい記事から古い記事の順に並べる（新→古）
-                                </label>
+                            <div class="mb-2">
+                                <label class="form-label d-block">記事順：</label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="sortOrder" id="sortNewestFirst" value="desc" checked>
+                                    <label class="form-check-label" for="sortNewestFirst">
+                                        ▼ 降順
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="sortOrder" id="sortOldestFirst" value="asc">
+                                    <label class="form-check-label" for="sortOldestFirst">
+                                        ▲ 昇順
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -127,14 +151,22 @@
             <table class="table table-bordered table-hover history-table" id="historyTable">
                 <thead class="table-light sticky-top">
                     <tr>
-                        <th class="year-column">Year</th>
+                        <th class="year-column">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <span>Year</span>
+                                <div class="d-flex gap-1 align-items-center">
+                                    <span id="emptyYearIndicator" class="clickable-indicator" style="cursor: pointer; user-select: none;">[+]</span>
+                                    <span id="sortOrderIndicator" class="clickable-indicator" style="cursor: pointer; user-select: none;">▼</span>
+                                </div>
+                            </div>
+                        </th>
                         <th class="article-header-cell">
                             <div class="d-flex justify-content-between align-items-center flex-nowrap">
                                 <div class="d-flex align-items-center gap-2">
                                     <span>Article</span>
-                                    <span id="selectedCategoryIcons" class="text-muted small"></span>
+                                    <span id="selectedCategoryIcons" class="text-muted small clickable-icons"></span>
                                 </div>
-                                <button class="btn btn-sm btn-outline-primary flex-shrink-0" id="showAllBtn">すべて表示</button>
+                                <button class="btn btn-sm btn-outline-primary flex-shrink-0" id="showAllBtn">全表示</button>
                             </div>
                         </th>
                     </tr>

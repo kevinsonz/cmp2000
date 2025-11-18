@@ -367,8 +367,8 @@ function parseContributionCSV(csvText) {
 
 // カード自動生成関数（フィルター対応）
 function generateCards(basicInfo, singleData, filterTag = null) {
-    // cmp2000を除外
-    let filteredInfo = basicInfo.filter(item => item.key !== 'cmp2000');
+    // 全てのアイテムを表示
+    let filteredInfo = basicInfo;
     
     // ハッシュタグフィルターを適用
     if (filterTag) {
@@ -558,6 +558,14 @@ function loadFeeds(multiData, singleData) {
             const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
             const articleElement = document.createElement('div');
             
+            // breadcrumbsのリンクを追加
+            let breadcrumbsSpan = '';
+            if (item.breadcrumbs && item.siteUrl) {
+                breadcrumbsSpan = `<a href="${item.siteUrl}" target="_blank" style="color: #0d6efd; margin-right: 0.5rem; text-decoration: none;">${item.breadcrumbs}</a>`;
+            } else if (item.breadcrumbs) {
+                breadcrumbsSpan = `<span style="color: #495057; margin-right: 0.5rem;">${item.breadcrumbs}</span>`;
+            }
+            
             let titleSpan = '';
             if (item.link) {
                 titleSpan = `<a href="${item.link}" target="_blank">
@@ -576,7 +584,7 @@ function loadFeeds(multiData, singleData) {
                 newBadge = '<span class="badge bg-danger" style="margin-right: 0.5rem;">New!!</span>';
             }
             
-            articleElement.innerHTML = `${newBadge}<span style="color: #6c757d; margin-right: 0.5rem;">${formattedDate}</span>${titleSpan}`;
+            articleElement.innerHTML = `${newBadge}${breadcrumbsSpan}<span style="color: #6c757d; margin-right: 0.5rem;">${formattedDate}</span>${titleSpan}`;
             articleElement.style.marginBottom = '0.5rem';
             
             multiContainer.appendChild(articleElement);
@@ -762,17 +770,16 @@ function generateContributionGraph(contributionData) {
     mainContent.style.position = 'relative';
     mainContent.style.zIndex = '1';
     
-    const weekdays = document.createElement('div');
-    weekdays.className = 'contribution-weekdays';
-    ['日', '月', '火', '水', '木', '金', '土'].forEach((day, index) => {
+    // 左側の曜日ラベル
+    const weekdaysLeft = document.createElement('div');
+    weekdaysLeft.className = 'contribution-weekdays';
+    ['日', '月', '火', '水', '木', '金', '土'].forEach((day) => {
         const weekday = document.createElement('div');
         weekday.className = 'contribution-weekday';
-        if (index === 1 || index === 3 || index === 5) {
-            weekday.textContent = day;
-        }
-        weekdays.appendChild(weekday);
+        weekday.textContent = day;
+        weekdaysLeft.appendChild(weekday);
     });
-    mainContent.appendChild(weekdays);
+    mainContent.appendChild(weekdaysLeft);
     
     const weeksContainer = document.createElement('div');
     weeksContainer.className = 'contribution-weeks';
@@ -812,6 +819,18 @@ function generateContributionGraph(contributionData) {
     });
     
     mainContent.appendChild(weeksContainer);
+    
+    // 右側の曜日ラベル
+    const weekdaysRight = document.createElement('div');
+    weekdaysRight.className = 'contribution-weekdays contribution-weekdays-right';
+    ['日', '月', '火', '水', '木', '金', '土'].forEach((day) => {
+        const weekday = document.createElement('div');
+        weekday.className = 'contribution-weekday';
+        weekday.textContent = day;
+        weekdaysRight.appendChild(weekday);
+    });
+    mainContent.appendChild(weekdaysRight);
+    
     graphContainer.appendChild(mainContent);
     container.appendChild(graphContainer);
     
