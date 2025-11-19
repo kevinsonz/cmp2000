@@ -483,10 +483,10 @@
 /* セクションカード */
 .section-card {
     margin-bottom: 1.5rem;
-    border: none; /* 外枠を削除 */
-    border-radius: 0; /* 角丸も削除 */
+    border: 1px solid #dee2e6; /* 罫線を追加 */
+    border-radius: 0.5rem; /* 角丸を追加 */
     overflow: visible;
-    box-shadow: none; /* 影も削除 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 軽い影を追加 */
 }
 
 .section-header {
@@ -500,7 +500,7 @@
 }
 
 .section-body {
-    padding: 1.5rem;
+    padding: 1rem; /* 1.5remから1remに縮小 */
 }
 
 /* サイトリスト */
@@ -634,9 +634,6 @@
     font-weight: bold;
     text-align: center;
     vertical-align: middle;
-    position: sticky;
-    top: 0;
-    z-index: 10;
 }
 
 /* Articleヘッダーセルのスタイル */
@@ -800,4 +797,20 @@ select option:disabled {
 #selectedCategoryIcons {
     font-size: 1rem;
     white-space: nowrap;
+}
+
+/* 省略行（…）のスタイル */
+.ellipsis-row {
+    background-color: #fff3cd !important;
+    border-top: 2px dashed #ffc107 !important;
+    border-bottom: 2px dashed #ffc107 !important;
+}
+
+.ellipsis-row td {
+    background-color: #fff3cd !important;
+    font-weight: 500;
+}
+
+.ellipsis-row:hover td {
+    background-color: #ffe69c !important;
 }

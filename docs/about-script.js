@@ -479,7 +479,7 @@ function generateAboutPage(filterTag = null) {
                 archiveSection.style.border = '2px solid #adb5bd';
                 archiveSection.style.borderRadius = '0.5rem';
                 archiveSection.style.padding = '1rem';
-                archiveSection.style.marginTop = '1rem';
+                archiveSection.style.marginTop = '0.5rem'; /* 1remから0.5remに縮小 */
                 archiveSection.style.backgroundColor = '#f8f9fa';
                 
                 // アーカイブセクションヘッダー

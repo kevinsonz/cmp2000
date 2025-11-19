@@ -53,7 +53,7 @@
             <a href="index.html" class="btn btn-outline-primary">← 🏠 ポータルページへ戻る</a>
         </div>
         
-        <h2 class="text-center mb-3">History</h2>
+        <h2 class="text-center mb-3">History since 1998</h2>
         
         <!-- フィルター設定UI（アコーディオン） -->
         <div class="mb-3">
@@ -146,10 +146,15 @@
             </div>
         </div>
 
+        <!-- 年表の範囲表示 -->
+        <div class="mb-2 text-center">
+            <span id="year-range-display" class="text-muted small"></span>
+        </div>
+
         <!-- 年表テーブル -->
         <div class="table-responsive">
             <table class="table table-bordered table-hover history-table" id="historyTable">
-                <thead class="table-light sticky-top">
+                <thead class="table-light">
                     <tr>
                         <th class="year-column">
                             <div class="d-flex flex-column align-items-center gap-1">

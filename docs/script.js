@@ -551,44 +551,112 @@ function loadFeeds(multiData, singleData) {
     const multiContainer = document.getElementById('multi-rss-feed-container');
     
     if (multiContainer) {
+        // テーブル形式で表示するためのラッパー
+        const tableWrapper = document.createElement('div');
+        tableWrapper.style.maxHeight = '400px'; // スクロール可能な高さ
+        tableWrapper.style.overflowY = 'auto';
+        tableWrapper.style.border = '1px solid #dee2e6';
+        tableWrapper.style.borderRadius = '0.375rem';
+        tableWrapper.style.backgroundColor = 'white';
+        
+        const table = document.createElement('table');
+        table.className = 'table table-sm table-hover mb-0';
+        table.style.fontSize = '0.9rem';
+        
+        const tbody = document.createElement('tbody');
+        
+        let currentYear = null;
+        
         multiData.slice(0, multiMaxLength).forEach(item => {
-            if (!item.pubDate) return;
+            const date = item.pubDate ? new Date(item.pubDate) : null;
+            const year = date ? date.getFullYear() : null;
+            const month = date ? String(date.getMonth() + 1).padStart(2, '0') : null;
+            const day = date ? String(date.getDate()).padStart(2, '0') : null;
+            const formattedShortDate = date ? `${month}/${day}` : '--/--';
             
-            const date = new Date(item.pubDate);
-            const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
-            const articleElement = document.createElement('div');
-            
-            // breadcrumbsのリンクを追加
-            let breadcrumbsSpan = '';
-            if (item.breadcrumbs && item.siteUrl) {
-                breadcrumbsSpan = `<a href="${item.siteUrl}" target="_blank" style="color: #0d6efd; margin-right: 0.5rem; text-decoration: none;">${item.breadcrumbs}</a>`;
-            } else if (item.breadcrumbs) {
-                breadcrumbsSpan = `<span style="color: #495057; margin-right: 0.5rem;">${item.breadcrumbs}</span>`;
+            // 年が変わった場合、年の行を追加
+            if (year !== null && year !== currentYear) {
+                currentYear = year;
+                const yearRow = document.createElement('tr');
+                yearRow.style.backgroundColor = '#e9ecef';
+                const yearCell = document.createElement('td');
+                yearCell.colSpan = 2;
+                yearCell.className = 'fw-bold text-center py-2';
+                yearCell.textContent = `${year}年`;
+                yearRow.appendChild(yearCell);
+                tbody.appendChild(yearRow);
             }
             
-            let titleSpan = '';
-            if (item.link) {
-                titleSpan = `<a href="${item.link}" target="_blank">
-                    <span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle;">${item.title}</span>
-                </a>`;
-            } else {
-                titleSpan = `<span style="line-height: 1.25; margin-bottom: 0.25rem; display: inline-block; width: 30rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; vertical-align: middle; color: #6c757d;">${item.title}</span>`;
-            }
+            // 1行目：NEW!!バッヂ、breadcrumbs（siteUrl付き）
+            const row1 = document.createElement('tr');
+            const cell1 = document.createElement('td');
+            cell1.colSpan = 2;
+            cell1.className = 'py-1';
+            cell1.style.borderBottom = '0';
             
+            // NEW!!バッヂの計算
             const today = new Date();
-            const diffTime = today - date;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const diffTime = date ? today - date : null;
+            const diffDays = diffTime ? Math.ceil(diffTime / (1000 * 60 * 60 * 24)) : null;
             
-            let newBadge = '';
-            if (diffDays <= NEW_BADGE_DAYS) {
-                newBadge = '<span class="badge bg-danger" style="margin-right: 0.5rem;">New!!</span>';
+            let newBadgeHtml = '';
+            if (diffDays !== null && diffDays <= NEW_BADGE_DAYS) {
+                newBadgeHtml = '<span class="badge bg-danger me-2" style="font-size: 0.7rem;">New!!</span>';
+            } else {
+                newBadgeHtml = '<span style="display: inline-block; width: 3.5rem;"></span>'; // 空白スペース
             }
             
-            articleElement.innerHTML = `${newBadge}${breadcrumbsSpan}<span style="color: #6c757d; margin-right: 0.5rem;">${formattedDate}</span>${titleSpan}`;
-            articleElement.style.marginBottom = '0.5rem';
+            // breadcrumbsのリンク
+            let breadcrumbsHtml = '';
+            if (item.breadcrumbs && item.siteUrl) {
+                breadcrumbsHtml = `<a href="${item.siteUrl}" target="_blank" style="color: #0d6efd; text-decoration: none;">${item.breadcrumbs}</a>`;
+            } else if (item.breadcrumbs) {
+                breadcrumbsHtml = `<span style="color: #495057;">${item.breadcrumbs}</span>`;
+            }
             
-            multiContainer.appendChild(articleElement);
+            cell1.innerHTML = newBadgeHtml + breadcrumbsHtml;
+            row1.appendChild(cell1);
+            tbody.appendChild(row1);
+            
+            // 2行目：「mm/dd」、title（link付き）
+            const row2 = document.createElement('tr');
+            const dateCell = document.createElement('td');
+            dateCell.className = 'py-1 text-muted';
+            dateCell.style.width = '80px';
+            dateCell.style.borderTop = '0';
+            dateCell.textContent = formattedShortDate;
+            
+            const titleCell = document.createElement('td');
+            titleCell.className = 'py-1';
+            titleCell.style.borderTop = '0';
+            
+            if (item.link) {
+                const link = document.createElement('a');
+                link.href = item.link;
+                link.target = '_blank';
+                link.style.color = '#0d6efd';
+                link.style.textDecoration = 'none';
+                link.textContent = item.title;
+                link.addEventListener('mouseenter', () => {
+                    link.style.textDecoration = 'underline';
+                });
+                link.addEventListener('mouseleave', () => {
+                    link.style.textDecoration = 'none';
+                });
+                titleCell.appendChild(link);
+            } else {
+                titleCell.textContent = item.title;
+                titleCell.style.color = '#6c757d';
+            }
+            
+            row2.appendChild(dateCell);
+            row2.appendChild(titleCell);
+            tbody.appendChild(row2);
         });
+        
+        table.appendChild(tbody);
+        tableWrapper.appendChild(table);
+        multiContainer.appendChild(tableWrapper);
     }
 }
 

@@ -449,6 +449,9 @@ function generateHistoryTable() {
     const tbody = document.getElementById('historyTableBody');
     tbody.innerHTML = '';
     
+    // 年表の範囲表示を更新
+    updateYearRangeDisplay();
+    
     // データを年とカテゴリでグループ化
     const groupedData = {};
     
@@ -489,6 +492,47 @@ function generateHistoryTable() {
         yearsToDisplay.sort((a, b) => b - a);
     } else {
         yearsToDisplay.sort((a, b) => a - b);
+    }
+    
+    // 表示年の範囲が全体範囲より狭い場合に「...」行を追加
+    // データの有無は関係なく、純粋に年の範囲だけで判定
+    const hasYearsBeforeStart = currentStartYear > MIN_YEAR;
+    const hasYearsAfterEnd = currentEndYear < MAX_YEAR;
+    
+    // デバッグ情報
+    console.log('=== 省略行判定 ===');
+    console.log('全体範囲:', MIN_YEAR, '〜', MAX_YEAR);
+    console.log('表示範囲:', currentStartYear, '〜', currentEndYear);
+    console.log('ソート:', currentSortNewestFirst ? '降順（新→古）' : '昇順（古→新）');
+    console.log('過去に続きがある:', hasYearsBeforeStart);
+    console.log('未来に続きがある:', hasYearsAfterEnd);
+    console.log('==================');
+    
+    // 最初に「...」行を追加（新→古の場合は未来に続きがある、古→新の場合は過去に続きがある）
+    if (currentSortNewestFirst && hasYearsAfterEnd) {
+        const dotRow = document.createElement('tr');
+        dotRow.className = 'ellipsis-row';
+        const dotYearCell = document.createElement('td');
+        dotYearCell.className = 'year-column text-center text-muted';
+        dotYearCell.textContent = '…';
+        const dotArticleCell = document.createElement('td');
+        dotArticleCell.className = 'article-column text-muted text-center fst-italic';
+        dotArticleCell.textContent = '(未来に続く)';
+        dotRow.appendChild(dotYearCell);
+        dotRow.appendChild(dotArticleCell);
+        tbody.appendChild(dotRow);
+    } else if (!currentSortNewestFirst && hasYearsBeforeStart) {
+        const dotRow = document.createElement('tr');
+        dotRow.className = 'ellipsis-row';
+        const dotYearCell = document.createElement('td');
+        dotYearCell.className = 'year-column text-center text-muted';
+        dotYearCell.textContent = '…';
+        const dotArticleCell = document.createElement('td');
+        dotArticleCell.className = 'article-column text-muted text-center fst-italic';
+        dotArticleCell.textContent = '(過去に続く)';
+        dotRow.appendChild(dotYearCell);
+        dotRow.appendChild(dotArticleCell);
+        tbody.appendChild(dotRow);
     }
     
     // 年ごとに行を生成
@@ -570,6 +614,33 @@ function generateHistoryTable() {
         row.appendChild(articleCell);
         tbody.appendChild(row);
     });
+    
+    // 最後に「...」行を追加（新→古の場合は過去に続きがある、古→新の場合は未来に続きがある）
+    if (currentSortNewestFirst && hasYearsBeforeStart) {
+        const dotRow = document.createElement('tr');
+        dotRow.className = 'ellipsis-row';
+        const dotYearCell = document.createElement('td');
+        dotYearCell.className = 'year-column text-center text-muted';
+        dotYearCell.textContent = '…';
+        const dotArticleCell = document.createElement('td');
+        dotArticleCell.className = 'article-column text-muted text-center fst-italic';
+        dotArticleCell.textContent = '(過去に続く)';
+        dotRow.appendChild(dotYearCell);
+        dotRow.appendChild(dotArticleCell);
+        tbody.appendChild(dotRow);
+    } else if (!currentSortNewestFirst && hasYearsAfterEnd) {
+        const dotRow = document.createElement('tr');
+        dotRow.className = 'ellipsis-row';
+        const dotYearCell = document.createElement('td');
+        dotYearCell.className = 'year-column text-center text-muted';
+        dotYearCell.textContent = '…';
+        const dotArticleCell = document.createElement('td');
+        dotArticleCell.className = 'article-column text-muted text-center fst-italic';
+        dotArticleCell.textContent = '(未来に続く)';
+        dotRow.appendChild(dotYearCell);
+        dotRow.appendChild(dotArticleCell);
+        tbody.appendChild(dotRow);
+    }
     
     // ジャンプメニューを更新
     updateJumpMenu();
@@ -675,6 +746,14 @@ function updateCurrentYear() {
     if (currentYearSpan) {
         currentYearSpan.textContent = MAX_YEAR;
     }
+}
+
+// 年表の範囲表示を更新
+function updateYearRangeDisplay() {
+    const displayElement = document.getElementById('year-range-display');
+    if (!displayElement) return;
+    
+    displayElement.textContent = `${currentStartYear}〜${currentEndYear} (全${MIN_YEAR}〜${MAX_YEAR})`;
 }
 
 // ヘッダースクロール効果の初期化
