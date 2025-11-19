@@ -124,65 +124,6 @@
     padding: 24px;
 }
 
-/* カードコンテンツコンテナ（親要素）のスタイル */
-#card-content-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0 24px;
-    width: 100%;
-}
-
-/* カードコンテナ用のスタイル */
-.card-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 2rem;
-    margin-top: 1.5rem;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 64rem; /* カード3列分: 20rem × 3 + gap 2rem × 2 = 64rem */
-}
-
-/* カードラッパー：レスポンシブな幅設定 */
-.card-wrapper {
-    flex: 0 0 auto;
-    width: 20rem;
-    max-width: 100%;
-}
-
-/* カードの高さを固定（コンテンツカードのみ） */
-.card-wrapper .card {
-    height: 30rem;
-}
-
-/* NEW!!バッジのスタイル */
-.new-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    z-index: 10;
-    font-size: 0.85rem;
-    font-weight: bold;
-    padding: 0.35rem 0.6rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-/* sub-imageのスタイル（X/Twitter風の円形アイコン） */
-.card-sub-image {
-    position: absolute;
-    bottom: 8px;
-    left: 8px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    z-index: 10;
-}
-
 /* ロゴ画像の統一スタイル */
 .logo-img {
     height: 20px;
@@ -191,82 +132,6 @@
     object-fit: contain;
     vertical-align: middle;
     margin-left: 0.5rem;
-}
-
-/* カード内のロゴ（右上配置） */
-.card-logo-img {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    height: 40px;
-    width: auto;
-    max-width: 80px;
-    object-fit: contain;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 4px;
-    border-radius: 4px;
-}
-
-/* RSSフィードコンテナのスタイル */
-#cmp .rss-feed-container {
-    background-color: white;
-}
-
-#cmp .rss-feed-container a {
-    font-size: 1rem;
-}
-
-#cmp .rss-feed-container h3 {
-    margin-bottom: .25rem;
-}
-
-/* セクションタイトルのスタイル */
-.section-title {
-    width: 100%;
-    text-align: center;
-    margin-bottom: 0;
-    scroll-margin-top: 100px; /* ヘッダー分のオフセット */
-}
-
-/* スマホサイズでカード幅を調整 */
-@media (max-width: 576px) {
-    .card-wrapper {
-        width: 100%;
-        max-width: 20rem;
-    }
-}
-
-/* カード内のアクションエリア（ボタン＋ハッシュタグ）のスタイル */
-.card-action-area {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem; /* ボタンとハッシュタグの間隔 */
-}
-
-.card-action-button {
-    flex-shrink: 0;
-}
-
-.card-hashtag-area {
-    flex-grow: 1;
-    overflow-x: auto;
-    white-space: nowrap;
-}
-
-.card-hashtag-area small {
-    font-size: 0.85rem;
-    line-height: 1.3;
-}
-
-.card-hashtag-area a {
-    color: #0d6efd;
-    text-decoration: none;
-    margin-right: 0.25rem;
-    display: inline;
-}
-
-.card-hashtag-area a:hover {
-    text-decoration: underline;
 }
 
 /* RSSとSingle記事のスタイル */
@@ -307,140 +172,16 @@
     color: #495057;
 }
 
-/* コントリビューショングラフのスタイル */
-.contribution-graph-wrapper {
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding: 10px;
-    background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+/* =================================
+   About.html専用のスタイル
+   ================================= */
+
+/* 理念セクション */
+.philosophy-section {
+    max-width: 960px;
 }
 
-.contribution-graph-container {
-    display: inline-block;
-    min-width: 100%;
-    padding-right: 20px; /* スマホで右端の余白を追加 */
-}
-
-.contribution-year,
-.contribution-month {
-    font-size: 11px;
-    color: #666;
-}
-
-.contribution-main {
-    display: flex;
-    gap: 3px;
-}
-
-.contribution-weekdays {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    margin-right: 5px;
-}
-
-.contribution-weekdays-right {
-    margin-right: 0;
-    margin-left: 5px;
-}
-
-.contribution-weekday {
-    height: 10px;
-    font-size: 9px;
-    color: #666;
-    display: flex;
-    align-items: center;
-}
-
-.contribution-weeks {
-    display: flex;
-    gap: 3px;
-}
-
-.contribution-week {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.contribution-day {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    cursor: pointer;
-    transition: transform 0.1s ease;
-}
-
-.contribution-day:hover {
-    transform: scale(1.2);
-}
-
-.contribution-day.level-0 {
-    background-color: #ebedf0;
-}
-
-.contribution-day.level-1 {
-    background-color: #9be9a8;
-}
-
-.contribution-day.level-2 {
-    background-color: #40c463;
-}
-
-.contribution-day.level-3 {
-    background-color: #30a14e;
-}
-
-.contribution-day.level-4 {
-    background-color: #216e39;
-}
-
-.contribution-tooltip {
-    position: fixed;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 3px;
-    font-size: 12px;
-    pointer-events: none;
-    z-index: 9999;
-    white-space: nowrap;
-    display: none;
-}
-
-/* PCでの右側の隙間を調整 */
-@media (min-width: 769px) {
-    .contribution-graph-container {
-        padding-right: 10px;
-    }
-    
-    /* PCではグラフを中央寄せ */
-    .contribution-graph-wrapper {
-        display: flex;
-        justify-content: center;
-    }
-}
-
-/* より広い画面（1024px以上）では、グラフを少し大きく */
-@media (min-width: 1024px) {
-    /* グラフコンテナの幅を制限して余白を減らす */
-    .contribution-graph-wrapper {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 20px 10px; /* 拡大による余白を確保 */
-    }
-    
-    /* グラフ全体を1.2倍に拡大 */
-    .contribution-graph-container {
-        transform: scale(1.2);
-        transform-origin: center center;
-    }
-}
-
-/* ハッシュタグ一覧のスタイル */
+/* ハッシュタグ一覧のスタイル（共通） */
 .hashtag-list {
     display: flex;
     flex-wrap: wrap;
@@ -467,15 +208,6 @@
     background-color: #0d6efd;
     color: white;
     border-color: #0d6efd;
-}
-
-/* =================================
-   About.html専用のスタイル
-   ================================= */
-
-/* 理念セクション */
-.philosophy-section {
-    max-width: 960px;
 }
 
 /* セクションカード */

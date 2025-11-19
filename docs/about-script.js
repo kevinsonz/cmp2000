@@ -215,7 +215,7 @@ function generateHashTagList(allTags, filterTag = null) {
     });
 }
 
-// フィルターUIを表示
+// フィルタUIを表示
 function showFilterUI(tag) {
     const container = document.getElementById('filter-ui-container');
     if (!container) return;
@@ -225,7 +225,7 @@ function showFilterUI(tag) {
         <div class="alert alert-info d-flex justify-content-between align-items-center mb-3" role="alert">
             <span>フィルタ適用中: <strong>${tag}</strong></span>
             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearHashTagFilter()">
-                フィルタを解除
+                フィルタ解除
             </button>
         </div>
     `;
@@ -240,7 +240,7 @@ function updateJumpMenu(filterTag) {
         dropdownMenu.innerHTML = `
             <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#filter-ui-container">フィルター結果</a></li>
+            <li><a class="dropdown-item" href="#filter-ui-container">フィルタ結果</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#footer">フッター</a></li>
         `;
@@ -260,7 +260,7 @@ function updateJumpMenu(filterTag) {
     }
 }
 
-// フィルターUIを非表示
+// フィルタUIを非表示
 function hideFilterUI() {
     const container = document.getElementById('filter-ui-container');
     if (!container) return;
@@ -269,14 +269,14 @@ function hideFilterUI() {
     container.innerHTML = '';
 }
 
-// ハッシュタグフィルターを適用
+// ハッシュタグフィルタを適用
 function applyHashTagFilter(tag) {
     currentFilterTag = tag;
     
-    // フィルター適用してページを再生成
+    // フィルタ適用してページを再生成
     generateAboutPage(tag);
     
-    // フィルターUIを表示
+    // フィルタUIを表示
     showFilterUI(tag);
     
     // ジャンプメニューを更新
@@ -286,7 +286,7 @@ function applyHashTagFilter(tag) {
     const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
     generateHashTagList(allTags, tag);
     
-    // フィルターUI表示位置にスムーズスクロール
+    // フィルタUI表示位置にスムーズスクロール
     setTimeout(() => {
         const filterContainer = document.getElementById('filter-ui-container');
         if (filterContainer) {
@@ -295,14 +295,14 @@ function applyHashTagFilter(tag) {
     }, 100);
 }
 
-// ハッシュタグフィルターをクリア
+// ハッシュタグフィルタをクリア
 function clearHashTagFilter() {
     currentFilterTag = null;
     
-    // フィルターなしでページを再生成
+    // フィルタなしでページを再生成
     generateAboutPage();
     
-    // フィルターUIを非表示
+    // フィルタUIを非表示
     hideFilterUI();
     
     // ジャンプメニューを更新
@@ -333,7 +333,7 @@ function convertHashTagsToLinks(hashTagString) {
     }).join(' ');
 }
 
-// アイテムがフィルターに一致するかチェック
+// アイテムがフィルタに一致するかチェック
 function matchesFilter(item, filterTag) {
     if (!filterTag) return true;
     if (!item.hashTag) return false;
@@ -341,7 +341,7 @@ function matchesFilter(item, filterTag) {
     return tags.includes(filterTag);
 }
 
-// Aboutページを生成する関数（フィルターに対応）
+// Aboutページを生成する関数（フィルタに対応）
 function generateAboutPage(filterTag = null) {
     const container = document.getElementById('about-content');
     if (!container) return;

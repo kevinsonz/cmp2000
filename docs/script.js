@@ -128,7 +128,7 @@ function convertHashTagsToLinks(hashTagString) {
     }).join(' ');
 }
 
-// ハッシュタグフィルターを適用
+// ハッシュタグフィルタを適用
 function applyHashTagFilter(tag) {
     currentFilterTag = tag;
     generateCards(basicInfoData, singleDataGlobal, tag);
@@ -136,7 +136,7 @@ function applyHashTagFilter(tag) {
     showFilterUI(tag);
     updateJumpMenu(tag);
     
-    // フィルターUI表示位置にスムーズスクロール
+    // フィルタUI表示位置にスムーズスクロール
     setTimeout(() => {
         const filterContainer = document.getElementById('filter-ui-container');
         if (filterContainer) {
@@ -145,7 +145,7 @@ function applyHashTagFilter(tag) {
     }, 100);
 }
 
-// フィルターをクリア
+// フィルタをクリア
 function clearHashTagFilter() {
     currentFilterTag = null;
     generateCards(basicInfoData, singleDataGlobal, null);
@@ -162,7 +162,7 @@ function clearHashTagFilter() {
     }, 100);
 }
 
-// フィルターUI表示
+// フィルタUI表示
 function showFilterUI(tag) {
     const container = document.getElementById('filter-ui-container');
     if (!container) return;
@@ -171,12 +171,12 @@ function showFilterUI(tag) {
     container.innerHTML = `
         <div class="alert alert-info d-flex justify-content-between align-items-center">
             <span>表示中: <strong>${tag}</strong></span>
-            <button class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">フィルター解除</button>
+            <button class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">フィルタ解除</button>
         </div>
     `;
 }
 
-// フィルターUI非表示
+// フィルタUI非表示
 function hideFilterUI() {
     const container = document.getElementById('filter-ui-container');
     if (!container) return;
@@ -194,7 +194,7 @@ function updateJumpMenu(filterTag) {
         dropdownMenu.innerHTML = `
             <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#filter-ui-container">フィルター結果</a></li>
+            <li><a class="dropdown-item" href="#filter-ui-container">フィルタ結果</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#footer">フッター</a></li>
         `;
@@ -365,12 +365,12 @@ function parseContributionCSV(csvText) {
     return items;
 }
 
-// カード自動生成関数（フィルター対応）
+// カード自動生成関数（フィルタ対応）
 function generateCards(basicInfo, singleData, filterTag = null) {
     // 全てのアイテムを表示
     let filteredInfo = basicInfo;
     
-    // ハッシュタグフィルターを適用
+    // ハッシュタグフィルタを適用
     if (filterTag) {
         filteredInfo = filteredInfo.filter(item => {
             if (!item.hashTag) return false;
@@ -395,15 +395,53 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         singleDataByKey[item.key].push(item);
     });
     
+    // 各キーのデータを日付順にソート
+    Object.keys(singleDataByKey).forEach(key => {
+        singleDataByKey[key].sort((a, b) => {
+            if (!a.pubDate && !b.pubDate) return 0;
+            if (!a.pubDate) return -1;
+            if (!b.pubDate) return 1;
+            
+            const dateA = new Date(a.pubDate);
+            const dateB = new Date(b.pubDate);
+            return dateB - dateA; // 新しい順
+        });
+    });
+    
     function isNewArticle(key) {
+        console.log(`=== Checking isNewArticle for key: ${key} ===`);
         const articles = singleDataByKey[key];
-        if (!articles || articles.length === 0) return false;
+        
+        if (!articles) {
+            console.log(`  - No articles found for key: ${key}`);
+            return false;
+        }
+        
+        if (articles.length === 0) {
+            console.log(`  - Articles array is empty for key: ${key}`);
+            return false;
+        }
+        
+        console.log(`  - Found ${articles.length} articles for key: ${key}`);
         
         const latestArticle = articles[0];
+        console.log(`  - Latest article:`, latestArticle);
+        
+        if (!latestArticle.pubDate) {
+            console.log(`  - Latest article has no pubDate`);
+            return false;
+        }
+        
         const articleDate = new Date(latestArticle.pubDate);
         const today = new Date();
         const diffTime = today - articleDate;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        console.log(`  - Latest Date: ${latestArticle.pubDate}`);
+        console.log(`  - Today: ${today.toISOString().split('T')[0]}`);
+        console.log(`  - Days Ago: ${diffDays}`);
+        console.log(`  - NEW_BADGE_DAYS: ${NEW_BADGE_DAYS}`);
+        console.log(`  - Is New: ${diffDays <= NEW_BADGE_DAYS}`);
         
         return diffDays <= NEW_BADGE_DAYS;
     }
@@ -413,7 +451,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
     
     container.innerHTML = '';
     
-    // フィルター時は全カードを1つのコンテナに並べる
+    // フィルタ時は全カードを1つのコンテナに並べる
     if (filterTag) {
         const cardContainer = document.createElement('div');
         cardContainer.className = 'card-container';
@@ -430,9 +468,14 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                 const cardWrapper = document.createElement('div');
                 cardWrapper.className = 'card-wrapper';
                 
-                const newBadgeHtml = isNewArticle(site.key) 
+                const isNew = isNewArticle(site.key);
+                console.log(`>>> [FILTER] Card: ${site.siteTitle} (${site.key}), isNew: ${isNew}`);
+                
+                const newBadgeHtml = isNew 
                     ? '<span class="badge bg-danger new-badge">New!!</span>' 
                     : '';
+                
+                console.log(`>>> [FILTER] Badge HTML: ${newBadgeHtml ? 'Generated' : 'Empty'}, HTML length: ${newBadgeHtml.length}`);
                 
                 const subImageHtml = site.subImage 
                     ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
@@ -450,8 +493,8 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                 
                 cardWrapper.innerHTML = `
                     <div class="card">
-                        <a href="${site.siteUrl}" target="_blank" style="position: relative; overflow: hidden; height: 200px; display: block; text-decoration: none;">
-                            <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <a href="${site.siteUrl}" target="_blank">
+                            <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}">
                             ${newBadgeHtml}
                             ${subImageHtml}
                             ${logoHtml}
@@ -459,9 +502,9 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                         <div class="card-body">
                             ${categoryBadgeHtml}
                             <h5 class="card-title">${site.siteTitle}</h5>
-                            <p class="card-text">
+                            <div class="card-text">
                                 <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
-                            </p>
+                            </div>
                             <div class="card-action-area">
                                 <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
                                 ${hashTagHtml}
@@ -469,6 +512,13 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                         </div>
                     </div>
                 `;
+                
+                // 生成後のHTMLにバッジが含まれているか確認
+                if (isNew) {
+                    const hasNewBadge = cardWrapper.innerHTML.includes('new-badge');
+                    console.log(`>>> [FILTER] Card HTML includes new-badge class: ${hasNewBadge}`);
+                }
+                
                 cardContainer.appendChild(cardWrapper);
             });
         });
@@ -489,9 +539,14 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                 const cardWrapper = document.createElement('div');
                 cardWrapper.className = 'card-wrapper';
                 
-                const newBadgeHtml = isNewArticle(site.key) 
+                const isNew = isNewArticle(site.key);
+                console.log(`>>> [NORMAL] Card: ${site.siteTitle} (${site.key}), isNew: ${isNew}`);
+                
+                const newBadgeHtml = isNew 
                     ? '<span class="badge bg-danger new-badge">New!!</span>' 
                     : '';
+                
+                console.log(`>>> [NORMAL] Badge HTML: ${newBadgeHtml ? 'Generated' : 'Empty'}, HTML length: ${newBadgeHtml.length}`);
                 
                 const subImageHtml = site.subImage 
                     ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
@@ -506,17 +561,17 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                 
                 cardWrapper.innerHTML = `
                     <div class="card">
-                        <a href="${site.siteUrl}" target="_blank" style="position: relative; overflow: hidden; height: 200px; display: block; text-decoration: none;">
-                            <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}" style="width: 100%; height: 100%; object-fit: cover;">
+                        <a href="${site.siteUrl}" target="_blank">
+                            <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}">
                             ${newBadgeHtml}
                             ${subImageHtml}
                             ${logoHtml}
                         </a>
                         <div class="card-body">
                             <h5 class="card-title">${site.siteTitle}</h5>
-                            <p class="card-text">
+                            <div class="card-text">
                                 <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
-                            </p>
+                            </div>
                             <div class="card-action-area">
                                 <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
                                 ${hashTagHtml}
@@ -524,6 +579,13 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                         </div>
                     </div>
                 `;
+                
+                // 生成後のHTMLにバッジが含まれているか確認
+                if (isNew) {
+                    const hasNewBadge = cardWrapper.innerHTML.includes('new-badge');
+                    console.log(`>>> [NORMAL] Card HTML includes new-badge class: ${hasNewBadge}`);
+                }
+                
                 cardContainer.appendChild(cardWrapper);
             });
             
