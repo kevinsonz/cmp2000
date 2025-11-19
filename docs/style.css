@@ -209,8 +209,6 @@
 
 /* RSSフィードコンテナのスタイル */
 #cmp .rss-feed-container {
-    overflow-y: scroll;
-    height: 12rem;
     background-color: white;
 }
 

@@ -553,7 +553,7 @@ function loadFeeds(multiData, singleData) {
     if (multiContainer) {
         // テーブル形式で表示するためのラッパー
         const tableWrapper = document.createElement('div');
-        tableWrapper.style.maxHeight = '400px'; // スクロール可能な高さ
+        tableWrapper.style.maxHeight = '200px'; // スクロール可能な高さ
         tableWrapper.style.overflowY = 'auto';
         tableWrapper.style.border = '1px solid #dee2e6';
         tableWrapper.style.borderRadius = '0.375rem';
