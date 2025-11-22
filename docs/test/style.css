@@ -1,0 +1,979 @@
+/* ヘッダーのスタイル */
+#main-header {
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: visible !important; /* ドロップダウンメニューがヘッダー外にはみ出せるように */
+}
+
+/* sticky-topクラスのoverflowを上書き */
+#main-header.sticky-top {
+    overflow: visible !important;
+}
+
+/* 通常時のタイトル */
+.header-title-normal {
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+}
+
+/* スクロール時のコンパクトヘッダー（初期状態では非表示） */
+.header-compact {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    gap: 1rem;
+    flex-wrap: nowrap; /* 1行に固定 */
+    overflow: visible !important; /* ドロップダウンメニューがはみ出せるように */
+}
+
+.header-compact-title {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.header-compact-title a {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.header-icon-compact {
+    height: 1.2rem;
+    width: auto;
+}
+
+.header-text-cmp-compact {
+    font-weight: bold;
+}
+
+.header-text-official-compact {
+    font-weight: 500;
+}
+
+.header-compact-menus {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 1;
+    min-width: 0; /* 縮小を許可 */
+    overflow: visible !important; /* ドロップダウンメニューが完全にはみ出せるように */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ページメニュードロップダウンのスタイル */
+.header-compact-menus .dropdown {
+    flex-shrink: 0;
+}
+
+.header-compact-menus .dropdown-toggle {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+/* コンパクトヘッダーの全開/全閉ボタン */
+#toggleAllBtnCompact {
+    flex-shrink: 0;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.header-compact-menus .dropdown-item.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+/* ドロップダウンメニューの固定表示用スタイル */
+.dropdown-menu-fixed {
+    position: absolute !important;
+    z-index: 9999 !important; /* ヘッダーのz-indexより高く設定 */
+    margin-top: 0.125rem;
+    will-change: transform;
+}
+
+/* ドロップダウンの親要素 */
+.header-compact-menus .dropdown {
+    position: static !important;
+}
+
+/* タブナビゲーションコンパクト版 */
+.tab-navigation-compact {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+    overflow-x: auto; /* タブが多い場合は横スクロール */
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.tab-navigation-compact::-webkit-scrollbar {
+    height: 4px;
+}
+
+.tab-navigation-compact::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tab-navigation-compact::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+.tab-navigation-compact::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.tab-navigation-compact .tab-button {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.9rem;
+    min-width: auto;
+    white-space: nowrap;
+}
+
+/* スクロール時の表示制御 */
+#main-header.scrolled .header-title-normal {
+    display: none;
+}
+
+#main-header.scrolled .header-compact {
+    display: flex;
+}
+
+#main-header.scrolled + .page-menu-wrapper {
+    display: none;
+}
+
+#main-header.scrolled + .page-menu-wrapper + .tab-navigation-wrapper {
+    display: none;
+}
+
+/* レスポンシブ対応：横幅に応じてテキスト表示を調整 */
+/* 1024px以下でテキストを非表示（ロゴのみ） */
+@media (max-width: 1024px) {
+    #main-header.scrolled .header-text-cmp-compact,
+    #main-header.scrolled .header-text-official-compact {
+        display: none;
+    }
+}
+
+/* 768px以下でさらにコンパクトに */
+@media (max-width: 768px) {
+    .header-compact {
+        padding: 0.4rem 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    .header-icon-compact {
+        height: 1rem;
+    }
+    
+    .header-compact-menus {
+        gap: 0.5rem;
+    }
+    
+    .tab-navigation-compact .tab-button {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.85rem;
+    }
+    
+    #toggleAllBtnCompact {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* ヘッダーアイコン */
+.header-icon {
+    height: 2.5rem;
+    width: auto;
+}
+
+/* 改行制御 */
+@media (max-width: 576px) {
+    .header-title-normal {
+        font-size: 1.5rem;
+        gap: 0.3rem;
+    }
+    
+    .header-icon {
+        height: 1.5rem;
+    }
+    
+    /* スマホでのコンパクトヘッダー（1行レイアウト維持） */
+    .header-compact {
+        padding: 0.4rem 0.5rem;
+        gap: 0.5rem;
+    }
+    
+    .header-icon-compact {
+        height: 0.9rem;
+    }
+    
+    .header-compact-menus {
+        gap: 0.4rem;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .header-compact-menus .dropdown-toggle {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    #toggleAllBtnCompact {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .tab-navigation-compact .tab-button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        min-width: 60px;
+    }
+}
+
+/* クリック可能な要素のスタイル */
+.clickable {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.clickable:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* ページメニューのスタイル */
+.page-menu-wrapper {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 0;
+}
+
+.page-menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+}
+
+.page-menu-item {
+    text-decoration: none;
+    color: #495057;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.page-menu-item:hover {
+    background-color: #e9ecef;
+    color: #212529;
+}
+
+.page-menu-item.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.page-menu-separator {
+    color: #dee2e6;
+}
+
+/* レイアウト用のシンプルなCSS */
+.page-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* ロゴ画像の統一スタイル */
+.logo-img {
+    height: 20px;
+    width: auto;
+    max-width: 100px;
+    object-fit: contain;
+    vertical-align: middle;
+    margin-left: 0.5rem;
+}
+
+/* RSSとSingle記事のスタイル */
+.rss-article-item,
+.single-article-item {
+    padding: 0.4rem 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.rss-article-item:last-child,
+.single-article-item:last-child {
+    border-bottom: none;
+}
+
+.rss-article-date,
+.single-article-date {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+}
+
+.rss-article-link,
+.single-article-link {
+    color: #0d6efd;
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.rss-article-link:hover,
+.single-article-link:hover {
+    text-decoration: underline;
+}
+
+.rss-article-text,
+.single-article-text {
+    color: #495057;
+}
+
+/* =================================
+   About.html専用のスタイル
+   ================================= */
+
+/* 理念セクション */
+.philosophy-section {
+    max-width: 960px;
+}
+
+/* セクションナビゲーションバーのスタイル */
+.section-nav-wrapper {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 0;
+    overflow: visible;
+}
+
+.section-nav-container {
+    display: flex;
+    align-items: center;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    gap: 0.5rem;
+}
+
+#toggleAllBtn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.section-nav {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    flex: 1;
+}
+
+.section-nav::-webkit-scrollbar {
+    height: 4px;
+}
+
+.section-nav::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.section-nav::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 2px;
+}
+
+.section-nav::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.section-nav-item {
+    padding: 0.4rem 0.75rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    color: #495057;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.section-nav-item:hover {
+    background-color: #e9ecef;
+    color: #212529;
+}
+
+.section-nav-item.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+.section-nav-item.filtering {
+    background-color: #ffc107;
+    color: #000;
+    border-color: #ffc107;
+    font-weight: 600;
+}
+
+/* コンパクトヘッダーのナビゲーション */
+.section-nav-compact {
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    flex: 1;
+    min-width: 0;
+}
+
+.section-nav-compact::-webkit-scrollbar {
+    height: 4px;
+}
+
+.section-nav-compact::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.section-nav-compact::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+.section-nav-compact::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.section-nav-compact .section-nav-item {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+}
+
+/* スクロール時の表示制御（About専用） */
+#main-header.scrolled + .page-menu-wrapper + .section-nav-wrapper {
+    display: none;
+}
+
+/* アコーディオンスタイル */
+.accordion-section {
+    margin-bottom: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.accordion-header-custom {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    cursor: pointer;
+    border-bottom: 2px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s ease;
+    user-select: none;
+}
+
+.accordion-header-custom:hover {
+    background-color: #e9ecef;
+}
+
+.accordion-header-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #212529;
+    flex: 1;
+}
+
+.accordion-header-stats {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-left: 1rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.stat-badge {
+    background-color: #e9ecef;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+.stat-badge.active-count {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.stat-badge.archive-count {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+.accordion-toggle-icon {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+    margin-left: 0.5rem;
+}
+
+.accordion-toggle-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+.accordion-body-custom {
+    padding: 1rem;
+    display: none;
+}
+
+.accordion-body-custom.show {
+    display: block;
+}
+
+/* ハッシュタグ一覧のスタイル（共通） */
+.hashtag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.hashtag-button {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.hashtag-button:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.hashtag-button.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+/* セクションカード */
+.section-card {
+    margin-bottom: 1.5rem;
+    border: 1px solid #dee2e6; /* 罫線を追加 */
+    border-radius: 0.5rem; /* 角丸を追加 */
+    overflow: visible;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 軽い影を追加 */
+}
+
+.section-header {
+    background-color: #f8f9fa; /* 青から通常の背景色に変更 */
+    color: #212529; /* テキスト色も黒に */
+    padding: 1rem;
+    font-size: 1.3rem;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 2px solid #dee2e6; /* 下線を追加 */
+}
+
+.section-body {
+    padding: 1rem; /* 1.5remから1remに縮小 */
+}
+
+/* サイトリスト */
+.site-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.site-item {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.site-item:last-child {
+    border-bottom: none;
+}
+
+.site-link {
+    text-decoration: none;
+    color: #0d6efd;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.site-link:hover {
+    color: #0a58ca;
+    text-decoration: underline;
+}
+
+/* ハッシュタグ表示 */
+.hashtag-display {
+    font-size: 0.85rem;
+    margin-left: 0.5rem;
+}
+
+.hashtag-display a {
+    color: #0d6efd;
+    text-decoration: none;
+    margin-right: 0.25rem;
+}
+
+.hashtag-display a:hover {
+    text-decoration: underline;
+}
+
+/* アーカイブセクション */
+.archive-section {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #6c757d;
+    opacity: 0.9;
+}
+
+.archive-title {
+    font-weight: bold;
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.archive-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.archive-item {
+    padding: 0.4rem 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    opacity: 0.8;
+}
+
+.archive-comment {
+    color: #6c757d;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+.family-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.family-item:last-child {
+    border-bottom: none;
+}
+
+.family-name {
+    font-weight: bold;
+    color: #212529;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.family-comment {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    display: block;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .section-header {
+        font-size: 1.1rem;
+    }
+    
+    .accordion-header-title {
+        font-size: 1.1rem;
+    }
+    
+    .accordion-header-stats {
+        font-size: 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    .family-comment {
+        font-size: 0.85rem;
+    }
+    
+    .section-nav-container {
+        padding: 0 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .section-nav-container {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+    
+    .accordion-header-stats {
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: flex-end;
+    }
+}
+
+/* =================================
+   History.html専用のスタイル
+   ================================= */
+
+/* フィルター設定のグループカードスタイル */
+.card.border-primary {
+    border-width: 2px;
+}
+
+.card.border-success {
+    border-width: 2px;
+}
+
+.card-header.bg-primary.bg-opacity-10 {
+    font-weight: bold;
+    color: #0d6efd;
+}
+
+.card-header.bg-success.bg-opacity-10 {
+    font-weight: bold;
+    color: #198754;
+}
+
+/* 年スライダーのバッジスタイル */
+.year-badge {
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.4rem 0.6rem;
+    min-width: 30px;
+    text-align: center;
+    user-select: none;
+}
+
+/* 年の増減ボタンスタイル */
+.year-btn {
+    cursor: pointer;
+    border: none;
+    transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.year-btn:hover {
+    transform: scale(1.1);
+}
+
+.year-btn:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
+.year-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* 年表テーブルのスタイル */
+.history-table {
+    background-color: white;
+    width: 100%;
+    table-layout: auto;
+}
+
+.history-table thead th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Articleヘッダーセルのスタイル */
+.article-header-cell {
+    padding: 0.5rem !important;
+}
+
+.article-header-cell .d-flex {
+    gap: 0.5rem;
+}
+
+.article-header-cell span {
+    flex-shrink: 0;
+}
+
+.article-header-cell button {
+    flex-shrink: 0;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    white-space: nowrap;
+}
+
+/* カテゴリ列の設定 */
+.history-table thead th:not(.year-column) {
+    width: auto;
+}
+
+.history-table tbody td {
+    vertical-align: top;
+    padding: 0.75rem;
+}
+
+/* Article列のスタイル */
+.article-column {
+    line-height: 1.8;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+/* 改行スタイル用の記事アイテム */
+.article-item {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.article-item:last-child {
+    border-bottom: none;
+}
+
+/* カテゴリ略称ボタンのスタイル */
+.category-abbr-btn {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* 記事がない年のセルのスタイル */
+.empty-year-cell {
+    background-color: #f0f0f0 !important;
+}
+
+/* Tableのホバースタイルは削除 */
+
+/* ゼブラストライプ（奇数行に薄い背景色） */
+.history-table tbody tr:nth-child(odd) {
+    background-color: #f8f9fa;
+}
+
+/* 空のセルのスタイル（ゼブラストライプより優先） */
+.history-table tbody td:empty,
+.history-table tbody td.empty-cell {
+    background-color: #f0f0f0 !important;
+}
+
+/* 年の列のスタイル */
+.year-column {
+    background-color: #e9ecef;
+    width: 100px;
+    min-width: 100px;
+}
+
+/* 年表リンクのスタイル */
+.history-link {
+    text-decoration: none;
+    color: #0d6efd;
+    word-break: break-word;
+}
+
+.history-link:hover {
+    text-decoration: underline;
+}
+
+/* テーブルレスポンシブラッパー */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* レスポンシブ対応（History） */
+@media (max-width: 768px) {
+    .history-table {
+        font-size: 0.9rem;
+    }
+    
+    .history-table tbody td {
+        padding: 0.5rem;
+    }
+    
+    .year-column {
+        width: 70px;
+        min-width: 70px;
+        font-size: 0.85rem;
+    }
+    
+    /* スマホでのヘッダーボタン調整 */
+    .article-header-cell button {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    /* スマホでの表の横スクロール対応 */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    /* カテゴリアイコンエリアのスクロール対応 */
+    .article-header-cell .d-flex {
+        overflow: visible;
+    }
+    
+    #selectedCategoryIcons {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* 年選択セレクトボックスの無効化オプションスタイル */
+select option:disabled {
+    color: #ccc;
+}
+
+/* すべて表示ボタンのスタイル */
+#showAllBtn {
+    white-space: nowrap;
+}
+
+#showAllBtn:hover {
+    background-color: #0d6efd;
+    color: white;
+}
+
+/* 選択中アイコンの表示 */
+#selectedCategoryIcons {
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+/* 省略行（…）のスタイル */
+.ellipsis-row {
+    background-color: #f0f0f0 !important;
+    border-top: 2px dashed #dee2e6 !important;
+    border-bottom: 2px dashed #dee2e6 !important;
+}
+
+.ellipsis-row td {
+    background-color: #f0f0f0 !important;
+    font-weight: 500;
+    color: #6c757d;
+}
