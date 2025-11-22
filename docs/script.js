@@ -622,7 +622,7 @@ function loadFeeds(multiData, singleData) {
         tableWrapper.style.backgroundColor = 'white';
         
         const table = document.createElement('table');
-        table.className = 'table table-sm table-hover mb-0';
+        table.className = 'table table-sm mb-0';
         table.style.fontSize = '0.9rem';
         
         const tbody = document.createElement('tbody');
@@ -691,6 +691,9 @@ function loadFeeds(multiData, singleData) {
             const titleCell = document.createElement('td');
             titleCell.className = 'py-1';
             titleCell.style.borderTop = '0';
+            titleCell.style.maxWidth = '0'; // テーブルの自動幅計算を防ぐ
+            titleCell.style.overflow = 'auto'; // 横スクロール有効化
+            titleCell.style.whiteSpace = 'nowrap'; // 改行を防止
             
             if (item.link) {
                 const link = document.createElement('a');

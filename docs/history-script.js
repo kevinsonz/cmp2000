@@ -84,6 +84,21 @@ if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
         });
 }
 
+// 和暦変換関数
+function getJapaneseEra(year) {
+    if (year >= 2019) {
+        return `令和${year - 2018}年`;
+    } else if (year >= 1989) {
+        return `平成${year - 1988}年`;
+    } else if (year >= 1926) {
+        return `昭和${year - 1925}年`;
+    } else if (year >= 1912) {
+        return `大正${year - 1911}年`;
+    } else {
+        return `明治${year - 1867}年`;
+    }
+}
+
 // CSV解析関数
 function parseHistoryCSV(csvText) {
     const lines = csvText.trim().split('\n');
@@ -215,12 +230,237 @@ function updateYearSelectOptions() {
     });
 }
 
+// スライダーと年選択の同期機能
+function initializeYearSliders() {
+    const startYearSelect = document.getElementById('startYearSelect');
+    const endYearSelect = document.getElementById('endYearSelect');
+    const startYearSlider = document.getElementById('startYearSlider');
+    const endYearSlider = document.getElementById('endYearSlider');
+    
+    if (!startYearSelect || !endYearSelect || !startYearSlider || !endYearSlider) return;
+    
+    // スライダーの範囲を設定
+    startYearSlider.min = MIN_YEAR;
+    startYearSlider.max = MAX_YEAR;
+    endYearSlider.min = MIN_YEAR;
+    endYearSlider.max = MAX_YEAR;
+    
+    // 初期値を設定
+    startYearSlider.value = tempStartYear;
+    endYearSlider.value = tempEndYear;
+    
+    // 開始年スライダーのイベントリスナー
+    startYearSlider.addEventListener('input', function() {
+        const year = parseInt(this.value);
+        startYearSelect.value = year;
+        // 終了年より後にならないように制限
+        if (year > parseInt(endYearSelect.value)) {
+            endYearSelect.value = year;
+            endYearSlider.value = year;
+        }
+        updateYearSelectOptions();
+    });
+    
+    // 終了年スライダーのイベントリスナー
+    endYearSlider.addEventListener('input', function() {
+        const year = parseInt(this.value);
+        endYearSelect.value = year;
+        // 開始年より前にならないように制限
+        if (year < parseInt(startYearSelect.value)) {
+            startYearSelect.value = year;
+            startYearSlider.value = year;
+        }
+        updateYearSelectOptions();
+    });
+    
+    // 開始年プルダウンのイベントリスナー
+    startYearSelect.addEventListener('change', function() {
+        startYearSlider.value = this.value;
+    });
+    
+    // 終了年プルダウンのイベントリスナー
+    endYearSelect.addEventListener('change', function() {
+        endYearSlider.value = this.value;
+    });
+}
+
+// 年の増減ボタンの機能を初期化
+function initializeYearButtons() {
+    const startYearSelect = document.getElementById('startYearSelect');
+    const endYearSelect = document.getElementById('endYearSelect');
+    const startYearSlider = document.getElementById('startYearSlider');
+    const endYearSlider = document.getElementById('endYearSlider');
+    
+    const startYearMinus = document.getElementById('startYearMinus');
+    const startYearPlus = document.getElementById('startYearPlus');
+    const endYearMinus = document.getElementById('endYearMinus');
+    const endYearPlus = document.getElementById('endYearPlus');
+    
+    if (!startYearSelect || !endYearSelect || !startYearSlider || !endYearSlider) return;
+    if (!startYearMinus || !startYearPlus || !endYearMinus || !endYearPlus) return;
+    
+    // 長押し用のID管理
+    let intervalId = null;
+    let timeoutId = null;
+    let isPressed = false;
+    
+    // 年を変更する共通関数
+    function changeYear(selectElement, sliderElement, delta) {
+        let currentYear = parseInt(selectElement.value);
+        let newYear = currentYear + delta;
+        
+        // 範囲チェック
+        if (newYear < MIN_YEAR) newYear = MIN_YEAR;
+        if (newYear > MAX_YEAR) newYear = MAX_YEAR;
+        
+        // 開始年と終了年の関係チェック（ループを防ぐため、必要な場合のみ連動）
+        if (selectElement === startYearSelect) {
+            const endYear = parseInt(endYearSelect.value);
+            // 開始年を増やしているときのみ、終了年も連動して増やす
+            if (delta > 0 && newYear > endYear) {
+                endYearSelect.value = newYear;
+                endYearSlider.value = newYear;
+            }
+            // 開始年が既に終了年を超えている場合は、開始年を終了年に合わせる
+            else if (newYear > endYear) {
+                newYear = endYear;
+            }
+        } else if (selectElement === endYearSelect) {
+            const startYear = parseInt(startYearSelect.value);
+            // 終了年を減らしているときのみ、開始年も連動して減らす
+            if (delta < 0 && newYear < startYear) {
+                startYearSelect.value = newYear;
+                startYearSlider.value = newYear;
+            }
+            // 終了年が既に開始年を下回っている場合は、終了年を開始年に合わせる
+            else if (newYear < startYear) {
+                newYear = startYear;
+            }
+        }
+        
+        // 値を更新
+        selectElement.value = newYear;
+        sliderElement.value = newYear;
+        updateYearSelectOptions();
+    }
+    
+    // 長押し開始
+    function startContinuousChange(selectElement, sliderElement, delta) {
+        // フラグをセット
+        isPressed = true;
+        
+        // 最初の1回を実行
+        changeYear(selectElement, sliderElement, delta);
+        
+        // 500ms後から連続変更開始（ただし、まだ押されている場合のみ）
+        timeoutId = setTimeout(() => {
+            if (isPressed) {
+                intervalId = setInterval(() => {
+                    changeYear(selectElement, sliderElement, delta);
+                }, 100); // 100msごとに変更
+            }
+        }, 500);
+    }
+    
+    // 長押し停止
+    function stopContinuousChange() {
+        // フラグをクリア
+        isPressed = false;
+        
+        // タイムアウトをクリア（まだインターバルが開始されていない場合）
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+        }
+        
+        // インターバルをクリア
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+    }
+    
+    // 開始年マイナスボタン
+    startYearMinus.addEventListener('mousedown', () => startContinuousChange(startYearSelect, startYearSlider, -1));
+    startYearMinus.addEventListener('mouseup', stopContinuousChange);
+    startYearMinus.addEventListener('mouseleave', stopContinuousChange);
+    startYearMinus.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startContinuousChange(startYearSelect, startYearSlider, -1);
+    });
+    startYearMinus.addEventListener('touchend', stopContinuousChange);
+    startYearMinus.addEventListener('touchcancel', stopContinuousChange);
+    
+    // 開始年プラスボタン
+    startYearPlus.addEventListener('mousedown', () => startContinuousChange(startYearSelect, startYearSlider, 1));
+    startYearPlus.addEventListener('mouseup', stopContinuousChange);
+    startYearPlus.addEventListener('mouseleave', stopContinuousChange);
+    startYearPlus.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startContinuousChange(startYearSelect, startYearSlider, 1);
+    });
+    startYearPlus.addEventListener('touchend', stopContinuousChange);
+    startYearPlus.addEventListener('touchcancel', stopContinuousChange);
+    
+    // 終了年マイナスボタン
+    endYearMinus.addEventListener('mousedown', () => startContinuousChange(endYearSelect, endYearSlider, -1));
+    endYearMinus.addEventListener('mouseup', stopContinuousChange);
+    endYearMinus.addEventListener('mouseleave', stopContinuousChange);
+    endYearMinus.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startContinuousChange(endYearSelect, endYearSlider, -1);
+    });
+    endYearMinus.addEventListener('touchend', stopContinuousChange);
+    endYearMinus.addEventListener('touchcancel', stopContinuousChange);
+    
+    // 終了年プラスボタン
+    endYearPlus.addEventListener('mousedown', () => startContinuousChange(endYearSelect, endYearSlider, 1));
+    endYearPlus.addEventListener('mouseup', stopContinuousChange);
+    endYearPlus.addEventListener('mouseleave', stopContinuousChange);
+    endYearPlus.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        startContinuousChange(endYearSelect, endYearSlider, 1);
+    });
+    endYearPlus.addEventListener('touchend', stopContinuousChange);
+    endYearPlus.addEventListener('touchcancel', stopContinuousChange);
+}
+
+// [全期間]ボタンの処理
+function setAllPeriod() {
+    const startYearSelect = document.getElementById('startYearSelect');
+    const endYearSelect = document.getElementById('endYearSelect');
+    const startYearSlider = document.getElementById('startYearSlider');
+    const endYearSlider = document.getElementById('endYearSlider');
+    
+    if (!startYearSelect || !endYearSelect || !startYearSlider || !endYearSlider) return;
+    
+    // 全期間を設定
+    startYearSelect.value = MIN_YEAR;
+    endYearSelect.value = MAX_YEAR;
+    startYearSlider.value = MIN_YEAR;
+    endYearSlider.value = MAX_YEAR;
+    
+    // 選択肢を更新
+    updateYearSelectOptions();
+    
+    console.log('全期間設定:', MIN_YEAR, '〜', MAX_YEAR);
+}
+
 // ページ初期化
 function initializePage() {
     console.log('initializePage called');
     
     // 年のセレクトボックスの初期化
     initializeYearSelects();
+    
+    // スライダーと年選択の同期機能の初期化
+    initializeYearSliders();
+    
+    // 年の増減ボタンの初期化
+    initializeYearButtons();
+    
+    // [全期間]ボタンのイベントリスナー
+    document.getElementById('allPeriodBtn').addEventListener('click', setAllPeriod);
     
     // カテゴリーフィルターリストを生成
     generateCategoryFilterList();
@@ -543,7 +783,17 @@ function generateHistoryTable() {
         // 年のセル
         const yearCell = document.createElement('td');
         yearCell.className = 'year-column fw-bold text-center';
-        yearCell.textContent = year + '年';
+        
+        // 西暦と和暦を表示
+        const yearDiv = document.createElement('div');
+        yearDiv.textContent = year + '年';
+        yearCell.appendChild(yearDiv);
+        
+        const eraDiv = document.createElement('div');
+        eraDiv.className = 'text-muted small';
+        eraDiv.textContent = `(${getJapaneseEra(year)})`;
+        yearCell.appendChild(eraDiv);
+        
         row.appendChild(yearCell);
         
         // Article列のセル
@@ -554,18 +804,8 @@ function generateHistoryTable() {
         
         if (items && items.length > 0) {
             // 記事がある場合
-            // カテゴリ順でソート
-            items.sort((a, b) => {
-                return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
-            });
-            
-            // 年内の記事の並び順を設定
-            if (currentSortNewestFirst) {
-                // 新→古なので、カテゴリ順のままでOK（データは既に新→古の順）
-            } else {
-                // 古→新なので、逆順にする
-                items.reverse();
-            }
+            // 元データの順番を保持（カテゴリソートは行わない）
+            // historyDataの元の順序をそのまま使用
             
             // 各アイテムを改行で表示
             items.forEach((item, index) => {
@@ -753,7 +993,7 @@ function updateYearRangeDisplay() {
     const displayElement = document.getElementById('year-range-display');
     if (!displayElement) return;
     
-    displayElement.textContent = `${currentStartYear}〜${currentEndYear} (全${MIN_YEAR}〜${MAX_YEAR})`;
+    displayElement.textContent = `表示期間 ${currentStartYear}〜${currentEndYear} (全${MIN_YEAR}〜${MAX_YEAR})`;
 }
 
 // ヘッダースクロール効果の初期化
