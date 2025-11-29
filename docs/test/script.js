@@ -494,42 +494,42 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         }
         
         const container = document.getElementById('card-content-container-filter');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        const cardContainer = document.createElement('div');
-        cardContainer.className = 'card-container';
-        
-        // カテゴリ順序を維持するためのソート
-        const categoryOrder = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
-        const groupedByCategory = {};
-        filteredInfo.forEach(item => {
-            if (!groupedByCategory[item.category]) {
-                groupedByCategory[item.category] = [];
-            }
-            groupedByCategory[item.category].push(item);
-        });
-        
-        const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
-            return categoryOrder.indexOf(a) - categoryOrder.indexOf(b);
-        });
-        
-        sortedCategories.forEach(category => {
-            const items = groupedByCategory[category];
-            items.forEach(site => {
-                const cardWrapper = document.createElement('div');
-                cardWrapper.className = 'card-wrapper';
-                cardWrapper.id = site.key; // 各カードにIDを設定
-                cardWrapper.innerHTML = generateCardHTML(site, true);
-                cardContainer.appendChild(cardWrapper);
+        if (container) {
+            container.innerHTML = '';
+            
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'card-container';
+            
+            // カテゴリ順序を維持するためのソート
+            const categoryOrder = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
+            const groupedByCategory = {};
+            filteredInfo.forEach(item => {
+                if (!groupedByCategory[item.category]) {
+                    groupedByCategory[item.category] = [];
+                }
+                groupedByCategory[item.category].push(item);
             });
-        });
-        
-        container.appendChild(cardContainer);
-        
-        // ハッシュタグ一覧を更新
-        renderHashTagListForTab('filter');
+            
+            const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
+                return categoryOrder.indexOf(a) - categoryOrder.indexOf(b);
+            });
+            
+            sortedCategories.forEach(category => {
+                const items = groupedByCategory[category];
+                items.forEach(site => {
+                    const cardWrapper = document.createElement('div');
+                    cardWrapper.className = 'card-wrapper';
+                    cardWrapper.id = site.key; // 各カードにIDを設定
+                    cardWrapper.innerHTML = generateCardHTML(site, true);
+                    cardContainer.appendChild(cardWrapper);
+                });
+            });
+            
+            container.appendChild(cardContainer);
+            
+            // ハッシュタグ一覧を更新
+            renderHashTagListForTab('filter');
+        }
     } else {
         // 通常モード: タブごとにカードを生成
         
