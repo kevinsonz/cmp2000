@@ -154,9 +154,15 @@ function parseBasicInfoCSV(csvText) {
 
 // アーカイブCSVの解析
 function parseArchiveCSV(csvText) {
+    console.log('=== parseArchiveCSV開始 ===');
+    console.log('CSVテキスト長:', csvText.length);
+    console.log('CSVの最初の200文字:', csvText.substring(0, 200));
+    
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     const items = [];
+    
+    console.log('ヘッダー:', headers);
     
     const categoryIndex = headers.indexOf('category');
     const siteTitleIndex = headers.indexOf('siteTitle');
@@ -164,6 +170,11 @@ function parseArchiveCSV(csvText) {
     const siteUrlIndex = headers.indexOf('siteUrl');
     const logoIndex = headers.indexOf('logo');
     const commentIndex = headers.indexOf('comment');
+    
+    console.log('インデックス情報:');
+    console.log('  categoryIndex:', categoryIndex);
+    console.log('  siteTitleIndex:', siteTitleIndex);
+    console.log('  hashTagIndex:', hashTagIndex);
     
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
@@ -194,6 +205,11 @@ function parseArchiveCSV(csvText) {
                 comment: values[commentIndex] || ''
             });
         }
+    }
+    
+    console.log('parseArchiveCSV完了: アイテム数=', items.length);
+    if (items.length > 0) {
+        console.log('最初のアイテム:', items[0]);
     }
     
     return items;
@@ -533,6 +549,12 @@ function generateAboutPage(filterTag = null) {
         archiveByCategory[item.category].push(item);
     });
     
+    // デバッグ用ログ
+    console.log('=== アーカイブデータのデバッグ ===');
+    console.log('allArchiveInfo件数:', allArchiveInfo.length);
+    console.log('archiveByCategoryのキー:', Object.keys(archiveByCategory));
+    console.log('archiveByCategory:', archiveByCategory);
+    
     const familyByCategory = {};
     allFamilyInfo.forEach(item => {
         if (!familyByCategory[item.category]) {
@@ -578,6 +600,13 @@ function generateAboutPage(filterTag = null) {
     ['ユニット活動', 'けびんケビンソン(ソロ)', 'イイダリョウ(ソロ)'].forEach(category => {
         const hasBasic = basicByCategory[category] && basicByCategory[category].length > 0;
         const hasArchive = archiveByCategory[category] && archiveByCategory[category].length > 0;
+        
+        console.log(`カテゴリ "${category}":`, {
+            hasBasic,
+            basicCount: hasBasic ? basicByCategory[category].length : 0,
+            hasArchive,
+            archiveCount: hasArchive ? archiveByCategory[category].length : 0
+        });
         
         if (hasBasic || hasArchive) {
             const sectionId = category === 'ユニット活動' ? 'common' : 
