@@ -436,7 +436,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         return diffDays <= NEW_BADGE_DAYS;
     }
     
-    function generateCardHTML(site, showCategory = false) {
+    function generateCardHTML(site, showCategory = false, includeFeed = false) {
         const isNew = isNewArticle(site.key);
         const newBadgeHtml = isNew 
             ? '<span class="badge bg-danger new-badge">New!!</span>' 
@@ -454,6 +454,41 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         
         const categoryBadgeHtml = showCategory ? `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">${site.category}</small>` : '';
         
+        // RSSフィードのHTMLを生成（includeFeedがtrueの場合）
+        let feedContentHtml = '';
+        if (includeFeed && singleDataByKey[site.key]) {
+            const articles = singleDataByKey[site.key].slice(0, singleMaxLength);
+            feedContentHtml = articles.map(item => {
+                if (!item.title) return '';
+                
+                let dateSpan = '';
+                if (item.pubDate) {
+                    const date = new Date(item.pubDate);
+                    const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+                    
+                    const today = new Date();
+                    const diffTime = today - date;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    let newBadge = '';
+                    if (diffDays <= NEW_BADGE_DAYS) {
+                        newBadge = '<span class="badge bg-danger" style="margin-right: 0.35rem; font-size: 0.65rem;">New!!</span>';
+                    }
+                    
+                    dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
+                }
+                
+                let titleSpan = '';
+                if (item.link) {
+                    titleSpan = `<a href="${item.link}" target="_blank" style="color: #0d6efd; font-size: 0.9rem;">${item.title}</a>`;
+                } else {
+                    titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${item.title}</span>`;
+                }
+                
+                return `<div style="margin-bottom: 0.4rem; font-size: 0.9rem;">${dateSpan}${titleSpan}</div>`;
+            }).join('');
+        }
+        
         return `
             <div class="card">
                 <a href="${site.siteUrl}" target="_blank">
@@ -466,7 +501,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                     ${categoryBadgeHtml}
                     <h5 class="card-title">${site.siteTitle}</h5>
                     <div class="card-text">
-                        <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
+                        <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start">${feedContentHtml}</div>
                     </div>
                     <div class="card-action-area">
                         <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
@@ -520,7 +555,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                     const cardWrapper = document.createElement('div');
                     cardWrapper.className = 'card-wrapper';
                     cardWrapper.id = site.key; // 各カードにIDを設定
-                    cardWrapper.innerHTML = generateCardHTML(site, true);
+                    cardWrapper.innerHTML = generateCardHTML(site, true, true); // includeFeed=trueを追加
                     cardContainer.appendChild(cardWrapper);
                 });
             });
@@ -607,8 +642,12 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         generateTabLinksSection();
     }
     
-    if (singleData) {
-        loadSingleFeeds(singleData, filteredInfo.map(item => item.key));
+    // 通常モード時のみloadSingleFeedsを呼び出す（フィルタモードでは既に埋め込まれている）
+    if (singleData && !filterTag) {
+        // DOM更新が完了するのを待ってからフィードを読み込む
+        setTimeout(() => {
+            loadSingleFeeds(singleData, filteredInfo.map(item => item.key));
+        }, 50);
     }
 }
 function loadFeeds(singleData) {
@@ -731,8 +770,13 @@ function loadFeeds(singleData) {
 }
 
 function loadSingleFeeds(singleData, keys) {
+    console.log('loadSingleFeeds called with keys:', keys);
+    console.log('singleData length:', singleData ? singleData.length : 'null');
+    
     keys.forEach(key => {
         const feedContainer = document.getElementById(`single-rss-feed-container-${key}`);
+        console.log(`Looking for container: single-rss-feed-container-${key}`, feedContainer ? 'FOUND' : 'NOT FOUND');
+        
         if (!feedContainer) return;
         
         const filteredData = singleData
@@ -749,6 +793,8 @@ function loadSingleFeeds(singleData, keys) {
                 return dateB - dateA;
             })
             .slice(0, singleMaxLength);
+        
+        console.log(`Filtered data for ${key}:`, filteredData.length, 'items');
         
         filteredData.forEach(item => {
             if (!item.title) return;
