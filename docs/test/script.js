@@ -33,6 +33,7 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
     generateCards(basicInfo, singleData);
     loadFeeds(singleData);
     generateContributionGraph(contributionData);
+    updateJumpMenuForCurrentTab(); // ローカルモード時はここでジャンプメニューを更新
 } else {
     console.log('オンラインモードで実行中');
     
@@ -53,6 +54,7 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
         generateCards(basicInfo, singleData);
         loadFeeds(singleData);
         generateContributionGraph(contributionData);
+        updateJumpMenuForCurrentTab(); // オンラインモード時はデータ読み込み完了後にジャンプメニューを更新
     })
     .catch(error => {
         console.error('公開CSVの読み込みに失敗しました:', error);
@@ -1302,5 +1304,4 @@ document.addEventListener('DOMContentLoaded', () => {
     initHeaderTitleClick();
     updateCurrentYear();
     initTabs();
-    updateJumpMenuForCurrentTab();
 });
