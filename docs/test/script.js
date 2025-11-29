@@ -1153,17 +1153,34 @@ function generateTabLinksSection() {
             showNewBadge = diffDays <= NEW_BADGE_DAYS;
         }
         
-        // RSSフィード形式のHTML生成
+        // RSSフィード形式のHTML生成（日付とNew!!バッジ付き）
         const feedItemsHTML = sortedArticles.map(article => {
+            let dateSpan = '';
+            if (article.pubDate) {
+                const date = new Date(article.pubDate);
+                const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+                
+                const today = new Date();
+                const diffTime = today - date;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                let newBadge = '';
+                if (diffDays <= NEW_BADGE_DAYS) {
+                    newBadge = '<span class="badge bg-danger" style="margin-right: 0.35rem; font-size: 0.65rem;">New!!</span>';
+                }
+                
+                dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
+            }
+            
             return `
-                <div class="rss-item">
-                    <a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>
+                <div class="rss-item" style="margin-bottom: 0.4rem; font-size: 0.9rem;">
+                    ${dateSpan}<a href="${article.link}" target="_blank" rel="noopener noreferrer" style="color: #0d6efd; font-size: 0.9rem;">${article.title}</a>
                 </div>
             `;
         }).join('');
         
         return `
-            <div class="card-wrapper">
+            <div class="card-wrapper" id="${tabInfo.key}">
                 <div class="card">
                     <a href="javascript:void(0);" onclick="switchTab('${tabInfo.tabId}'); return false;">
                         <img src="${image}" class="card-img-top" alt="${tabInfo.name}">
@@ -1209,7 +1226,23 @@ function updateJumpMenuForCurrentTab() {
         menuItems += '<li><hr class="dropdown-divider"></li>';
         
         if (currentTab === 'general') {
-            menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'tab-links-section\'); return false;">各コンテンツへ</a></li>';
+            // 各タブのカードへのリンクを生成
+            const tabNames = ['common', 'kevin', 'ryo'];
+            const tabKeyPrefixMap = {
+                'common': 'cmp',
+                'kevin': 'kevin',
+                'ryo': 'ryo'
+            };
+            
+            tabNames.forEach(tabName => {
+                const keyPrefix = tabKeyPrefixMap[tabName] || tabName;
+                const tabItems = basicInfoData.filter(item => item.key.startsWith(keyPrefix));
+                if (tabItems.length > 0) {
+                    const firstItem = tabItems[0];
+                    menuItems += `<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('${firstItem.key}'); return false;">${firstItem.summary || firstItem.category}</a></li>`;
+                }
+            });
+            menuItems += '<li><hr class="dropdown-divider"></li>';
             menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'contribution-graph\'); return false;">ヒートマップ</a></li>';
         } else {
             // 各タブのカードセクションへのリンクを生成
