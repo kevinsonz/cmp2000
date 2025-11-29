@@ -6,7 +6,7 @@ const NEW_BADGE_DAYS = 30;
 
 // 公開スプレッドシートのCSV URL
 const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
-const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
+// PUBLIC_MULTI_CSV_URLは廃止されました（MULTI_CSVは使用されなくなりました）
 const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
 const PUBLIC_CONTRIBUTION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=928202728&single=true&output=csv';
 
@@ -23,7 +23,6 @@ const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_C
 if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined') {
     console.log('ローカルモードで実行中');
     const basicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
-    const multiData = parseMultiCSV(TEST_DATA.MULTI_CSV);
     const singleData = parseSingleCSV(TEST_DATA.SINGLE_CSV);
     const contributionData = parseContributionCSV(TEST_DATA.CONTRIBUTION_CSV);
     
@@ -32,20 +31,18 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
     allHashTags = collectAllHashTags(basicInfo);
     
     generateCards(basicInfo, singleData);
-    loadFeeds(multiData, singleData);
+    loadFeeds(singleData);
     generateContributionGraph(contributionData);
 } else {
     console.log('オンラインモードで実行中');
     
     Promise.all([
         fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
-        fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_CONTRIBUTION_CSV_URL).then(response => response.text())
     ])
-    .then(([basicCsvText, multiCsvText, singleCsvText, contributionCsvText]) => {
+    .then(([basicCsvText, singleCsvText, contributionCsvText]) => {
         const basicInfo = parseBasicInfoCSV(basicCsvText);
-        const multiData = parseMultiCSV(multiCsvText);
         const singleData = parseSingleCSV(singleCsvText);
         const contributionData = parseContributionCSV(contributionCsvText);
         
@@ -54,7 +51,7 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
         allHashTags = collectAllHashTags(basicInfo);
         
         generateCards(basicInfo, singleData);
-        loadFeeds(multiData, singleData);
+        loadFeeds(singleData);
         generateContributionGraph(contributionData);
     })
     .catch(error => {
@@ -96,7 +93,7 @@ function convertHashTagsToLinks(hashTagString) {
 
 // ハッシュタグフィルタを適用
 function applyHashTagFilter(tag) {
-    // 現在のタブを保存（フィルターモードでない場合のみ）
+    // 現在のタブを保存（フィルタモードでない場合のみ）
     if (!currentFilterTag && currentTab !== 'filter') {
         // 保存するタブがfilterでない場合のみ保存
         window.previousTab = currentTab;
@@ -117,7 +114,7 @@ function applyHashTagFilter(tag) {
 function clearHashTagFilter() {
     currentFilterTag = null;
     
-    // フィルタータブのコンテンツをクリア
+    // フィルタタブのコンテンツをクリア
     const filterContainer = document.getElementById('card-content-container-filter');
     if (filterContainer) {
         filterContainer.innerHTML = '';
@@ -171,9 +168,11 @@ function parseBasicInfoCSV(csvText) {
     const items = [];
     
     const keyIndex = headers.indexOf('key');
+    const tabIdIndex = headers.indexOf('tabId');
+    const tabIndex = headers.indexOf('tab');
     const categoryIndex = headers.indexOf('category');
+    const summaryIndex = headers.indexOf('summary');
     const siteTitleIndex = headers.indexOf('siteTitle');
-    const breadcrumbsIndex = headers.indexOf('breadcrumbs');
     const hashTagIndex = headers.indexOf('hashTag');
     const siteUrlIndex = headers.indexOf('siteUrl');
     const imageIndex = headers.indexOf('image');
@@ -204,9 +203,11 @@ function parseBasicInfoCSV(csvText) {
         if (values[keyIndex] && values[categoryIndex]) {
             items.push({
                 key: values[keyIndex],
+                tabId: values[tabIdIndex] || '',
+                tab: values[tabIndex] || '',
                 category: values[categoryIndex],
+                summary: values[summaryIndex] || '',
                 siteTitle: values[siteTitleIndex] || '',
-                breadcrumbs: values[breadcrumbsIndex] || '',
                 hashTag: values[hashTagIndex] || '',
                 siteUrl: values[siteUrlIndex] || '',
                 image: values[imageIndex] || '',
@@ -220,15 +221,14 @@ function parseBasicInfoCSV(csvText) {
     return items;
 }
 
-// CSV解析関数（Multi用）
+// CSV解析関数（Multi用） - 廃止されました（MULTI_CSVは使用されなくなりました）
+/*
 function parseMultiCSV(csvText) {
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     const items = [];
     
     const keyIndex = headers.indexOf('key');
-    const breadcrumbsIndex = headers.indexOf('breadcrumbs');
-    const siteUrlIndex = headers.indexOf('siteUrl');
     const titleIndex = headers.indexOf('title');
     const linkIndex = headers.indexOf('link');
     const dateIndex = headers.indexOf('date');
@@ -256,16 +256,21 @@ function parseMultiCSV(csvText) {
         if (values[keyIndex] && values[titleIndex]) {
             items.push({
                 key: values[keyIndex],
-                breadcrumbs: values[breadcrumbsIndex] || '',
-                siteUrl: values[siteUrlIndex] || '',
-                title: values[titleIndex] || '',
+                title: values[titleIndex],
                 link: values[linkIndex] || '',
-                pubDate: values[dateIndex] || ''
+                pubDate: values[dateIndex] || '' // dateをpubDateとして使用
             });
         }
     }
     
     return items;
+}
+*/
+
+// keyを基にbasic-info.jsから情報を取得するヘルパー関数
+function getBasicInfoByKey(key) {
+    if (!basicInfoData) return null;
+    return basicInfoData.find(item => item.key === key);
 }
 
 // CSV解析関数（Single用）
@@ -280,7 +285,24 @@ function parseSingleCSV(csvText) {
     const dateIndex = headers.indexOf('date');
     
     for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
+        const line = lines[i];
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        // カンマ区切りの解析（タイトル内のカンマを考慮）
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
         
         if (values[keyIndex] && values[titleIndex]) {
             items.push({
@@ -455,7 +477,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
     
     // フィルタモード
     if (filterTag) {
-        // フィルタータブを表示
+        // フィルタタブを表示
         currentTab = 'filter';
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('active');
@@ -509,21 +531,33 @@ function generateCards(basicInfo, singleData, filterTag = null) {
     } else {
         // 通常モード: タブごとにカードを生成
         
-        // タブをグループ化
-        const tabGroups = {
-            common: { key: 'cmp', category: '共通コンテンツ', containerId: 'card-content-container-common' },
-            kevin: { key: 'kevin', category: 'けびんケビンソン', containerId: 'card-content-container-kevin' },
-            ryo: { key: 'ryo', category: 'イイダリョウ', containerId: 'card-content-container-ryo' }
+        // CSVのtabフィールドを基にタブを動的に生成
+        // タブ名とコンテナIDのマッピング
+        const tabContainerMap = {
+            'common': 'card-content-container-common',
+            'kevin': 'card-content-container-kevin',
+            'ryo': 'card-content-container-ryo'
         };
         
-        Object.entries(tabGroups).forEach(([tabName, tabInfo]) => {
-            const container = document.getElementById(tabInfo.containerId);
+        // 各タブごとにアイテムをグループ化
+        const itemsByTab = {};
+        filteredInfo.forEach(item => {
+            const tabName = item.tabId || 'common'; // デフォルトはcommon
+            if (!itemsByTab[tabName]) {
+                itemsByTab[tabName] = [];
+            }
+            itemsByTab[tabName].push(item);
+        });
+        
+        // 各タブを処理
+        Object.entries(itemsByTab).forEach(([tabName, tabItems]) => {
+            const containerId = tabContainerMap[tabName];
+            if (!containerId) return;
+            
+            const container = document.getElementById(containerId);
             if (!container) return;
             
             container.innerHTML = '';
-            
-            // 該当するカテゴリのアイテムを抽出
-            const tabItems = filteredInfo.filter(item => item.key.startsWith(tabInfo.key));
             
             // カテゴリごとにグループ化
             const groupedByCategory = {};
@@ -537,6 +571,8 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             Object.entries(groupedByCategory).forEach(([category, items]) => {
                 const sectionTitle = document.createElement('h3');
                 sectionTitle.className = 'section-title';
+                
+                // categoryフィールドの値をタイトルとして使用
                 sectionTitle.textContent = category;
                 sectionTitle.id = items[0].key; // カテゴリの最初のアイテムのkeyをIDとする
                 container.appendChild(sectionTitle);
@@ -573,7 +609,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         loadSingleFeeds(singleData, filteredInfo.map(item => item.key));
     }
 }
-function loadFeeds(multiData, singleData) {
+function loadFeeds(singleData) {
     const multiContainer = document.getElementById('multi-rss-feed-container');
     
     if (multiContainer) {
@@ -593,7 +629,7 @@ function loadFeeds(multiData, singleData) {
         
         let currentYear = null;
         
-        multiData.slice(0, multiMaxLength).forEach(item => {
+        singleData.slice(0, multiMaxLength).forEach(item => {
             const date = item.pubDate ? new Date(item.pubDate) : null;
             const year = date ? date.getFullYear() : null;
             const month = date ? String(date.getMonth() + 1).padStart(2, '0') : null;
@@ -632,15 +668,18 @@ function loadFeeds(multiData, singleData) {
                 newBadgeHtml = '<span style="display: inline-block; width: 3.5rem;"></span>'; // 空白スペース
             }
             
-            // breadcrumbsのリンク
-            let breadcrumbsHtml = '';
-            if (item.breadcrumbs && item.siteUrl) {
-                breadcrumbsHtml = `<a href="${item.siteUrl}" target="_blank" style="color: #0d6efd; text-decoration: none;">${item.breadcrumbs}</a>`;
-            } else if (item.breadcrumbs) {
-                breadcrumbsHtml = `<span style="color: #495057;">${item.breadcrumbs}</span>`;
+            // siteTitleのリンク（basic-info.jsから取得）
+            let siteTitleHtml = '';
+            const basicInfo = getBasicInfoByKey(item.key);
+            if (basicInfo) {
+                if (basicInfo.siteTitle && basicInfo.siteUrl) {
+                    siteTitleHtml = `<a href="${basicInfo.siteUrl}" target="_blank" style="color: #0d6efd; text-decoration: none;">${basicInfo.siteTitle}</a>`;
+                } else if (basicInfo.siteTitle) {
+                    siteTitleHtml = `<span style="color: #495057;">${basicInfo.siteTitle}</span>`;
+                }
             }
             
-            cell1.innerHTML = newBadgeHtml + breadcrumbsHtml;
+            cell1.innerHTML = newBadgeHtml + siteTitleHtml;
             row1.appendChild(cell1);
             tbody.appendChild(row1);
             
@@ -1008,7 +1047,7 @@ function initTabs() {
 
 // タブ切り替え
 function switchTab(tabName) {
-    // フィルターモードの場合は何もしない
+    // フィルタモードの場合は何もしない
     if (currentFilterTag) {
         return;
     }
@@ -1031,7 +1070,7 @@ function switchTab(tabName) {
         targetContent.classList.add('active');
         currentTab = tabName;
         
-        // previousTabも更新（次回のフィルター用）
+        // previousTabも更新（次回のフィルタ用）
         if (tabName !== 'filter') {
             window.previousTab = tabName;
         }
@@ -1049,31 +1088,58 @@ function generateTabLinksSection() {
     const container = document.getElementById('tab-links-section');
     if (!container || !basicInfoData || !singleDataGlobal) return;
     
-    // 各カテゴリのデータを取得
-    const categories = [
-        { key: 'cmp', name: '共通', tab: 'common' },
-        { key: 'kevin', name: 'けびん', tab: 'kevin' },
-        { key: 'ryo', name: 'リョウ', tab: 'ryo' }
-    ];
+    // CSVデータから各タブの情報を動的に取得
+    // タブごとに最初のアイテムを取得してリンクカードを作成
+    const tabNames = ['common', 'kevin', 'ryo'];
+    const tabData = [];
     
-    const linksHTML = categories.map(category => {
-        // 該当するカテゴリの基本情報を取得
-        const categoryInfo = basicInfoData.find(item => item.key.startsWith(category.key));
-        if (!categoryInfo) return '';
+    tabNames.forEach(tabName => {
+        // 該当するタブのアイテムを取得
+        const tabItems = basicInfoData.filter(item => item.tabId === tabName);
+        if (tabItems.length > 0) {
+            // 最初のアイテムから情報を取得
+            const firstItem = tabItems[0];
+            tabData.push({
+                tabId: tabName,
+                tabName: firstItem.tab, // 表示用のタブ名
+                name: firstItem.summary || firstItem.category, // summaryを優先、なければcategory
+                key: firstItem.key,
+                image: firstItem.image,
+                subImage: firstItem.subImage
+            });
+        }
+    });
+    
+    const linksHTML = tabData.map(tabInfo => {
+        const image = tabInfo.image || '';
         
-        const image = categoryInfo.image || '';
+        // アイコン画像の決定
+        let subImageSrc = '';
+        if (tabInfo.tabId === 'ryo') {
+            subImageSrc = './images/ryo-icon-tech.jpg';
+        } else {
+            subImageSrc = tabInfo.subImage || '';
+        }
         
-        // 該当する記事を検索（keyが一致するもの）
+        // tabIdに対応するkeyプレフィックスのマッピング
+        const tabKeyPrefixMap = {
+            'common': 'cmp',
+            'kevin': 'kevin',
+            'ryo': 'ryo'
+        };
+        
+        // 該当する記事を検索（keyプレフィックスで一致するもの）
+        const keyPrefix = tabKeyPrefixMap[tabInfo.tabId] || tabInfo.tabId;
         const articles = singleDataGlobal.filter(article => 
-            article.key.startsWith(category.key)
+            article.key.startsWith(keyPrefix)
         );
         
-        // 最新記事を取得
+        // 最新10件を取得
         const sortedArticles = articles.sort((a, b) => {
             const dateA = new Date(a.pubDate);
             const dateB = new Date(b.pubDate);
             return dateB - dateA;
-        });
+        }).slice(0, 10);
         
         const latestArticle = sortedArticles[0];
         
@@ -1087,28 +1153,40 @@ function generateTabLinksSection() {
             showNewBadge = diffDays <= NEW_BADGE_DAYS;
         }
         
-        // 日付フォーマット
-        const formatDate = (dateStr) => {
-            const date = new Date(dateStr);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}/${month}/${day}`;
-        };
+        // RSSフィード形式のHTML生成
+        const feedItemsHTML = sortedArticles.map(article => {
+            return `
+                <div class="rss-item">
+                    <a href="${article.link}" target="_blank" rel="noopener noreferrer">${article.title}</a>
+                </div>
+            `;
+        }).join('');
         
         return `
-            <div class="tab-link-card" onclick="switchTab('${category.tab}')">
-                <div class="tab-link-image-wrapper">
-                    <img src="${image}" alt="${category.name}" class="tab-link-image">
-                    ${showNewBadge ? '<div class="tab-link-new-badge">NEW!!</div>' : ''}
-                    ${latestArticle && latestArticle.pubDate ? `<div class="tab-link-date">${formatDate(latestArticle.pubDate)}</div>` : ''}
+            <div class="card-wrapper">
+                <div class="card">
+                    <a href="javascript:void(0);" onclick="switchTab('${tabInfo.tabId}'); return false;">
+                        <img src="${image}" class="card-img-top" alt="${tabInfo.name}">
+                        ${showNewBadge ? '<span class="new-badge">NEW!!</span>' : ''}
+                        ${subImageSrc ? `<img src="${subImageSrc}" class="card-sub-image" alt="${tabInfo.name} Icon">` : ''}
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">${tabInfo.name}</h5>
+                        <div class="card-text">
+                            <div class="rss-feed-container">
+                                ${feedItemsHTML}
+                            </div>
+                        </div>
+                        <div class="card-action-area">
+                            <button class="btn btn-primary btn-sm card-action-button" onclick="switchTab('${tabInfo.tabId}')">Go to Tab</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="tab-link-title">${category.name}</div>
             </div>
         `;
     }).join('');
     
-    container.innerHTML = `<div class="tab-links-container">${linksHTML}</div>`;
+    container.innerHTML = `<div class="card-container">${linksHTML}</div>`;
 }
 
 // 現在のタブに応じてジャンプメニューを更新
@@ -1117,7 +1195,7 @@ function updateJumpMenuForCurrentTab() {
     if (!jumpMenuList) return;
     
     if (currentFilterTag) {
-        // フィルターモード
+        // フィルタモード
         jumpMenuList.innerHTML = `
             <li><a class="dropdown-item" href="#" onclick="smoothScrollToTop(); return false;">ヘッダー</a></li>
             <li><hr class="dropdown-divider"></li>
@@ -1132,8 +1210,7 @@ function updateJumpMenuForCurrentTab() {
         
         if (currentTab === 'general') {
             menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'tab-links-section\'); return false;">各コンテンツへ</a></li>';
-            menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'multi-rss-feed-container\'); return false;">最新の更新情報</a></li>';
-            menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'contribution-graph\'); return false;">活動履歴</a></li>';
+            menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'contribution-graph\'); return false;">ヒートマップ</a></li>';
         } else {
             // 各タブのカードセクションへのリンクを生成
             const sections = getSectionsForTab(currentTab);
@@ -1176,7 +1253,7 @@ function getSectionsForTab(tabName) {
     else if (tabName === 'kevin') keyPrefix = 'kevin';
     else if (tabName === 'ryo') keyPrefix = 'ryo';
     
-    // 該当するタブのアイテムをフィルターして、各カードの情報を返す
+    // 該当するタブのアイテムをフィルタして、各カードの情報を返す
     const sections = basicInfoData
         .filter(item => item.key.startsWith(keyPrefix))
         .map(item => ({

@@ -26,7 +26,7 @@ let accordionStates = {
     'specialThanks': false
 };
 
-// フィルター前の状態を保存
+// フィルタ前の状態を保存
 let preFilterStates = null;
 
 // セクション情報
@@ -58,15 +58,10 @@ function toggleAccordion(sectionId) {
         icon.classList.remove('collapsed');
         accordionStates[sectionId] = true;
     }
-    
-    updateToggleAllButton();
 }
 
-// 全開/全閉のトグル
-function toggleAllAccordions() {
-    // 現在の状態を確認（一つでも閉じていれば全開に、すべて開いていれば全閉に）
-    const allOpen = Object.values(accordionStates).every(state => state === true);
-    
+// 全開
+function openAllAccordions() {
     sectionInfo.forEach(info => {
         const section = document.getElementById(info.id);
         if (!section) return;
@@ -76,109 +71,32 @@ function toggleAllAccordions() {
         
         if (!body || !icon) return;
         
-        if (allOpen) {
-            // 全閉
-            body.classList.remove('show');
-            icon.classList.add('collapsed');
-            accordionStates[info.id] = false;
-        } else {
-            // 全開
-            body.classList.add('show');
-            icon.classList.remove('collapsed');
-            accordionStates[info.id] = true;
-        }
+        body.classList.add('show');
+        icon.classList.remove('collapsed');
+        accordionStates[info.id] = true;
     });
-    
-    // ボタンのテキストを更新（両方のボタンを同期）
-    updateToggleAllButton();
 }
 
-// セクションナビゲーションを更新
-function updateSectionNavigation(filterTag = null) {
-    // 通常時のナビゲーション
-    const navContainer = document.getElementById('section-nav');
-    // コンパクトヘッダーのナビゲーション
-    const navCompactContainer = document.getElementById('section-nav-compact');
-    
-    if (!navContainer || !navCompactContainer) return;
-    
-    navContainer.innerHTML = '';
-    navCompactContainer.innerHTML = '';
-    
-    if (filterTag) {
-        // フィルター中の表示
-        const filterItem = document.createElement('span');
-        filterItem.className = 'section-nav-item filtering';
-        filterItem.textContent = `フィルター: ${filterTag}`;
-        navContainer.appendChild(filterItem);
-        
-        const filterItemCompact = filterItem.cloneNode(true);
-        navCompactContainer.appendChild(filterItemCompact);
-    } else {
-        // 通常の表示
-        sectionInfo.forEach(info => {
-            const navItem = document.createElement('a');
-            navItem.className = 'section-nav-item';
-            navItem.href = `#${info.id}`;
-            navItem.textContent = info.name;
-            navItem.dataset.target = info.id;
-            
-            const navItemCompact = navItem.cloneNode(true);
-            
-            navContainer.appendChild(navItem);
-            navCompactContainer.appendChild(navItemCompact);
-        });
-        
-        // スクロールスパイの初期化
-        initScrollSpy();
-    }
-    
-    // 全開/全閉ボタンの更新
-    updateToggleAllButton();
-}
-
-// 全開/全閉ボタンの表示を更新
-function updateToggleAllButton() {
-    const btn = document.getElementById('toggleAllBtn');
-    const btnCompact = document.getElementById('toggleAllBtnCompact');
-    
-    const allOpen = Object.values(accordionStates).every(state => state === true);
-    const text = allOpen ? '- 全閉' : '+ 全開';
-    
-    if (btn) btn.textContent = text;
-    if (btnCompact) btnCompact.textContent = text;
-}
-
-// スクロールスパイの初期化
-function initScrollSpy() {
-    // 既存のIntersectionObserverをクリア（複数初期化を防ぐ）
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const sectionId = entry.target.id;
-                
-                // ナビゲーションアイテムのアクティブ状態を更新
-                document.querySelectorAll('.section-nav-item').forEach(item => {
-                    if (item.dataset.target === sectionId) {
-                        item.classList.add('active');
-                    } else {
-                        item.classList.remove('active');
-                    }
-                });
-            }
-        });
-    }, {
-        threshold: 0.3,
-        rootMargin: '-100px 0px -50% 0px'
-    });
-    
-    // すべてのセクションを監視
+// 全閉
+function closeAllAccordions() {
     sectionInfo.forEach(info => {
         const section = document.getElementById(info.id);
-        if (section) {
-            observer.observe(section);
-        }
+        if (!section) return;
+        
+        const body = section.querySelector('.accordion-body-custom');
+        const icon = section.querySelector('.accordion-toggle-icon');
+        
+        if (!body || !icon) return;
+        
+        body.classList.remove('show');
+        icon.classList.add('collapsed');
+        accordionStates[info.id] = false;
     });
+}
+
+// セクションナビゲーションを更新（削除）
+function updateSectionNavigation(filterTag = null) {
+    // セクションナビゲーションは削除されたため、何もしない
 }
 
 // 基本情報CSVの解析
@@ -194,6 +112,7 @@ function parseBasicInfoCSV(csvText) {
     const siteUrlIndex = headers.indexOf('siteUrl');
     const logoIndex = headers.indexOf('logo');
     const commentIndex = headers.indexOf('comment');
+    const summaryIndex = headers.indexOf('summary');
     
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
@@ -224,7 +143,8 @@ function parseBasicInfoCSV(csvText) {
                 hashTag: values[hashTagIndex] || '',
                 siteUrl: values[siteUrlIndex] || '#',
                 logo: values[logoIndex] || '',
-                comment: values[commentIndex] || ''
+                comment: values[commentIndex] || '',
+                summary: summaryIndex >= 0 ? (values[summaryIndex] || '') : ''
             });
         }
     }
@@ -434,12 +354,66 @@ function updateJumpMenu(filterTag) {
         filterItem.appendChild(filterLink);
         dropdownMenu.appendChild(filterItem);
     } else {
-        sectionInfo.forEach(info => {
+        // CSVデータから動的にセクションを生成
+        const sections = [];
+        
+        // カテゴリごとにグループ化（generateAboutPageと同じロジック）
+        const basicByCategory = {};
+        allBasicInfo.forEach(item => {
+            if (!basicByCategory[item.category]) {
+                basicByCategory[item.category] = [];
+            }
+            basicByCategory[item.category].push(item);
+        });
+        
+        const archiveByCategory = {};
+        allArchiveInfo.forEach(item => {
+            if (!archiveByCategory[item.category]) {
+                archiveByCategory[item.category] = [];
+            }
+            archiveByCategory[item.category].push(item);
+        });
+        
+        // ユニット活動、けびんケビンソン(ソロ)、イイダリョウ(ソロ)
+        ['ユニット活動', 'けびんケビンソン(ソロ)', 'イイダリョウ(ソロ)'].forEach(category => {
+            const hasBasic = basicByCategory[category] && basicByCategory[category].length > 0;
+            const hasArchive = archiveByCategory[category] && archiveByCategory[category].length > 0;
+            
+            if (hasBasic || hasArchive) {
+                const sectionId = category === 'ユニット活動' ? 'common' : 
+                                category === 'けびんケビンソン(ソロ)' ? 'kevin' : 'ryo';
+                sections.push({ id: sectionId, name: category });
+            }
+        });
+        
+        // ファミリー情報から各セクションを追加
+        const familyByCategory = {};
+        allFamilyInfo.forEach(member => {
+            if (!familyByCategory[member.category]) {
+                familyByCategory[member.category] = [];
+            }
+            familyByCategory[member.category].push(member);
+        });
+        
+        if (familyByCategory['スタッフ'] && familyByCategory['スタッフ'].length > 0) {
+            sections.push({ id: 'staff', name: 'スタッフ' });
+        }
+        
+        if (familyByCategory['ファミリー'] && familyByCategory['ファミリー'].length > 0) {
+            sections.push({ id: 'family', name: 'ファミリー' });
+        }
+        
+        if (familyByCategory['スペシャルサンクス'] && familyByCategory['スペシャルサンクス'].length > 0) {
+            sections.push({ id: 'specialThanks', name: 'スペシャルサンクス' });
+        }
+        
+        // セクションのリンクを生成
+        sections.forEach(section => {
             const item = document.createElement('li');
             const link = document.createElement('a');
             link.className = 'dropdown-item';
-            link.href = `#${info.id}`;
-            link.textContent = info.fullName;
+            link.href = `#${section.id}`;
+            link.textContent = section.name;
             item.appendChild(link);
             dropdownMenu.appendChild(item);
         });
@@ -601,13 +575,13 @@ function generateAboutPage(filterTag = null) {
     }
     
     // 共通、けびん、リョウのセクション（アコーディオン）
-    ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'].forEach(category => {
+    ['ユニット活動', 'けびんケビンソン(ソロ)', 'イイダリョウ(ソロ)'].forEach(category => {
         const hasBasic = basicByCategory[category] && basicByCategory[category].length > 0;
         const hasArchive = archiveByCategory[category] && archiveByCategory[category].length > 0;
         
         if (hasBasic || hasArchive) {
-            const sectionId = category === '共通コンテンツ' ? 'common' : 
-                            category === 'けびんケビンソン' ? 'kevin' : 'ryo';
+            const sectionId = category === 'ユニット活動' ? 'common' : 
+                            category === 'けびんケビンソン(ソロ)' ? 'kevin' : 'ryo';
             
             // 件数計算
             const activeCount = hasBasic ? basicByCategory[category].length : 0;
@@ -621,6 +595,7 @@ function generateAboutPage(filterTag = null) {
             const accordionHeader = document.createElement('div');
             accordionHeader.className = 'accordion-header-custom';
             
+            // categoryから見出しを取得（CSVのcategoryカラムの値をそのまま使用）
             const headerTitle = document.createElement('div');
             headerTitle.className = 'accordion-header-title';
             headerTitle.textContent = category;
@@ -650,6 +625,21 @@ function generateAboutPage(filterTag = null) {
             // アコーディオンボディ
             const accordionBody = document.createElement('div');
             accordionBody.className = 'accordion-body-custom';
+            
+            // 説明文を追加（けびんとリョウのみ）
+            if (category === 'けびんケビンソン(ソロ)') {
+                const descDiv = document.createElement('div');
+                descDiv.className = 'person-description';
+                descDiv.style.cssText = 'padding: 1rem; margin-bottom: 1rem; background-color: #f8f9fa; border-radius: 0.25rem; border-left: 3px solid #0d6efd;';
+                descDiv.innerHTML = '<p class="mb-0 small text-muted" style="line-height: 1.5;">2019年（コロナ禍）頃からの参画で、現在はCMP2000管理人の役割を担っている。「何か」をしたくて活動しており、現在も模索中。</p>';
+                accordionBody.appendChild(descDiv);
+            } else if (category === 'イイダリョウ(ソロ)') {
+                const descDiv = document.createElement('div');
+                descDiv.className = 'person-description';
+                descDiv.style.cssText = 'padding: 1rem; margin-bottom: 1rem; background-color: #f8f9fa; border-radius: 0.25rem; border-left: 3px solid #198754;';
+                descDiv.innerHTML = '<p class="mb-0 small text-muted" style="line-height: 1.5;">2014年頃から参画しているCMP2000主要メンバー。多岐に渡るキャリアを経ており、現在はフロントエンドを中心としたエンジニア。</p>';
+                accordionBody.appendChild(descDiv);
+            }
             
             // アクティブなサイト
             if (hasBasic) {
@@ -889,17 +879,17 @@ function initializeAboutPage() {
         initHeaderScroll();
         updateJumpMenu(null);
         
-        // 全開/全閉ボタンのイベント
-        const toggleAllBtn = document.getElementById('toggleAllBtn');
-        if (toggleAllBtn) {
-            toggleAllBtn.addEventListener('click', toggleAllAccordions);
-        }
+        // 全開/全閉ボタンのイベント（通常時）
+        const openAllBtn = document.getElementById('openAllBtn');
+        const closeAllBtn = document.getElementById('closeAllBtn');
+        if (openAllBtn) openAllBtn.addEventListener('click', openAllAccordions);
+        if (closeAllBtn) closeAllBtn.addEventListener('click', closeAllAccordions);
         
-        // コンパクト版の全開/全閉ボタンのイベント
-        const toggleAllBtnCompact = document.getElementById('toggleAllBtnCompact');
-        if (toggleAllBtnCompact) {
-            toggleAllBtnCompact.addEventListener('click', toggleAllAccordions);
-        }
+        // 全開/全閉ボタンのイベント（コンパクト版）
+        const openAllBtnCompact = document.getElementById('openAllBtnCompact');
+        const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
+        if (openAllBtnCompact) openAllBtnCompact.addEventListener('click', openAllAccordions);
+        if (closeAllBtnCompact) closeAllBtnCompact.addEventListener('click', closeAllAccordions);
     } else {
         console.log('オンラインモードで実行中（About）');
         
@@ -918,17 +908,17 @@ function initializeAboutPage() {
             initHeaderScroll();
             updateJumpMenu(null);
             
-            // 全開/全閉ボタンのイベント
-            const toggleAllBtn = document.getElementById('toggleAllBtn');
-            if (toggleAllBtn) {
-                toggleAllBtn.addEventListener('click', toggleAllAccordions);
-            }
+            // 全開/全閉ボタンのイベント（通常時）
+            const openAllBtn = document.getElementById('openAllBtn');
+            const closeAllBtn = document.getElementById('closeAllBtn');
+            if (openAllBtn) openAllBtn.addEventListener('click', openAllAccordions);
+            if (closeAllBtn) closeAllBtn.addEventListener('click', closeAllAccordions);
             
-            // コンパクト版の全開/全閉ボタンのイベント
-            const toggleAllBtnCompact = document.getElementById('toggleAllBtnCompact');
-            if (toggleAllBtnCompact) {
-                toggleAllBtnCompact.addEventListener('click', toggleAllAccordions);
-            }
+            // 全開/全閉ボタンのイベント（コンパクト版）
+            const openAllBtnCompact = document.getElementById('openAllBtnCompact');
+            const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
+            if (openAllBtnCompact) openAllBtnCompact.addEventListener('click', openAllAccordions);
+            if (closeAllBtnCompact) closeAllBtnCompact.addEventListener('click', closeAllAccordions);
         })
         .catch(error => {
             console.error('公開CSVの読み込みに失敗しました:', error);

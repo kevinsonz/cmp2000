@@ -38,31 +38,26 @@
             </a>
         </h1>
         
-        <!-- スクロール時のコンパクトヘッダー（1行レイアウト） -->
+        <!-- スクロール時のコンパクトヘッダー（2段レイアウト） -->
         <div class="header-compact">
-            <div class="header-compact-title">
-                <a href="./" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+            <!-- 1段目：ロゴ + ページメニュー -->
+            <div class="header-compact-row1">
+                <div class="header-compact-logo">
                     <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon-compact">
-                    <span class="header-text-cmp-compact">CMP2000</span>
-                    <span class="header-text-official-compact">Official Portal</span>
-                </a>
-            </div>
-            <div class="header-compact-menus">
-                <!-- ページメニュー（ドロップダウン形式） -->
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="pageMenuDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
-                        Menu
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-fixed" aria-labelledby="pageMenuDropdown">
-                        <li><a class="dropdown-item active" href="index.html">Home</a></li>
-                        <li><a class="dropdown-item" href="about.html">About</a></li>
-                        <li><a class="dropdown-item" href="history.html">History</a></li>
-                    </ul>
                 </div>
-                <!-- タブメニュー（横スクロール対応） -->
+                <div class="header-compact-page-menu">
+                    <a href="index.html" class="page-menu-link active">Home</a>
+                    <span class="page-menu-separator">|</span>
+                    <a href="about.html" class="page-menu-link">About</a>
+                    <span class="page-menu-separator">|</span>
+                    <a href="history.html" class="page-menu-link">History</a>
+                </div>
+            </div>
+            <!-- 2段目：タブメニュー -->
+            <div class="header-compact-row2">
                 <div class="tab-navigation-compact">
-                    <button class="tab-button active" data-tab="general" style="--tab-color: #6c757d;">全般</button>
-                    <button class="tab-button" data-tab="common" style="--tab-color: #dc3545;">共通</button>
+                    <button class="tab-button active" data-tab="general" style="--tab-color: #6c757d;">全体</button>
+                    <button class="tab-button" data-tab="common" style="--tab-color: #dc3545;">ユニット</button>
                     <button class="tab-button" data-tab="kevin" style="--tab-color: #198754;">けびん</button>
                     <button class="tab-button" data-tab="ryo" style="--tab-color: #8b4513;">リョウ</button>
                 </div>
@@ -84,14 +79,14 @@
     <!-- タブナビゲーション（通常時） -->
     <div class="tab-navigation-wrapper">
         <div class="tab-navigation">
-            <button class="tab-button active" data-tab="general" style="--tab-color: #6c757d;">全般</button>
-            <button class="tab-button" data-tab="common" style="--tab-color: #dc3545;">共通</button>
+            <button class="tab-button active" data-tab="general" style="--tab-color: #6c757d;">全体</button>
+            <button class="tab-button" data-tab="common" style="--tab-color: #dc3545;">ユニット</button>
             <button class="tab-button" data-tab="kevin" style="--tab-color: #198754;">けびん</button>
             <button class="tab-button" data-tab="ryo" style="--tab-color: #8b4513;">リョウ</button>
         </div>
     </div>
 
-    <!-- 全般タブコンテンツ -->
+    <!-- 全体タブコンテンツ -->
     <div id="tab-general" class="tab-content active">
         <!-- 理念セクション -->
         <div class="philosophy-section mt-3 mb-4 mx-auto" style="max-width: 960px;">
@@ -120,28 +115,9 @@
         </div>
         <hr>
 
-        <!-- 最新の更新情報セクション -->
-        <div class="page-container text-center">
-            <h3>最新の更新情報</h3>
-            <div class="row">
-                <div class="col">
-                    <!-- 複数のRSSフィードを表示するコンテナ -->
-                    <div id="multi-rss-feed-container" class="rss-feed-container text-start"></div>
-                </div>
-            </div>
-            
-            <!-- 履歴ページへのリンク -->
-            <div class="mt-3">
-                <a href="history.html" class="btn btn-outline-primary">
-                    📅 年表で全ての歴史を見る →
-                </a>
-            </div>
-        </div>
-        <hr>
-
         <!-- コントリビューショングラフセクション -->
         <div class="page-container text-center mt-4">
-            <h3>活動履歴</h3>
+            <h3>ヒートマップ</h3>
             <div class="contribution-graph-wrapper">
                 <div id="contribution-graph" class="contribution-graph"></div>
             </div>
@@ -151,7 +127,7 @@
         <div id="hashtag-list-container-general" class="page-container text-center mt-4 mb-4"></div>
     </div>
 
-    <!-- 共通タブコンテンツ -->
+    <!-- ユニットタブコンテンツ -->
     <div id="tab-common" class="tab-content">
         <div id="card-content-container-common">
             <!-- カードはscript.jsで自動生成されます -->
@@ -178,13 +154,13 @@
         <div id="hashtag-list-container-ryo" class="page-container text-center mt-4 mb-4"></div>
     </div>
 
-    <!-- フィルター表示用タブコンテンツ -->
+    <!-- フィルタ表示用タブコンテンツ -->
     <div id="tab-filter" class="tab-content">
-        <!-- フィルターUI表示エリア -->
+        <!-- フィルタUI表示エリア -->
         <div id="filter-ui-container" class="page-container"></div>
         
         <div id="card-content-container-filter">
-            <!-- フィルター結果のカードはscript.jsで自動生成されます -->
+            <!-- フィルタ結果のカードはscript.jsで自動生成されます -->
         </div>
         <!-- ハッシュタグ一覧 -->
         <div id="hashtag-list-container-filter" class="page-container text-center mt-4 mb-4"></div>

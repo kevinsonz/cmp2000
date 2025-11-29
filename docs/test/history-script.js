@@ -45,7 +45,7 @@ let currentCategoryFilters = [...CATEGORIES]; // すべて選択された状態�
 let currentShowEmptyYears = true; // デフォルトで空白年を表示
 let currentSortNewestFirst = true; // デフォルトで新→古
 
-// フィルター設定の一時保存用
+// フィルタ設定の一時保存用
 let tempStartYear = currentStartYear;
 let tempEndYear = currentEndYear;
 let tempCategoryFilters = [...currentCategoryFilters];
@@ -462,13 +462,13 @@ function initializePage() {
     // [全期間]ボタンのイベントリスナー
     document.getElementById('allPeriodBtn').addEventListener('click', setAllPeriod);
     
-    // カテゴリーフィルターリストを生成
+    // カテゴリフィルタリストを生成
     generateCategoryFilterList();
     
     // 「全表示」ボタンのイベントリスナー
     document.getElementById('showAllBtn').addEventListener('click', showAllCategories);
     
-    // フィルター設定内の「全選択」「全解除」ボタン
+    // フィルタ設定内の「全選択」「全解除」ボタン
     document.getElementById('filterSelectAllBtn').addEventListener('click', selectAllInFilter);
     document.getElementById('filterDeselectAllBtn').addEventListener('click', deselectAllInFilter);
     
@@ -497,7 +497,7 @@ function initializePage() {
     initHeaderScroll();
 }
 
-// カテゴリーフィルターリストを生成
+// カテゴリフィルタリストを生成
 function generateCategoryFilterList() {
     const container = document.getElementById('categoryFilterList');
     if (!container) return;
@@ -531,14 +531,14 @@ function generateCategoryFilterList() {
     });
 }
 
-// フィルター設定内の「全選択」
+// フィルタ設定内の「全選択」
 function selectAllInFilter() {
     document.querySelectorAll('.filter-category-checkbox').forEach(checkbox => {
         checkbox.checked = true;
     });
 }
 
-// フィルター設定内の「全解除」
+// フィルタ設定内の「全解除」
 function deselectAllInFilter() {
     document.querySelectorAll('.filter-category-checkbox').forEach(checkbox => {
         checkbox.checked = false;
@@ -554,7 +554,7 @@ function applyFilter() {
     const startYear = parseInt(startYearSelect.value);
     const endYear = parseInt(endYearSelect.value);
     
-    // カテゴリーフィルターを取得
+    // カテゴリフィルタを取得
     const selectedCategories = [];
     document.querySelectorAll('.filter-category-checkbox').forEach(checkbox => {
         if (checkbox.checked) {
@@ -607,7 +607,7 @@ function cancelFilter() {
         document.getElementById('sortOldestFirst').checked = true;
     }
     
-    // カテゴリーチェックボックスを現在の設定に戻す
+    // カテゴリチェックボックスを現在の設定に戻す
     document.querySelectorAll('.filter-category-checkbox').forEach(checkbox => {
         checkbox.checked = currentCategoryFilters.includes(checkbox.dataset.category);
     });
@@ -629,7 +629,7 @@ function cancelFilter() {
 function showAllCategories() {
     currentCategoryFilters = [...CATEGORIES];
     
-    // フィルター設定も更新
+    // フィルタ設定も更新
     document.querySelectorAll('.filter-category-checkbox').forEach(checkbox => {
         checkbox.checked = true;
     });
@@ -640,11 +640,11 @@ function showAllCategories() {
     updateJumpMenu();
 }
 
-// 単一カテゴリーを選択
+// 単一カテゴリを選択
 function selectSingleCategory(category) {
     currentCategoryFilters = [category];
     
-    // フィルター設定も更新
+    // フィルタ設定も更新
     document.querySelectorAll('.filter-category-checkbox').forEach(checkbox => {
         checkbox.checked = checkbox.dataset.category === category;
     });
@@ -655,7 +655,7 @@ function selectSingleCategory(category) {
     updateJumpMenu();
 }
 
-// 選択中カテゴリーアイコンを更新
+// 選択中カテゴリアイコンを更新
 function updateSelectedCategoryIcons() {
     const container = document.getElementById('selectedCategoryIcons');
     if (!container) return;
@@ -696,7 +696,7 @@ function generateHistoryTable() {
     
     historyData.forEach(item => {
         if (item.year >= currentStartYear && item.year <= currentEndYear) {
-            // カテゴリフィルターを適用
+            // カテゴリフィルタを適用
             if (currentCategoryFilters.length === 0) {
                 // 空配列の場合は何も表示しない
                 return;
@@ -904,7 +904,7 @@ function updateJumpMenu() {
     const yearsWithData = new Set();
     historyData.forEach(item => {
         if (item.year >= currentStartYear && item.year <= currentEndYear) {
-            // カテゴリフィルターを考慮
+            // カテゴリフィルタを考慮
             if (currentCategoryFilters.length === 0) {
                 return;
             }
@@ -992,7 +992,7 @@ function updateYearRangeDisplay() {
     const displayElement = document.getElementById('year-range-display');
     if (!displayElement) return;
     
-    displayElement.textContent = `表示期間 ${currentStartYear}〜${currentEndYear} (全${MIN_YEAR}〜${MAX_YEAR})`;
+    displayElement.textContent = `表示期間 ${currentStartYear}〜${currentEndYear}年 (全${MIN_YEAR}〜${MAX_YEAR}年)`;
 }
 
 // ヘッダースクロール効果の初期化
@@ -1023,17 +1023,31 @@ function initHeaderScroll() {
     }
 }
 
-// フィルター設定へスクロールする関数
+// フィルタ設定へスクロールする関数
 function scrollToFilterSettings() {
     const filterSettings = document.getElementById('filterSettings');
     if (filterSettings) {
-        // アコーディオンを開く
-        const collapseElement = new bootstrap.Collapse(filterSettings, {
-            toggle: true
-        });
+        const isOpen = filterSettings.classList.contains('show');
         
-        // アコーディオンが開いた後にスクロール
-        setTimeout(() => {
+        if (!isOpen) {
+            // 閉じている場合は開く
+            const collapseElement = new bootstrap.Collapse(filterSettings, {
+                show: true
+            });
+            
+            // アコーディオンが開いた後にスクロール
+            setTimeout(() => {
+                const headerHeight = document.getElementById('main-header').offsetHeight;
+                const elementPosition = filterSettings.getBoundingClientRect().top + window.pageYOffset;
+                const offsetPosition = elementPosition - headerHeight - 20; // 余白を追加
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }, 300); // アニメーション時間を考慮
+        } else {
+            // 既に開いている場合はスクロールのみ
             const headerHeight = document.getElementById('main-header').offsetHeight;
             const elementPosition = filterSettings.getBoundingClientRect().top + window.pageYOffset;
             const offsetPosition = elementPosition - headerHeight - 20; // 余白を追加
@@ -1042,7 +1056,7 @@ function scrollToFilterSettings() {
                 top: offsetPosition,
                 behavior: 'smooth'
             });
-        }, 300); // アニメーション時間を考慮
+        }
     }
 }
 
@@ -1096,10 +1110,10 @@ function handleCategoryIconClick(event) {
     }
     
     if (clickedCategory && currentCategoryFilters.includes(clickedCategory)) {
-        // そのカテゴリをフィルターから除外
+        // そのカテゴリをフィルタから除外
         currentCategoryFilters = currentCategoryFilters.filter(cat => cat !== clickedCategory);
         
-        // フィルター設定も更新
+        // フィルタ設定も更新
         document.querySelectorAll('.filter-category-checkbox').forEach(checkbox => {
             if (checkbox.dataset.category === clickedCategory) {
                 checkbox.checked = false;

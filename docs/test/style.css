@@ -1,3 +1,22 @@
+/* =================================
+   グローバルスタイル
+   ================================= */
+
+/* リンクの色を赤系に統一 */
+a {
+    color: #dc3545;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #b02a37;
+    text-decoration: underline;
+}
+
+/* =================================
+   ヘッダーのスタイル
+   ================================= */
+
 /* ヘッダーのスタイル */
 #main-header {
     z-index: 1000;
@@ -23,22 +42,26 @@
 /* スクロール時のコンパクトヘッダー（初期状態では非表示） */
 .header-compact {
     display: none;
+    flex-direction: column;
+    padding: 0;
+    overflow: visible !important;
+}
+
+/* 1段目：ロゴ + ページメニュー */
+.header-compact-row1 {
+    display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem 1rem;
-    gap: 1rem;
-    flex-wrap: nowrap; /* 1行に固定 */
-    overflow: visible !important; /* ドロップダウンメニューがはみ出せるように */
+    justify-content: center;
+    position: relative;
+    padding: 0.4rem 1rem;
+    min-height: 35px;
 }
 
-.header-compact-title {
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-
-.header-compact-title a {
-    font-size: 1.2rem;
-    font-weight: 600;
+.header-compact-logo {
+    position: absolute;
+    left: 1rem;
+    display: flex;
+    align-items: center;
 }
 
 .header-icon-compact {
@@ -46,70 +69,75 @@
     width: auto;
 }
 
-.header-text-cmp-compact {
-    font-weight: bold;
-}
-
-.header-text-official-compact {
-    font-weight: 500;
-}
-
-.header-compact-menus {
+.header-compact-page-menu {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    flex-shrink: 1;
-    min-width: 0; /* 縮小を許可 */
-    overflow: visible !important; /* ドロップダウンメニューが完全にはみ出せるように */
-    -webkit-overflow-scrolling: touch;
+    gap: 0.5rem;
+    justify-content: center;
 }
 
-/* ページメニュードロップダウンのスタイル */
-.header-compact-menus .dropdown {
-    flex-shrink: 0;
+.page-menu-link {
+    text-decoration: none;
+    color: #495057;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
 }
 
-.header-compact-menus .dropdown-toggle {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.9rem;
-    white-space: nowrap;
+.page-menu-link:hover {
+    background-color: #e9ecef;
+    color: #212529;
 }
 
-/* コンパクトヘッダーの全開/全閉ボタン */
-#toggleAllBtnCompact {
-    flex-shrink: 0;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.9rem;
-    white-space: nowrap;
-}
-
-.header-compact-menus .dropdown-item.active {
-    background-color: #0d6efd;
+.page-menu-link.active {
+    background-color: #dc3545;
     color: white;
 }
 
-/* ドロップダウンメニューの固定表示用スタイル */
-.dropdown-menu-fixed {
-    position: absolute !important;
-    z-index: 9999 !important; /* ヘッダーのz-indexより高く設定 */
-    margin-top: 0.125rem;
-    will-change: transform;
+.page-menu-separator {
+    color: #dee2e6;
+    font-size: 0.9rem;
 }
 
-/* ドロップダウンの親要素 */
-.header-compact-menus .dropdown {
-    position: static !important;
+/* 2段目：タブメニュー */
+.header-compact-row2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.4rem 1rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    min-height: 35px;
+}
+
+/* 削除する古いスタイル */
+.header-compact-title,
+.header-text-cmp-compact,
+.header-text-official-compact,
+.header-compact-menus,
+.header-compact-menus .dropdown,
+.header-compact-menus .dropdown-toggle,
+#toggleAllBtnCompact {
+    /* これらは使用しないため削除 */
+}
+
+/* ページメニュードロップダウンのスタイル（削除） */
+.dropdown-menu-fixed {
+    /* 使用しないため削除 */
 }
 
 /* タブナビゲーションコンパクト版 */
 .tab-navigation-compact {
     display: flex;
     gap: 0.25rem;
-    flex-shrink: 0;
-    overflow-x: auto; /* タブが多い場合は横スクロール */
+    justify-content: center;
+    overflow-x: auto;
     overflow-y: visible;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+    max-width: 100%;
 }
 
 .tab-navigation-compact::-webkit-scrollbar {
@@ -130,7 +158,7 @@
 }
 
 .tab-navigation-compact .tab-button {
-    padding: 0.4rem 0.75rem;
+    padding: 0.35rem 0.75rem;
     font-size: 0.9rem;
     min-width: auto;
     white-space: nowrap;
@@ -153,38 +181,73 @@
     display: none;
 }
 
-/* レスポンシブ対応：横幅に応じてテキスト表示を調整 */
-/* 1024px以下でテキストを非表示（ロゴのみ） */
-@media (max-width: 1024px) {
-    #main-header.scrolled .header-text-cmp-compact,
-    #main-header.scrolled .header-text-official-compact {
-        display: none;
-    }
-}
-
+/* レスポンシブ対応：横幅に応じて調整 */
 /* 768px以下でさらにコンパクトに */
 @media (max-width: 768px) {
-    .header-compact {
-        padding: 0.4rem 0.75rem;
-        gap: 0.5rem;
+    .header-compact-row1,
+    .header-compact-row2 {
+        padding: 0.35rem 0.75rem;
+        min-height: 32px;
+    }
+    
+    .header-compact-logo {
+        left: 0.75rem;
     }
     
     .header-icon-compact {
         height: 1rem;
     }
     
-    .header-compact-menus {
-        gap: 0.5rem;
+    .page-menu-link {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.85rem;
+    }
+    
+    .page-menu-separator {
+        font-size: 0.8rem;
     }
     
     .tab-navigation-compact .tab-button {
         padding: 0.3rem 0.6rem;
         font-size: 0.85rem;
     }
+}
+
+/* スマホでのコンパクトヘッダー */
+@media (max-width: 576px) {
+    .header-compact-row1,
+    .header-compact-row2 {
+        padding: 0.3rem 0.5rem;
+        min-height: 30px;
+    }
     
-    #toggleAllBtnCompact {
-        padding: 0.3rem 0.6rem;
-        font-size: 0.85rem;
+    .header-compact-logo {
+        left: 0.5rem;
+    }
+    
+    .header-icon-compact {
+        height: 0.9rem;
+    }
+    
+    .page-menu-link {
+        padding: 0.15rem 0.35rem;
+        font-size: 0.8rem;
+    }
+    
+    .page-menu-separator {
+        font-size: 0.75rem;
+        margin: 0 0.15rem;
+    }
+    
+    .tab-navigation-compact .tab-button {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        min-width: 60px;
+    }
+    
+    .accordion-controls-compact .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
     }
 }
 
@@ -203,38 +266,6 @@
     
     .header-icon {
         height: 1.5rem;
-    }
-    
-    /* スマホでのコンパクトヘッダー（1行レイアウト維持） */
-    .header-compact {
-        padding: 0.4rem 0.5rem;
-        gap: 0.5rem;
-    }
-    
-    .header-icon-compact {
-        height: 0.9rem;
-    }
-    
-    .header-compact-menus {
-        gap: 0.4rem;
-        flex: 1;
-        min-width: 0;
-    }
-    
-    .header-compact-menus .dropdown-toggle {
-        padding: 0.2rem 0.5rem;
-        font-size: 0.8rem;
-    }
-    
-    #toggleAllBtnCompact {
-        padding: 0.2rem 0.5rem;
-        font-size: 0.8rem;
-    }
-    
-    .tab-navigation-compact .tab-button {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.75rem;
-        min-width: 60px;
     }
 }
 
@@ -282,7 +313,7 @@
 }
 
 .page-menu-item.active {
-    background-color: #0d6efd;
+    background-color: #dc3545;
     color: white;
 }
 
@@ -330,7 +361,7 @@
 
 .rss-article-link,
 .single-article-link {
-    color: #0d6efd;
+    color: #dc3545;
     text-decoration: none;
     word-break: break-word;
 }
@@ -364,111 +395,59 @@
 
 .section-nav-container {
     display: flex;
+    justify-content: center;
     align-items: center;
     max-width: 960px;
     margin: 0 auto;
     padding: 0 1rem;
-    gap: 0.5rem;
 }
 
-#toggleAllBtn {
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-
-.section-nav {
+.accordion-controls {
     display: flex;
     gap: 0.5rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    flex: 1;
 }
 
-.section-nav::-webkit-scrollbar {
-    height: 4px;
-}
-
-.section-nav::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.section-nav::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 2px;
-}
-
-.section-nav::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-.section-nav-item {
-    padding: 0.4rem 0.75rem;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 0.25rem;
-    color: #495057;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 500;
-    white-space: nowrap;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-}
-
-.section-nav-item:hover {
-    background-color: #e9ecef;
-    color: #212529;
-}
-
-.section-nav-item.active {
-    background-color: #0d6efd;
-    color: white;
-    border-color: #0d6efd;
-}
-
-.section-nav-item.filtering {
-    background-color: #ffc107;
-    color: #000;
-    border-color: #ffc107;
-    font-weight: 600;
-}
-
-/* コンパクトヘッダーのナビゲーション */
-.section-nav-compact {
+.accordion-controls-compact {
     display: flex;
-    gap: 0.25rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    flex: 1;
-    min-width: 0;
-}
-
-.section-nav-compact::-webkit-scrollbar {
-    height: 4px;
-}
-
-.section-nav-compact::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.section-nav-compact::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 2px;
-}
-
-.section-nav-compact::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
-}
-
-.section-nav-compact .section-nav-item {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.85rem;
+    gap: 0.5rem;
+    justify-content: center;
 }
 
 /* スクロール時の表示制御（About専用） */
 #main-header.scrolled + .page-menu-wrapper + .section-nav-wrapper {
+    display: none;
+}
+
+/* フィルタ設定ボタンエリアのスタイル（History専用） */
+.filter-nav-wrapper {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 0;
+    overflow: visible;
+}
+
+.filter-nav-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-controls-compact {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+/* スクロール時の表示制御（History専用） */
+#main-header.scrolled + .page-menu-wrapper + .filter-nav-wrapper {
     display: none;
 }
 
@@ -521,8 +500,8 @@
 }
 
 .stat-badge.active-count {
-    background-color: #d1e7dd;
-    color: #0f5132;
+    background-color: #f8d7da;
+    color: #842029;
 }
 
 .stat-badge.archive-count {
@@ -573,9 +552,9 @@
 }
 
 .hashtag-button.active {
-    background-color: #0d6efd;
+    background-color: #dc3545;
     color: white;
-    border-color: #0d6efd;
+    border-color: #dc3545;
 }
 
 /* セクションカード */
@@ -619,13 +598,13 @@
 
 .site-link {
     text-decoration: none;
-    color: #0d6efd;
+    color: #dc3545;
     font-weight: 500;
     transition: color 0.2s ease;
 }
 
 .site-link:hover {
-    color: #0a58ca;
+    color: #b02a37;
     text-decoration: underline;
 }
 
@@ -636,7 +615,7 @@
 }
 
 .hashtag-display a {
-    color: #0d6efd;
+    color: #dc3545;
     text-decoration: none;
     margin-right: 0.25rem;
 }
@@ -746,23 +725,25 @@
    History.html専用のスタイル
    ================================= */
 
-/* フィルター設定のグループカードスタイル */
+/* フィルタ設定のグループカードスタイル */
 .card.border-primary {
     border-width: 2px;
+    border-color: #dc3545 !important;
 }
 
 .card.border-success {
     border-width: 2px;
+    border-color: #dc3545 !important;
 }
 
 .card-header.bg-primary.bg-opacity-10 {
     font-weight: bold;
-    color: #0d6efd;
+    color: #dc3545;
 }
 
 .card-header.bg-success.bg-opacity-10 {
     font-weight: bold;
-    color: #198754;
+    color: #dc3545;
 }
 
 /* 年スライダーのバッジスタイル */
@@ -891,7 +872,7 @@
 /* 年表リンクのスタイル */
 .history-link {
     text-decoration: none;
-    color: #0d6efd;
+    color: #dc3545;
     word-break: break-word;
 }
 
@@ -955,7 +936,7 @@ select option:disabled {
 }
 
 #showAllBtn:hover {
-    background-color: #0d6efd;
+    background-color: #dc3545;
     color: white;
 }
 
@@ -965,7 +946,7 @@ select option:disabled {
     white-space: nowrap;
 }
 
-/* 省略行（…）のスタイル */
+/* 省略行(...)のスタイル */
 .ellipsis-row {
     background-color: #f0f0f0 !important;
     border-top: 2px dashed #dee2e6 !important;
@@ -976,4 +957,141 @@ select option:disabled {
     background-color: #f0f0f0 !important;
     font-weight: 500;
     color: #6c757d;
+}
+
+/* =================================
+   Bootstrapボタンのカスタマイズ
+   ================================= */
+
+/* Bootstrapのprimary/successカラーを赤系に統一 */
+.bg-primary,
+.bg-success {
+    background-color: #dc3545 !important;
+}
+
+.bg-primary.bg-opacity-10,
+.bg-success.bg-opacity-10 {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.border-primary,
+.border-success {
+    border-color: #dc3545 !important;
+}
+
+.text-primary,
+.text-success {
+    color: #dc3545 !important;
+}
+
+/* メインアクション: 赤系の塗りつぶし */
+.btn-primary {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #b02a37;
+    border-color: #a52834;
+    color: white !important;
+}
+
+.btn-primary:active {
+    background-color: #a52834;
+    border-color: #9a2530;
+    color: white !important;
+}
+
+/* サブアクション: 赤系の枠線 */
+.btn-outline-primary {
+    color: #dc3545;
+    border-color: #dc3545;
+    background-color: transparent;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white !important;
+}
+
+.btn-outline-primary:active {
+    background-color: #b02a37;
+    border-color: #a52834;
+    color: white !important;
+}
+
+/* キャンセル/閉じる: グレー系 (デフォルトのsecondaryを維持) */
+.btn-secondary,
+.btn-outline-secondary {
+    /* Bootstrapのデフォルトスタイルを使用 */
+}
+
+/* ボタン内のリンクの色を確実に白に */
+.btn-primary a,
+.btn-primary:hover a,
+.btn-primary:focus a,
+.btn-primary:active a {
+    color: white !important;
+    text-decoration: none !important;
+}
+
+/* フォームチェックボックス・ラジオボタンの色を赤系に統一 */
+.form-check-input:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.form-check-input:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+/* Bootstrapのバッジクラスを赤系に統一 */
+.badge.bg-primary,
+.badge.bg-success {
+    background-color: #dc3545 !important;
+}
+
+.badge.text-bg-primary,
+.badge.text-bg-success {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+/* フィルタ設定の見出しリンクを赤色に */
+.btn-link {
+    color: #dc3545;
+}
+
+.btn-link:hover {
+    color: #b02a37;
+}
+
+/* レンジスライダー（form-range）のツマミを赤色に */
+.form-range::-webkit-slider-thumb {
+    background-color: #dc3545;
+}
+
+.form-range::-moz-range-thumb {
+    background-color: #dc3545;
+}
+
+.form-range::-webkit-slider-thumb:hover {
+    background-color: #b02a37;
+}
+
+.form-range::-moz-range-thumb:hover {
+    background-color: #b02a37;
+}
+
+.form-range::-webkit-slider-thumb:active {
+    background-color: #a52834;
+}
+
+.form-range::-moz-range-thumb:active {
+    background-color: #a52834;
 }
