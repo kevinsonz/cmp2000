@@ -544,11 +544,13 @@ a:hover {
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    color: #dc3545; /* 赤系のテキスト色を追加 */
 }
 
 .hashtag-button:hover {
     background-color: #e9ecef;
     border-color: #adb5bd;
+    color: #b02a37; /* ホバー時も赤系に */
 }
 
 .hashtag-button.active {

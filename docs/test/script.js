@@ -89,7 +89,7 @@ function convertHashTagsToLinks(hashTagString) {
     
     const tags = extractHashTags(hashTagString);
     return tags.map(tag => {
-        return `<a href="#" onclick="applyHashTagFilter('${tag}'); return false;" style="margin-right: 0.25rem; color: #0d6efd; text-decoration: none;">${tag}</a>`;
+        return `<a href="#" onclick="applyHashTagFilter('${tag}'); return false;" style="margin-right: 0.25rem; color: #dc3545; text-decoration: none;">${tag}</a>`;
     }).join(' ');
 }
 
@@ -143,7 +143,7 @@ function showFilterUI(tag) {
     
     container.style.display = 'block';
     container.innerHTML = `
-        <div class="alert alert-info d-flex justify-content-between align-items-center">
+        <div class="alert alert-danger d-flex justify-content-between align-items-center">
             <span>表示中: <strong>${tag}</strong></span>
             <button class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">フィルタ解除</button>
         </div>
@@ -181,6 +181,7 @@ function parseBasicInfoCSV(csvText) {
     const subImageIndex = headers.indexOf('sub-image');
     const logoIndex = headers.indexOf('logo');
     const commentIndex = headers.indexOf('comment');
+    const cardDateIndex = headers.indexOf('cardDate');
     
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
@@ -215,7 +216,8 @@ function parseBasicInfoCSV(csvText) {
                 image: values[imageIndex] || '',
                 subImage: values[subImageIndex] || '',
                 logo: values[logoIndex] || '',
-                comment: commentIndex >= 0 ? (values[commentIndex] || '') : ''
+                comment: commentIndex >= 0 ? (values[commentIndex] || '') : '',
+                cardDate: cardDateIndex >= 0 ? (values[cardDateIndex] || '') : ''
             });
         }
     }
@@ -415,7 +417,20 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         });
     });
     
-    function isNewArticle(key) {
+    function isNewArticle(key, site = null) {
+        // basic-infoのcardDateをチェック（優先）
+        if (site && site.cardDate) {
+            const cardDate = new Date(site.cardDate);
+            const today = new Date();
+            const diffTime = today - cardDate;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= NEW_BADGE_DAYS) {
+                return true;
+            }
+        }
+        
+        // singleDataの最新記事日付をチェック（フォールバック）
         const articles = singleDataByKey[key];
         
         if (!articles || articles.length === 0) {
@@ -437,7 +452,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
     }
     
     function generateCardHTML(site, showCategory = false, includeFeed = false) {
-        const isNew = isNewArticle(site.key);
+        const isNew = isNewArticle(site.key, site);
         const newBadgeHtml = isNew 
             ? '<span class="badge bg-danger new-badge">New!!</span>' 
             : '';
@@ -456,37 +471,41 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         
         // RSSフィードのHTMLを生成（includeFeedがtrueの場合）
         let feedContentHtml = '';
-        if (includeFeed && singleDataByKey[site.key]) {
-            const articles = singleDataByKey[site.key].slice(0, singleMaxLength);
-            feedContentHtml = articles.map(item => {
-                if (!item.title) return '';
-                
-                let dateSpan = '';
-                if (item.pubDate) {
-                    const date = new Date(item.pubDate);
-                    const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+        if (includeFeed) {
+            console.log(`カード ${site.key} のフィード生成:`, singleDataByKey[site.key] ? `${singleDataByKey[site.key].length}件` : 'データなし');
+            
+            if (singleDataByKey[site.key]) {
+                    const articles = singleDataByKey[site.key].slice(0, singleMaxLength);
+                feedContentHtml = articles.map(item => {
+                    if (!item.title) return '';
                     
-                    const today = new Date();
-                    const diffTime = today - date;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    let newBadge = '';
-                    if (diffDays <= NEW_BADGE_DAYS) {
-                        newBadge = '<span class="badge bg-danger" style="margin-right: 0.35rem; font-size: 0.65rem;">New!!</span>';
+                    let dateSpan = '';
+                    if (item.pubDate) {
+                        const date = new Date(item.pubDate);
+                        const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+                        
+                        const today = new Date();
+                        const diffTime = today - date;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        let newBadge = '';
+                        if (diffDays <= NEW_BADGE_DAYS) {
+                            newBadge = '<span class="badge bg-danger" style="margin-right: 0.35rem; font-size: 0.65rem;">New!!</span>';
+                        }
+                        
+                        dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
                     }
                     
-                    dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
-                }
-                
-                let titleSpan = '';
-                if (item.link) {
-                    titleSpan = `<a href="${item.link}" target="_blank" style="color: #0d6efd; font-size: 0.9rem;">${item.title}</a>`;
-                } else {
-                    titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${item.title}</span>`;
-                }
-                
-                return `<div style="margin-bottom: 0.4rem; font-size: 0.9rem;">${dateSpan}${titleSpan}</div>`;
-            }).join('');
+                    let titleSpan = '';
+                    if (item.link) {
+                        titleSpan = `<a href="${item.link}" target="_blank" style="color: #dc3545; font-size: 0.9rem;">${item.title}</a>`;
+                    } else {
+                        titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${item.title}</span>`;
+                    }
+                    
+                    return `<div style="margin-bottom: 0.4rem; font-size: 0.9rem;">${dateSpan}${titleSpan}</div>`;
+                }).join('');
+            }
         }
         
         return `
@@ -514,6 +533,12 @@ function generateCards(basicInfo, singleData, filterTag = null) {
     
     // フィルタモード
     if (filterTag) {
+        console.log('フィルタモード:', filterTag);
+        console.log('フィルタされたカード数:', filteredInfo.length);
+        filteredInfo.forEach(item => {
+            console.log('- カード:', item.key, item.siteTitle, 'カテゴリ:', item.category);
+        });
+        
         // フィルタタブを表示
         currentTab = 'filter';
         document.querySelectorAll('.tab-button').forEach(btn => {
@@ -577,13 +602,23 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         };
         
         // 各タブごとにアイテムをグループ化
-        const itemsByTab = {};
+        const itemsByTab = {
+            'common': [],
+            'kevin': [],
+            'ryo': []
+        };
+        
         filteredInfo.forEach(item => {
             const tabName = item.tabId || 'common'; // デフォルトはcommon
-            if (!itemsByTab[tabName]) {
-                itemsByTab[tabName] = [];
+            
+            // 各カードはそれぞれのtabIdに対応するタブにのみ追加
+            if (tabName === 'common' || tabName === '') {
+                itemsByTab['common'].push(item);
+            } else if (tabName === 'kevin') {
+                itemsByTab['kevin'].push(item);
+            } else if (tabName === 'ryo') {
+                itemsByTab['ryo'].push(item);
             }
-            itemsByTab[tabName].push(item);
         });
         
         // 各タブを処理
@@ -621,7 +656,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                     const cardWrapper = document.createElement('div');
                     cardWrapper.className = 'card-wrapper';
                     cardWrapper.id = site.key; // 各カードにIDを設定
-                    cardWrapper.innerHTML = generateCardHTML(site, false);
+                    cardWrapper.innerHTML = generateCardHTML(site, false, true); // includeFeed=trueに変更
                     cardContainer.appendChild(cardWrapper);
                 });
                 
@@ -714,7 +749,7 @@ function loadFeeds(singleData) {
             const basicInfo = getBasicInfoByKey(item.key);
             if (basicInfo) {
                 if (basicInfo.siteTitle && basicInfo.siteUrl) {
-                    siteTitleHtml = `<a href="${basicInfo.siteUrl}" target="_blank" style="color: #0d6efd; text-decoration: none;">${basicInfo.siteTitle}</a>`;
+                    siteTitleHtml = `<a href="${basicInfo.siteUrl}" target="_blank" style="color: #dc3545; text-decoration: none;">${basicInfo.siteTitle}</a>`;
                 } else if (basicInfo.siteTitle) {
                     siteTitleHtml = `<span style="color: #495057;">${basicInfo.siteTitle}</span>`;
                 }
@@ -743,7 +778,7 @@ function loadFeeds(singleData) {
                 const link = document.createElement('a');
                 link.href = item.link;
                 link.target = '_blank';
-                link.style.color = '#0d6efd';
+                link.style.color = '#dc3545';
                 link.style.textDecoration = 'none';
                 link.textContent = item.title;
                 link.addEventListener('mouseenter', () => {
@@ -822,7 +857,7 @@ function loadSingleFeeds(singleData, keys) {
             
             let titleSpan = '';
             if (item.link) {
-                titleSpan = `<a href="${item.link}" target="_blank" style="color: #0d6efd; font-size: 0.9rem;">${item.title}</a>`;
+                titleSpan = `<a href="${item.link}" target="_blank" style="color: #dc3545; font-size: 0.9rem;">${item.title}</a>`;
             } else {
                 titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${item.title}</span>`;
             }
