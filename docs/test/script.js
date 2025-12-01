@@ -47,6 +47,12 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
         const singleData = parseSingleCSV(singleCsvText);
         const contributionData = parseContributionCSV(contributionCsvText);
         
+        console.log('[オンラインモード] singleData読み込み完了:', {
+            総データ数: singleData.length,
+            keyの種類: [...new Set(singleData.map(item => item.key))],
+            サンプル: singleData.slice(0, 5)
+        });
+        
         basicInfoData = basicInfo;
         singleDataGlobal = singleData;
         allHashTags = collectAllHashTags(basicInfo);
@@ -288,8 +294,13 @@ function parseSingleCSV(csvText) {
     const linkIndex = headers.indexOf('link');
     const dateIndex = headers.indexOf('date');
     
+    console.log('[parseSingleCSV] ヘッダー:', headers);
+    console.log('[parseSingleCSV] インデックス:', { keyIndex, titleIndex, linkIndex, dateIndex });
+    
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
+        if (!line.trim()) continue; // 空行をスキップ
+        
         const values = [];
         let currentValue = '';
         let insideQuotes = false;
@@ -308,15 +319,32 @@ function parseSingleCSV(csvText) {
         }
         values.push(currentValue.trim());
         
+        // クォーテーションを除去する関数
+        const removeQuotes = (str) => {
+            if (str && str.startsWith('"') && str.endsWith('"')) {
+                return str.slice(1, -1);
+            }
+            return str;
+        };
+        
         if (values[keyIndex] && values[titleIndex]) {
-            items.push({
-                key: values[keyIndex],
-                title: values[titleIndex],
-                link: values[linkIndex] || '',
-                pubDate: values[dateIndex] || ''
-            });
+            const item = {
+                key: removeQuotes(values[keyIndex]),
+                title: removeQuotes(values[titleIndex]),
+                link: removeQuotes(values[linkIndex] || ''),
+                pubDate: removeQuotes(values[dateIndex] || '')
+            };
+            
+            // デバッグログ（最初の3件のみ）
+            if (i <= 3) {
+                console.log(`[parseSingleCSV] 行${i}:`, item);
+            }
+            
+            items.push(item);
         }
     }
+    
+    console.log(`[parseSingleCSV] 解析完了: ${items.length}件`);
     
     return items;
 }
@@ -387,6 +415,12 @@ function renderHashTagListForTab(tabName) {
 function generateCards(basicInfo, singleData, filterTag = null) {
     let filteredInfo = basicInfo;
     
+    // デバッグログ: singleDataの内容を確認
+    console.log('[generateCards] singleData受信:', {
+        総データ数: singleData.length,
+        サンプル: singleData.slice(0, 3)
+    });
+    
     // ハッシュタグフィルタを適用
     if (filterTag) {
         filteredInfo = filteredInfo.filter(item => {
@@ -404,6 +438,12 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         singleDataByKey[item.key].push(item);
     });
     
+    // デバッグログ: keyごとのデータ数を確認
+    console.log('[generateCards] singleDataByKey作成完了:', Object.keys(singleDataByKey).map(key => ({
+        key,
+        件数: singleDataByKey[key].length
+    })));
+    
     // 各キーのデータを日付順にソート
     Object.keys(singleDataByKey).forEach(key => {
         singleDataByKey[key].sort((a, b) => {
@@ -418,6 +458,9 @@ function generateCards(basicInfo, singleData, filterTag = null) {
     });
     
     function isNewArticle(key, site = null) {
+        // デバッグログ
+        console.log(`[isNewArticle] チェック開始: key=${key}, siteTitle=${site ? site.siteTitle : 'null'}`);
+        
         // basic-infoのcardDateをチェック（優先）
         if (site && site.cardDate) {
             const cardDate = new Date(site.cardDate);
@@ -425,7 +468,10 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             const diffTime = today - cardDate;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
+            console.log(`[isNewArticle] cardDate検出: ${site.cardDate}, diffDays=${diffDays}`);
+            
             if (diffDays <= NEW_BADGE_DAYS) {
+                console.log(`[isNewArticle] ✓ cardDateによりNEW判定: ${key}`);
                 return true;
             }
         }
@@ -433,22 +479,33 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         // singleDataの最新記事日付をチェック（フォールバック）
         const articles = singleDataByKey[key];
         
+        console.log(`[isNewArticle] singleData確認: key=${key}, データ数=${articles ? articles.length : 0}`);
+        
         if (!articles || articles.length === 0) {
+            console.log(`[isNewArticle] ✗ singleDataなし: ${key}`);
             return false;
         }
         
         const latestArticle = articles[0];
         
         if (!latestArticle.pubDate) {
+            console.log(`[isNewArticle] ✗ pubDateなし: ${key}`);
             return false;
         }
+        
+        console.log(`[isNewArticle] 最新記事日付: ${latestArticle.pubDate}`);
         
         const articleDate = new Date(latestArticle.pubDate);
         const today = new Date();
         const diffTime = today - articleDate;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        return diffDays <= NEW_BADGE_DAYS;
+        console.log(`[isNewArticle] 記事経過日数: ${diffDays}日`);
+        
+        const result = diffDays <= NEW_BADGE_DAYS;
+        console.log(`[isNewArticle] ${result ? '✓' : '✗'} 判定結果: ${key} = ${result}`);
+        
+        return result;
     }
     
     function generateCardHTML(site, showCategory = false, includeFeed = false) {
@@ -934,19 +991,29 @@ function generateContributionGraph(contributionData) {
     yearsRow.style.marginBottom = '2px';
     
     let lastYear = -1;
+    let lastYearPosition = -999; // 最後に配置した年ラベルの位置
+    const minYearGap = 60; // 年ラベル間の最小間隔（px）
+    
     weeks.forEach((week, weekIndex) => {
         // 週の中で年が変わるかチェック
         for (let i = 0; i < week.length; i++) {
             const day = week[i];
             const year = day.date.getFullYear();
             
-            if (weekIndex === 0 || year !== lastYear) {
-                const yearLabel = document.createElement('div');
-                yearLabel.className = 'contribution-year';
-                yearLabel.textContent = `${year}年`;
-                yearLabel.style.position = 'absolute';
-                yearLabel.style.left = `${25 + weekIndex * 13}px`;
-                yearsRow.appendChild(yearLabel);
+            if (year !== lastYear) {
+                const currentPosition = 25 + weekIndex * 13;
+                
+                // 前の年ラベルから十分な距離がある場合、または最初の年の場合は表示
+                if (weekIndex === 0 || currentPosition - lastYearPosition >= minYearGap) {
+                    const yearLabel = document.createElement('div');
+                    yearLabel.className = 'contribution-year';
+                    yearLabel.textContent = `${year}年`;
+                    yearLabel.style.position = 'absolute';
+                    yearLabel.style.left = `${currentPosition}px`;
+                    yearLabel.style.whiteSpace = 'nowrap'; // 改行を防ぐ
+                    yearsRow.appendChild(yearLabel);
+                    lastYearPosition = currentPosition;
+                }
                 lastYear = year;
                 break;
             }
@@ -962,6 +1029,9 @@ function generateContributionGraph(contributionData) {
     monthsRow.style.marginBottom = '5px';
     
     let lastMonth = -1;
+    let lastMonthPosition = -999; // 最後に配置した月ラベルの位置
+    const minMonthGap = 40; // 月ラベル間の最小間隔（px）
+    
     weeks.forEach((week, weekIndex) => {
         // 週の中で最初に表示される月を見つける
         for (let i = 0; i < week.length; i++) {
@@ -970,12 +1040,19 @@ function generateContributionGraph(contributionData) {
             
             // 新しい月の最初の出現
             if (month !== lastMonth) {
-                const monthLabel = document.createElement('div');
-                monthLabel.className = 'contribution-month';
-                monthLabel.textContent = `${month + 1}月`;
-                monthLabel.style.position = 'absolute';
-                monthLabel.style.left = `${25 + weekIndex * 13}px`;
-                monthsRow.appendChild(monthLabel);
+                const currentPosition = 25 + weekIndex * 13;
+                
+                // 前の月ラベルから十分な距離がある場合のみ表示
+                if (currentPosition - lastMonthPosition >= minMonthGap) {
+                    const monthLabel = document.createElement('div');
+                    monthLabel.className = 'contribution-month';
+                    monthLabel.textContent = `${month + 1}月`;
+                    monthLabel.style.position = 'absolute';
+                    monthLabel.style.left = `${currentPosition}px`;
+                    monthLabel.style.whiteSpace = 'nowrap'; // 改行を防ぐ
+                    monthsRow.appendChild(monthLabel);
+                    lastMonthPosition = currentPosition;
+                }
                 lastMonth = month;
                 break;
             }
@@ -1217,6 +1294,11 @@ function generateTabLinksSection() {
             article.key.startsWith(keyPrefix)
         );
         
+        console.log(`[generateTabLinksSection] タブ=${tabInfo.tabId}, keyPrefix=${keyPrefix}, 記事数=${articles.length}`);
+        if (articles.length > 0) {
+            console.log(`[generateTabLinksSection] 記事サンプル:`, articles.slice(0, 2));
+        }
+        
         // 最新10件を取得
         const sortedArticles = articles.sort((a, b) => {
             const dateA = new Date(a.pubDate);
@@ -1234,6 +1316,9 @@ function generateTabLinksSection() {
             const diffTime = today - articleDate;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             showNewBadge = diffDays <= NEW_BADGE_DAYS;
+            console.log(`[generateTabLinksSection] タブ=${tabInfo.tabId}, 最新記事日=${latestArticle.pubDate}, 経過日数=${diffDays}, NEW判定=${showNewBadge}`);
+        } else {
+            console.log(`[generateTabLinksSection] タブ=${tabInfo.tabId}, 最新記事なしまたはpubDateなし`);
         }
         
         // RSSフィード形式のHTML生成（日付とNew!!バッジ付き）

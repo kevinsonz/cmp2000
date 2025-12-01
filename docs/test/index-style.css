@@ -400,6 +400,7 @@
 .contribution-month {
     font-size: 11px;
     color: #666;
+    white-space: nowrap; /* 改行を防ぐ */
 }
 
 .contribution-main {
