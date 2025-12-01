@@ -824,6 +824,12 @@ function loadSingleFeeds(singleData, keys) {
         
         if (!feedContainer) return;
         
+        // 既に内容がある場合はスキップ（重複を防ぐ）
+        if (feedContainer.innerHTML.trim() !== '') {
+            console.log(`Container ${key} already has content, skipping`);
+            return;
+        }
+        
         const filteredData = singleData
             .filter(item => item.key === key)
             .sort((a, b) => {
