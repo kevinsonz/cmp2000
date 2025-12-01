@@ -47,12 +47,6 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
         const singleData = parseSingleCSV(singleCsvText);
         const contributionData = parseContributionCSV(contributionCsvText);
         
-        console.log('[オンラインモード] singleData読み込み完了:', {
-            総データ数: singleData.length,
-            keyの種類: [...new Set(singleData.map(item => item.key))],
-            サンプル: singleData.slice(0, 5)
-        });
-        
         basicInfoData = basicInfo;
         singleDataGlobal = singleData;
         allHashTags = collectAllHashTags(basicInfo);
@@ -294,9 +288,6 @@ function parseSingleCSV(csvText) {
     const linkIndex = headers.indexOf('link');
     const dateIndex = headers.indexOf('date');
     
-    console.log('[parseSingleCSV] ヘッダー:', headers);
-    console.log('[parseSingleCSV] インデックス:', { keyIndex, titleIndex, linkIndex, dateIndex });
-    
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
         if (!line.trim()) continue; // 空行をスキップ
@@ -328,23 +319,14 @@ function parseSingleCSV(csvText) {
         };
         
         if (values[keyIndex] && values[titleIndex]) {
-            const item = {
+            items.push({
                 key: removeQuotes(values[keyIndex]),
                 title: removeQuotes(values[titleIndex]),
                 link: removeQuotes(values[linkIndex] || ''),
                 pubDate: removeQuotes(values[dateIndex] || '')
-            };
-            
-            // デバッグログ（最初の3件のみ）
-            if (i <= 3) {
-                console.log(`[parseSingleCSV] 行${i}:`, item);
-            }
-            
-            items.push(item);
+            });
         }
     }
-    
-    console.log(`[parseSingleCSV] 解析完了: ${items.length}件`);
     
     return items;
 }
@@ -415,12 +397,6 @@ function renderHashTagListForTab(tabName) {
 function generateCards(basicInfo, singleData, filterTag = null) {
     let filteredInfo = basicInfo;
     
-    // デバッグログ: singleDataの内容を確認
-    console.log('[generateCards] singleData受信:', {
-        総データ数: singleData.length,
-        サンプル: singleData.slice(0, 3)
-    });
-    
     // ハッシュタグフィルタを適用
     if (filterTag) {
         filteredInfo = filteredInfo.filter(item => {
@@ -438,12 +414,6 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         singleDataByKey[item.key].push(item);
     });
     
-    // デバッグログ: keyごとのデータ数を確認
-    console.log('[generateCards] singleDataByKey作成完了:', Object.keys(singleDataByKey).map(key => ({
-        key,
-        件数: singleDataByKey[key].length
-    })));
-    
     // 各キーのデータを日付順にソート
     Object.keys(singleDataByKey).forEach(key => {
         singleDataByKey[key].sort((a, b) => {
@@ -458,9 +428,6 @@ function generateCards(basicInfo, singleData, filterTag = null) {
     });
     
     function isNewArticle(key, site = null) {
-        // デバッグログ
-        console.log(`[isNewArticle] チェック開始: key=${key}, siteTitle=${site ? site.siteTitle : 'null'}`);
-        
         // basic-infoのcardDateをチェック（優先）
         if (site && site.cardDate) {
             const cardDate = new Date(site.cardDate);
@@ -468,10 +435,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             const diffTime = today - cardDate;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
-            console.log(`[isNewArticle] cardDate検出: ${site.cardDate}, diffDays=${diffDays}`);
-            
             if (diffDays <= NEW_BADGE_DAYS) {
-                console.log(`[isNewArticle] ✓ cardDateによりNEW判定: ${key}`);
                 return true;
             }
         }
@@ -479,33 +443,22 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         // singleDataの最新記事日付をチェック（フォールバック）
         const articles = singleDataByKey[key];
         
-        console.log(`[isNewArticle] singleData確認: key=${key}, データ数=${articles ? articles.length : 0}`);
-        
         if (!articles || articles.length === 0) {
-            console.log(`[isNewArticle] ✗ singleDataなし: ${key}`);
             return false;
         }
         
         const latestArticle = articles[0];
         
         if (!latestArticle.pubDate) {
-            console.log(`[isNewArticle] ✗ pubDateなし: ${key}`);
             return false;
         }
-        
-        console.log(`[isNewArticle] 最新記事日付: ${latestArticle.pubDate}`);
         
         const articleDate = new Date(latestArticle.pubDate);
         const today = new Date();
         const diffTime = today - articleDate;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        console.log(`[isNewArticle] 記事経過日数: ${diffDays}日`);
-        
-        const result = diffDays <= NEW_BADGE_DAYS;
-        console.log(`[isNewArticle] ${result ? '✓' : '✗'} 判定結果: ${key} = ${result}`);
-        
-        return result;
+        return diffDays <= NEW_BADGE_DAYS;
     }
     
     function generateCardHTML(site, showCategory = false, includeFeed = false) {
@@ -1291,18 +1244,17 @@ function generateTabLinksSection() {
         // 該当する記事を検索（keyプレフィックスで一致するもの）
         const keyPrefix = tabKeyPrefixMap[tabInfo.tabId] || tabInfo.tabId;
         const articles = singleDataGlobal.filter(article => 
-            article.key.startsWith(keyPrefix)
+            article.key.startsWith(keyPrefix) && article.pubDate // pubDateがある記事のみ
         );
-        
-        console.log(`[generateTabLinksSection] タブ=${tabInfo.tabId}, keyPrefix=${keyPrefix}, 記事数=${articles.length}`);
-        if (articles.length > 0) {
-            console.log(`[generateTabLinksSection] 記事サンプル:`, articles.slice(0, 2));
-        }
         
         // 最新10件を取得
         const sortedArticles = articles.sort((a, b) => {
             const dateA = new Date(a.pubDate);
             const dateB = new Date(b.pubDate);
+            // Invalid Dateの場合は後ろに配置
+            if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+            if (isNaN(dateA.getTime())) return 1;
+            if (isNaN(dateB.getTime())) return -1;
             return dateB - dateA;
         }).slice(0, 10);
         
@@ -1316,9 +1268,6 @@ function generateTabLinksSection() {
             const diffTime = today - articleDate;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             showNewBadge = diffDays <= NEW_BADGE_DAYS;
-            console.log(`[generateTabLinksSection] タブ=${tabInfo.tabId}, 最新記事日=${latestArticle.pubDate}, 経過日数=${diffDays}, NEW判定=${showNewBadge}`);
-        } else {
-            console.log(`[generateTabLinksSection] タブ=${tabInfo.tabId}, 最新記事なしまたはpubDateなし`);
         }
         
         // RSSフィード形式のHTML生成（日付とNew!!バッジ付き）
