@@ -106,6 +106,7 @@ function parseHistoryCSV(csvText) {
     const items = [];
     
     const yearIndex = headers.indexOf('Year');
+    const dateIndex = headers.indexOf('Date');
     const categoryIndex = headers.indexOf('Category');
     const contentsIndex = headers.indexOf('Contents');
     const linkIndex = headers.indexOf('Link');
@@ -133,6 +134,7 @@ function parseHistoryCSV(csvText) {
         if (values[yearIndex] && values[categoryIndex] && values[contentsIndex]) {
             items.push({
                 year: parseInt(values[yearIndex]),
+                date: dateIndex >= 0 ? (values[dateIndex] || '') : '',
                 category: values[categoryIndex],
                 contents: values[contentsIndex],
                 link: values[linkIndex] || ''
@@ -803,11 +805,25 @@ function generateHistoryTable() {
         
         if (items && items.length > 0) {
             // 記事がある場合
-            // 元データの順番を保持（カテゴリソートは行わない）
-            // historyDataの元の順序をそのまま使用
+            // Date列を基準にソート（currentSortNewestFirstに応じて昇順・降順を切り替え）
+            const sortedItems = [...items].sort((a, b) => {
+                // dateが空の場合は最後に配置
+                if (!a.date && !b.date) return 0;
+                if (!a.date) return 1;
+                if (!b.date) return -1;
+                
+                // dateを文字列として比較（YYYY-MM-DD形式を想定）
+                if (currentSortNewestFirst) {
+                    // 降順：新しい日付が上
+                    return b.date.localeCompare(a.date);
+                } else {
+                    // 昇順：古い日付が上
+                    return a.date.localeCompare(b.date);
+                }
+            });
             
             // 各アイテムを改行で表示
-            items.forEach((item, index) => {
+            sortedItems.forEach((item, index) => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'article-item';
                 
