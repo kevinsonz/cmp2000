@@ -790,7 +790,7 @@ function generateHistoryTable() {
         
         const eraDiv = document.createElement('div');
         eraDiv.className = 'text-muted small';
-        eraDiv.textContent = `(${getJapaneseEra(year)})`;
+        eraDiv.textContent = getJapaneseEra(year);
         yearCell.appendChild(eraDiv);
         
         row.appendChild(yearCell);
