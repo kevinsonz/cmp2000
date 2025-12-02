@@ -120,9 +120,9 @@
 
 /* カードコンテナ用のスタイル */
 .card-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    justify-items: center;
     gap: 2rem;
     margin-top: 1.5rem;
     margin-left: auto;
@@ -133,7 +133,6 @@
 
 /* カードラッパー：レスポンシブな幅設定 */
 .card-wrapper {
-    flex: 0 0 auto;
     width: 20rem;
     max-width: 100%;
     scroll-margin-top: 120px; /* ジャンプ時のオフセット */
