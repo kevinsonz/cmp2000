@@ -663,6 +663,25 @@ a:hover {
     margin-top: 0.25rem;
 }
 
+/* アーカイブアコーディオンのスタイル（親のアコーディオンと同じ仕様） */
+.archive-header:hover {
+    background-color: #e9ecef !important;
+}
+
+.archive-toggle-icon {
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+    margin-left: 0.5rem;
+}
+
+.archive-toggle-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+.archive-body.show {
+    display: block !important;
+}
+
 .family-item {
     padding: 0.75rem 0;
     border-bottom: 1px solid #f0f0f0;

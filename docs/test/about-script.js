@@ -18,9 +18,9 @@ let allFamilyInfo = [];
 
 // アコーディオン状態管理
 let accordionStates = {
-    'common': false,
-    'kevin': false,
-    'ryo': false,
+    'common': true,   // ユニット活動：初期状態で開く
+    'kevin': true,    // けびんケビンソン(ソロ)：初期状態で開く
+    'ryo': true,      // イイダリョウ(ソロ)：初期状態で開く
     'staff': false,
     'family': false,
     'specialThanks': false
@@ -657,16 +657,16 @@ function generateAboutPage(filterTag = null) {
             
             // 説明文を追加（けびんとリョウのみ）
             if (category === 'けびんケビンソン(ソロ)') {
-                const descDiv = document.createElement('div');
+                const descDiv = document.createElement('p');
                 descDiv.className = 'person-description';
-                descDiv.style.cssText = 'padding: 1rem; margin-bottom: 1rem; background-color: #f8f9fa; border-radius: 0.25rem; border-left: 3px solid #0d6efd;';
-                descDiv.innerHTML = '<p class="mb-0 small text-muted" style="line-height: 1.5;">2019年（コロナ禍）頃からの参画で、現在はCMP2000管理人の役割を担っている。「何か」をしたくて活動しており、現在も模索中。</p>';
+                descDiv.style.cssText = 'margin-bottom: 1rem; color: #6c757d; line-height: 1.5;';
+                descDiv.textContent = '2019年（コロナ禍）頃からの参画で、現在はCMP2000管理人の役割を担っている。「何か」をしたくて活動しており、現在も模索中。';
                 accordionBody.appendChild(descDiv);
             } else if (category === 'イイダリョウ(ソロ)') {
-                const descDiv = document.createElement('div');
+                const descDiv = document.createElement('p');
                 descDiv.className = 'person-description';
-                descDiv.style.cssText = 'padding: 1rem; margin-bottom: 1rem; background-color: #f8f9fa; border-radius: 0.25rem; border-left: 3px solid #198754;';
-                descDiv.innerHTML = '<p class="mb-0 small text-muted" style="line-height: 1.5;">2014年頃から参画しているCMP2000主要メンバー。多岐に渡るキャリアを経ており、現在はフロントエンドを中心としたエンジニア。</p>';
+                descDiv.style.cssText = 'margin-bottom: 1rem; color: #6c757d; line-height: 1.5;';
+                descDiv.textContent = '2014年頃から参画しているCMP2000主要メンバー。多岐に渡るキャリアを経ており、現在はフロントエンドを中心としたエンジニア。';
                 accordionBody.appendChild(descDiv);
             }
             
@@ -715,15 +715,33 @@ function generateAboutPage(filterTag = null) {
                 accordionBody.appendChild(siteListDiv);
             }
             
-            // アーカイブ
+            // アーカイブ（開閉可能）
             if (hasArchive) {
                 const archiveSection = document.createElement('div');
-                archiveSection.className = 'archive-section p-3 mt-3';
+                archiveSection.className = 'archive-accordion mt-3';
+                
+                // アーカイブヘッダー（クリック可能）
+                const archiveHeader = document.createElement('div');
+                archiveHeader.className = 'archive-header';
+                archiveHeader.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background-color: #f8f9fa; border-radius: 0.25rem; cursor: pointer; user-select: none; transition: background-color 0.2s ease;';
                 
                 const archiveTitle = document.createElement('div');
                 archiveTitle.className = 'archive-title';
+                archiveTitle.style.cssText = 'font-weight: 600; color: #495057;';
                 archiveTitle.textContent = 'アーカイブ';
-                archiveSection.appendChild(archiveTitle);
+                
+                const archiveToggleIcon = document.createElement('span');
+                archiveToggleIcon.className = 'archive-toggle-icon collapsed';
+                archiveToggleIcon.textContent = '▼';
+                
+                archiveHeader.appendChild(archiveTitle);
+                archiveHeader.appendChild(archiveToggleIcon);
+                archiveSection.appendChild(archiveHeader);
+                
+                // アーカイブボディ（初期状態は非表示）
+                const archiveBody = document.createElement('div');
+                archiveBody.className = 'archive-body';
+                archiveBody.style.cssText = 'padding: 1rem 0.5rem; display: none;';
                 
                 const archiveListDiv = document.createElement('ul');
                 archiveListDiv.className = 'archive-list';
@@ -776,7 +794,20 @@ function generateAboutPage(filterTag = null) {
                     archiveListDiv.appendChild(archiveItem);
                 });
                 
-                archiveSection.appendChild(archiveListDiv);
+                archiveBody.appendChild(archiveListDiv);
+                archiveSection.appendChild(archiveBody);
+                
+                // アーカイブの開閉イベント
+                archiveHeader.addEventListener('click', () => {
+                    if (archiveBody.classList.contains('show')) {
+                        archiveBody.classList.remove('show');
+                        archiveToggleIcon.classList.add('collapsed');
+                    } else {
+                        archiveBody.classList.add('show');
+                        archiveToggleIcon.classList.remove('collapsed');
+                    }
+                });
+                
                 accordionBody.appendChild(archiveSection);
             }
             
