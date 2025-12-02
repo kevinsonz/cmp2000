@@ -670,49 +670,67 @@ function generateAboutPage(filterTag = null) {
                 accordionBody.appendChild(descDiv);
             }
             
-            // アクティブなサイト
+            // アクティブなサイト（テーブル形式）
             if (hasBasic) {
-                const siteListDiv = document.createElement('ul');
-                siteListDiv.className = 'site-list';
+                const tableContainer = document.createElement('div');
+                tableContainer.className = 'table-responsive';
+                
+                const table = document.createElement('table');
+                table.className = 'table site-table';
+                
+                const tbody = document.createElement('tbody');
                 
                 basicByCategory[category].forEach(site => {
-                    const siteItem = document.createElement('li');
-                    siteItem.className = 'site-item';
+                    const row = document.createElement('tr');
                     
+                    // サイト名/リンク
+                    const titleCell = document.createElement('td');
+                    titleCell.className = 'site-title-cell';
                     const siteLink = document.createElement('a');
                     siteLink.href = site.siteUrl;
                     siteLink.target = '_blank';
                     siteLink.className = 'site-link';
                     siteLink.textContent = site.siteTitle;
+                    titleCell.appendChild(siteLink);
+                    row.appendChild(titleCell);
                     
-                    siteItem.appendChild(siteLink);
-                    
+                    // ロゴ
+                    const logoCell = document.createElement('td');
+                    logoCell.className = 'site-logo-cell';
                     if (site.logo) {
                         const logoImg = document.createElement('img');
                         logoImg.src = site.logo;
                         logoImg.className = 'logo-img';
                         logoImg.alt = 'logo';
-                        siteItem.appendChild(logoImg);
+                        logoCell.appendChild(logoImg);
                     }
+                    row.appendChild(logoCell);
                     
+                    // ハッシュタグ
+                    const hashTagCell = document.createElement('td');
+                    hashTagCell.className = 'site-hashtag-cell';
                     if (site.hashTag) {
                         const hashTagSpan = document.createElement('span');
                         hashTagSpan.className = 'hashtag-display';
                         hashTagSpan.innerHTML = convertHashTagsToLinks(site.hashTag);
-                        siteItem.appendChild(hashTagSpan);
+                        hashTagCell.appendChild(hashTagSpan);
                     }
+                    row.appendChild(hashTagCell);
                     
+                    // コメント
+                    const commentCell = document.createElement('td');
+                    commentCell.className = 'site-comment-cell';
                     if (site.comment) {
-                        const commentDiv = document.createElement('div');
-                        commentDiv.className = 'site-comment text-muted small mt-1';
-                        commentDiv.textContent = site.comment;
-                        siteItem.appendChild(commentDiv);
+                        commentCell.textContent = site.comment;
                     }
+                    row.appendChild(commentCell);
                     
-                    siteListDiv.appendChild(siteItem);
+                    tbody.appendChild(row);
                 });
                 
-                accordionBody.appendChild(siteListDiv);
+                table.appendChild(tbody);
+                tableContainer.appendChild(table);
+                accordionBody.appendChild(tableContainer);
             }
             
             // アーカイブ（開閉可能）
@@ -743,15 +761,20 @@ function generateAboutPage(filterTag = null) {
                 archiveBody.className = 'archive-body';
                 archiveBody.style.cssText = 'padding: 1rem 0.5rem; display: none;';
                 
-                const archiveListDiv = document.createElement('ul');
-                archiveListDiv.className = 'archive-list';
+                const tableContainer = document.createElement('div');
+                tableContainer.className = 'table-responsive';
+                
+                const table = document.createElement('table');
+                table.className = 'table archive-table';
+                
+                const tbody = document.createElement('tbody');
                 
                 archiveByCategory[category].forEach(archive => {
-                    const archiveItem = document.createElement('li');
-                    archiveItem.className = 'archive-item';
+                    const row = document.createElement('tr');
                     
-                    const titleContainer = document.createElement('div');
-                    titleContainer.style.marginBottom = '0.25rem';
+                    // サイト名/リンク
+                    const titleCell = document.createElement('td');
+                    titleCell.className = 'archive-title-cell';
                     
                     if (archive.siteUrl && archive.siteUrl.trim() !== '' && archive.siteUrl !== '#') {
                         const archiveLink = document.createElement('a');
@@ -759,42 +782,52 @@ function generateAboutPage(filterTag = null) {
                         archiveLink.target = '_blank';
                         archiveLink.className = 'site-link';
                         archiveLink.textContent = archive.siteTitle;
-                        titleContainer.appendChild(archiveLink);
+                        titleCell.appendChild(archiveLink);
                     } else {
                         const archiveText = document.createElement('span');
                         archiveText.textContent = archive.siteTitle;
                         archiveText.style.color = '#6c757d';
-                        titleContainer.appendChild(archiveText);
+                        titleCell.appendChild(archiveText);
                     }
+                    row.appendChild(titleCell);
                     
+                    // ロゴ
+                    const logoCell = document.createElement('td');
+                    logoCell.className = 'archive-logo-cell';
                     if (archive.logo) {
                         const logoImg = document.createElement('img');
                         logoImg.src = archive.logo;
                         logoImg.className = 'logo-img';
                         logoImg.alt = 'logo';
-                        titleContainer.appendChild(logoImg);
+                        logoCell.appendChild(logoImg);
                     }
+                    row.appendChild(logoCell);
                     
+                    // ハッシュタグ
+                    const hashTagCell = document.createElement('td');
+                    hashTagCell.className = 'archive-hashtag-cell';
                     if (archive.hashTag) {
                         const hashTagSpan = document.createElement('span');
                         hashTagSpan.className = 'hashtag-display';
                         hashTagSpan.innerHTML = convertHashTagsToLinks(archive.hashTag);
-                        titleContainer.appendChild(hashTagSpan);
+                        hashTagCell.appendChild(hashTagSpan);
                     }
+                    row.appendChild(hashTagCell);
                     
-                    archiveItem.appendChild(titleContainer);
-                    
+                    // コメント
+                    const commentCell = document.createElement('td');
+                    commentCell.className = 'archive-comment-cell';
                     if (archive.comment) {
-                        const commentSpan = document.createElement('span');
-                        commentSpan.className = 'archive-comment';
-                        commentSpan.textContent = archive.comment;
-                        archiveItem.appendChild(commentSpan);
+                        commentCell.textContent = archive.comment;
                     }
+                    row.appendChild(commentCell);
                     
-                    archiveListDiv.appendChild(archiveItem);
+                    tbody.appendChild(row);
                 });
                 
-                archiveBody.appendChild(archiveListDiv);
+                table.appendChild(tbody);
+                tableContainer.appendChild(table);
+                archiveBody.appendChild(tableContainer);
                 archiveSection.appendChild(archiveBody);
                 
                 // アーカイブの開閉イベント

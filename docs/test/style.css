@@ -583,6 +583,91 @@ a:hover {
 }
 
 /* サイトリスト */
+/* サイトテーブルのスタイル（Aboutページ用） */
+.site-table,
+.archive-table {
+    margin-bottom: 0;
+}
+
+.site-table td,
+.archive-table td {
+    padding: 0.75rem 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.site-table tbody tr:last-child td,
+.archive-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.site-title-cell,
+.archive-title-cell {
+    font-weight: 500;
+    width: 25%;
+    min-width: 150px;
+}
+
+.site-logo-cell,
+.archive-logo-cell {
+    width: 15%;
+    min-width: 100px;
+    text-align: center;
+}
+
+.site-hashtag-cell,
+.archive-hashtag-cell {
+    width: 20%;
+    min-width: 120px;
+}
+
+.site-comment-cell,
+.archive-comment-cell {
+    width: 40%;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* アーカイブテーブルの透明度 */
+.archive-table {
+    opacity: 0.8;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .site-table td,
+    .archive-table td {
+        display: block;
+        width: 100% !important;
+        min-width: 0 !important;
+        border-bottom: none;
+        padding: 0.4rem 0.5rem;
+    }
+    
+    .site-table tbody tr,
+    .archive-table tbody tr {
+        display: block;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 0.5rem 0;
+    }
+    
+    .site-table tbody tr:last-child,
+    .archive-table tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    .site-logo-cell,
+    .archive-logo-cell {
+        text-align: left;
+    }
+    
+    .site-title-cell,
+    .archive-title-cell {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+}
+
 .site-list {
     list-style: none;
     padding-left: 0;
