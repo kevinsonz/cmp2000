@@ -122,6 +122,7 @@
     margin-left: auto;
     margin-right: auto;
     max-width: 68rem; /* カード3列分: 20rem × 3 + gap 2rem × 2 + 余白 = 68rem */
+    width: 100%; /* レスポンシブ対応: 親要素の全幅を使用 */
     padding: 0 1rem; /* 左右に余白を追加 */
 }
 
