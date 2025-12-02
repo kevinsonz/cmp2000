@@ -47,14 +47,9 @@ a:hover {
     overflow: visible !important;
 }
 
-/* 1段目：ロゴ + ページメニュー */
+/* 1段目：ロゴ + ページメニュー（スクロール時は非表示） */
 .header-compact-row1 {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    padding: 0.4rem 1rem;
-    min-height: 35px;
+    display: none;
 }
 
 .header-compact-logo {
@@ -101,14 +96,13 @@ a:hover {
     font-size: 0.9rem;
 }
 
-/* 2段目：タブメニュー */
+/* 2段目を1段として表示（border-topを削除） */
 .header-compact-row2 {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 0.4rem 1rem;
     background-color: #f8f9fa;
-    border-top: 1px solid #dee2e6;
     min-height: 35px;
 }
 
