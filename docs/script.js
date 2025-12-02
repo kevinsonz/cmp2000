@@ -1407,6 +1407,18 @@ function smoothScrollToElement(elementId) {
             behavior: 'smooth',
             block: 'start'
         });
+        
+        // ヒートマップ(コントリビューショングラフ)の場合、横スクロールを右端に移動
+        if (elementId === 'contribution-graph') {
+            // scrollIntoViewが完了するまで待つ
+            setTimeout(() => {
+                const graphWrapper = document.querySelector('.contribution-graph-wrapper');
+                if (graphWrapper) {
+                    // 横スクロールを最大値(右端)に設定
+                    graphWrapper.scrollLeft = graphWrapper.scrollWidth - graphWrapper.clientWidth;
+                }
+            }, 500); // スクロールアニメーションの完了を待つ
+        }
     }
 }
 
