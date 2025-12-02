@@ -6,7 +6,7 @@ const NEW_BADGE_DAYS = 30;
 
 // 公開スプレッドシートのCSV URL
 const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
-const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
+// PUBLIC_MULTI_CSV_URLは廃止されました（MULTI_CSVは使用されなくなりました）
 const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
 const PUBLIC_CONTRIBUTION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=928202728&single=true&output=csv';
 
@@ -15,6 +15,7 @@ let allHashTags = [];
 let currentFilterTag = null;
 let basicInfoData = null;
 let singleDataGlobal = null;
+let currentTab = 'general'; // 現在のタブを追跡
 
 // 環境判定
 const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined');
@@ -22,7 +23,6 @@ const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_C
 if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined') {
     console.log('ローカルモードで実行中');
     const basicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
-    const multiData = parseMultiCSV(TEST_DATA.MULTI_CSV);
     const singleData = parseSingleCSV(TEST_DATA.SINGLE_CSV);
     const contributionData = parseContributionCSV(TEST_DATA.CONTRIBUTION_CSV);
     
@@ -31,21 +31,19 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
     allHashTags = collectAllHashTags(basicInfo);
     
     generateCards(basicInfo, singleData);
-    loadFeeds(multiData, singleData);
+    loadFeeds(singleData);
     generateContributionGraph(contributionData);
-    renderHashTagList();
+    updateJumpMenuForCurrentTab(); // ローカルモード時はここでジャンプメニューを更新
 } else {
     console.log('オンラインモードで実行中');
     
     Promise.all([
         fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
-        fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_CONTRIBUTION_CSV_URL).then(response => response.text())
     ])
-    .then(([basicCsvText, multiCsvText, singleCsvText, contributionCsvText]) => {
+    .then(([basicCsvText, singleCsvText, contributionCsvText]) => {
         const basicInfo = parseBasicInfoCSV(basicCsvText);
-        const multiData = parseMultiCSV(multiCsvText);
         const singleData = parseSingleCSV(singleCsvText);
         const contributionData = parseContributionCSV(contributionCsvText);
         
@@ -54,9 +52,9 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
         allHashTags = collectAllHashTags(basicInfo);
         
         generateCards(basicInfo, singleData);
-        loadFeeds(multiData, singleData);
+        loadFeeds(singleData);
         generateContributionGraph(contributionData);
-        renderHashTagList();
+        updateJumpMenuForCurrentTab(); // オンラインモード時はデータ読み込み完了後にジャンプメニューを更新
     })
     .catch(error => {
         console.error('公開CSVの読み込みに失敗しました:', error);
@@ -80,9 +78,282 @@ function collectAllHashTags(basicInfo) {
     return Array.from(tags).sort();
 }
 
-// ハッシュタグ一覧を表示
-function renderHashTagList() {
-    const container = document.getElementById('hashtag-list-container');
+// ハッシュタグ一覧を表示（各タブごとに表示）
+// この関数は、タブごとのハッシュタグ一覧表示に置き換えられました
+// renderHashTagListForTab関数を使用してください
+
+
+// ハッシュタグをクリック可能なリンクに変換
+function convertHashTagsToLinks(hashTagString) {
+    if (!hashTagString) return '';
+    
+    const tags = extractHashTags(hashTagString);
+    return tags.map(tag => {
+        return `<a href="#" onclick="applyHashTagFilter('${tag}'); return false;" style="margin-right: 0.25rem; color: #dc3545; text-decoration: none;">${tag}</a>`;
+    }).join(' ');
+}
+
+// ハッシュタグフィルタを適用
+function applyHashTagFilter(tag) {
+    // 現在のタブを保存（フィルタモードでない場合のみ）
+    if (!currentFilterTag && currentTab !== 'filter') {
+        // 保存するタブがfilterでない場合のみ保存
+        window.previousTab = currentTab;
+    }
+    
+    currentFilterTag = tag;
+    generateCards(basicInfoData, singleDataGlobal, tag);
+    showFilterUI(tag);
+    updateJumpMenuForCurrentTab();
+    
+    // フィルタUI表示位置にスムーズスクロール
+    setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+}
+
+// フィルタをクリア
+function clearHashTagFilter() {
+    currentFilterTag = null;
+    
+    // フィルタタブのコンテンツをクリア
+    const filterContainer = document.getElementById('card-content-container-filter');
+    if (filterContainer) {
+        filterContainer.innerHTML = '';
+    }
+    
+    generateCards(basicInfoData, singleDataGlobal, null);
+    hideFilterUI();
+    
+    // 元のタブに戻る（保存されたタブがない場合はgeneralに戻る）
+    const targetTab = window.previousTab || 'general';
+    currentTab = targetTab; // currentTabを直接設定
+    switchTab(targetTab);
+}
+
+// フィルタUI表示
+function showFilterUI(tag) {
+    const container = document.getElementById('filter-ui-container');
+    if (!container) return;
+    
+    container.style.display = 'block';
+    container.innerHTML = `
+        <div class="alert alert-danger d-flex justify-content-between align-items-center">
+            <span>フィルタ: <strong>${tag}</strong></span>
+            <button class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">フィルタ解除</button>
+        </div>
+    `;
+}
+
+// フィルタUI非表示
+function hideFilterUI() {
+    const container = document.getElementById('filter-ui-container');
+    if (!container) return;
+    
+    container.style.display = 'none';
+    container.innerHTML = '';
+}
+
+// ジャンプメニューを更新（タブ対応版に置き換えられました）
+// updateJumpMenuForCurrentTab関数を使用してください
+
+
+// CSV解析関数（基本情報用） - comment列対応
+function parseBasicInfoCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const items = [];
+    
+    const keyIndex = headers.indexOf('key');
+    const tabIdIndex = headers.indexOf('tabId');
+    const tabIndex = headers.indexOf('tab');
+    const categoryIndex = headers.indexOf('category');
+    const summaryIndex = headers.indexOf('summary');
+    const siteTitleIndex = headers.indexOf('siteTitle');
+    const hashTagIndex = headers.indexOf('hashTag');
+    const siteUrlIndex = headers.indexOf('siteUrl');
+    const imageIndex = headers.indexOf('image');
+    const subImageIndex = headers.indexOf('sub-image');
+    const logoIndex = headers.indexOf('logo');
+    const commentIndex = headers.indexOf('comment');
+    const cardDateIndex = headers.indexOf('cardDate');
+    
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        // カンマ区切りの解析（コメント内のカンマを考慮）
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        
+        if (values[keyIndex] && values[categoryIndex]) {
+            items.push({
+                key: values[keyIndex],
+                tabId: values[tabIdIndex] || '',
+                tab: values[tabIndex] || '',
+                category: values[categoryIndex],
+                summary: values[summaryIndex] || '',
+                siteTitle: values[siteTitleIndex] || '',
+                hashTag: values[hashTagIndex] || '',
+                siteUrl: values[siteUrlIndex] || '',
+                image: values[imageIndex] || '',
+                subImage: values[subImageIndex] || '',
+                logo: values[logoIndex] || '',
+                comment: commentIndex >= 0 ? (values[commentIndex] || '') : '',
+                cardDate: cardDateIndex >= 0 ? (values[cardDateIndex] || '') : ''
+            });
+        }
+    }
+    
+    return items;
+}
+
+// CSV解析関数（Multi用） - 廃止されました（MULTI_CSVは使用されなくなりました）
+/*
+function parseMultiCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const items = [];
+    
+    const keyIndex = headers.indexOf('key');
+    const titleIndex = headers.indexOf('title');
+    const linkIndex = headers.indexOf('link');
+    const dateIndex = headers.indexOf('date');
+    
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        // カンマ区切りの解析（タイトル内のカンマを考慮）
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        
+        if (values[keyIndex] && values[titleIndex]) {
+            items.push({
+                key: values[keyIndex],
+                title: values[titleIndex],
+                link: values[linkIndex] || '',
+                pubDate: values[dateIndex] || '' // dateをpubDateとして使用
+            });
+        }
+    }
+    
+    return items;
+}
+*/
+
+// keyを基にbasic-info.jsから情報を取得するヘルパー関数
+function getBasicInfoByKey(key) {
+    if (!basicInfoData) return null;
+    return basicInfoData.find(item => item.key === key);
+}
+
+// CSV解析関数（Single用）
+function parseSingleCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const items = [];
+    
+    const keyIndex = headers.indexOf('key');
+    const titleIndex = headers.indexOf('title');
+    const linkIndex = headers.indexOf('link');
+    const dateIndex = headers.indexOf('date');
+    
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.trim()) continue; // 空行をスキップ
+        
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        // カンマ区切りの解析（タイトル内のカンマを考慮）
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        
+        // クォーテーションを除去する関数
+        const removeQuotes = (str) => {
+            if (str && str.startsWith('"') && str.endsWith('"')) {
+                return str.slice(1, -1);
+            }
+            return str;
+        };
+        
+        if (values[keyIndex] && values[titleIndex]) {
+            items.push({
+                key: removeQuotes(values[keyIndex]),
+                title: removeQuotes(values[titleIndex]),
+                link: removeQuotes(values[linkIndex] || ''),
+                pubDate: removeQuotes(values[dateIndex] || '')
+            });
+        }
+    }
+    
+    return items;
+}
+
+// CSV解析関数（Contribution用）
+function parseContributionCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const items = [];
+    
+    const dateIndex = headers.indexOf('date');
+    const countIndex = headers.indexOf('count');
+    
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        
+        if (values[dateIndex] && values[countIndex]) {
+            items.push({
+                date: values[dateIndex],
+                count: parseInt(values[countIndex], 10) || 0
+            });
+        }
+    }
+    
+    return items;
+}
+
+// カード自動生成関数（フィルタ対応）
+
+// タブごとのハッシュタグ一覧を表示
+function renderHashTagListForTab(tabName) {
+    const container = document.getElementById(`hashtag-list-container-${tabName}`);
     if (!container) return;
     
     container.innerHTML = '';
@@ -118,256 +389,7 @@ function renderHashTagList() {
     container.appendChild(tagContainer);
 }
 
-// ハッシュタグをクリック可能なリンクに変換
-function convertHashTagsToLinks(hashTagString) {
-    if (!hashTagString) return '';
-    
-    const tags = extractHashTags(hashTagString);
-    return tags.map(tag => {
-        return `<a href="#" onclick="applyHashTagFilter('${tag}'); return false;" style="margin-right: 0.25rem; color: #0d6efd; text-decoration: none;">${tag}</a>`;
-    }).join(' ');
-}
-
-// ハッシュタグフィルタを適用
-function applyHashTagFilter(tag) {
-    currentFilterTag = tag;
-    generateCards(basicInfoData, singleDataGlobal, tag);
-    renderHashTagList();
-    showFilterUI(tag);
-    updateJumpMenu(tag);
-    
-    // フィルタUI表示位置にスムーズスクロール
-    setTimeout(() => {
-        const filterContainer = document.getElementById('filter-ui-container');
-        if (filterContainer) {
-            filterContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 100);
-}
-
-// フィルタをクリア
-function clearHashTagFilter() {
-    currentFilterTag = null;
-    generateCards(basicInfoData, singleDataGlobal, null);
-    renderHashTagList();
-    hideFilterUI();
-    updateJumpMenu(null);
-    
-    // 「共通コンテンツ」セクションにスムーズスクロール
-    setTimeout(() => {
-        const commonSection = document.getElementById('common');
-        if (commonSection) {
-            commonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 100);
-}
-
-// フィルタUI表示
-function showFilterUI(tag) {
-    const container = document.getElementById('filter-ui-container');
-    if (!container) return;
-    
-    container.style.display = 'block';
-    container.innerHTML = `
-        <div class="alert alert-info d-flex justify-content-between align-items-center">
-            <span>表示中: <strong>${tag}</strong></span>
-            <button class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">フィルタ解除</button>
-        </div>
-    `;
-}
-
-// フィルタUI非表示
-function hideFilterUI() {
-    const container = document.getElementById('filter-ui-container');
-    if (!container) return;
-    
-    container.style.display = 'none';
-    container.innerHTML = '';
-}
-
-// ジャンプメニューを更新
-function updateJumpMenu(filterTag) {
-    const dropdownMenu = document.querySelector('#jumpMenuButton + .dropdown-menu');
-    if (!dropdownMenu) return;
-    
-    if (filterTag) {
-        dropdownMenu.innerHTML = `
-            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#filter-ui-container">フィルタ結果</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#footer">フッター</a></li>
-        `;
-    } else {
-        dropdownMenu.innerHTML = `
-            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#common">共通コンテンツ</a></li>
-            <li><a class="dropdown-item" href="#kevin">けびんケビンソン</a></li>
-            <li><a class="dropdown-item" href="#ryo">イイダリョウ</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#footer">フッター</a></li>
-        `;
-    }
-}
-
-// CSV解析関数（基本情報用） - comment列対応
-function parseBasicInfoCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const items = [];
-    
-    const keyIndex = headers.indexOf('key');
-    const categoryIndex = headers.indexOf('category');
-    const siteTitleIndex = headers.indexOf('siteTitle');
-    const breadcrumbsIndex = headers.indexOf('breadcrumbs');
-    const hashTagIndex = headers.indexOf('hashTag');
-    const siteUrlIndex = headers.indexOf('siteUrl');
-    const imageIndex = headers.indexOf('image');
-    const subImageIndex = headers.indexOf('sub-image');
-    const logoIndex = headers.indexOf('logo');
-    const commentIndex = headers.indexOf('comment');
-    
-    for (let i = 1; i < lines.length; i++) {
-        const line = lines[i];
-        const values = [];
-        let currentValue = '';
-        let insideQuotes = false;
-        
-        // カンマ区切りの解析（コメント内のカンマを考慮）
-        for (let j = 0; j < line.length; j++) {
-            const char = line[j];
-            if (char === '"') {
-                insideQuotes = !insideQuotes;
-            } else if (char === ',' && !insideQuotes) {
-                values.push(currentValue.trim());
-                currentValue = '';
-            } else {
-                currentValue += char;
-            }
-        }
-        values.push(currentValue.trim());
-        
-        if (values[keyIndex] && values[categoryIndex]) {
-            items.push({
-                key: values[keyIndex],
-                category: values[categoryIndex],
-                siteTitle: values[siteTitleIndex] || '',
-                breadcrumbs: values[breadcrumbsIndex] || '',
-                hashTag: values[hashTagIndex] || '',
-                siteUrl: values[siteUrlIndex] || '',
-                image: values[imageIndex] || '',
-                subImage: values[subImageIndex] || '',
-                logo: values[logoIndex] || '',
-                comment: commentIndex >= 0 ? (values[commentIndex] || '') : ''
-            });
-        }
-    }
-    
-    return items;
-}
-
-// CSV解析関数（Multi用）
-function parseMultiCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const items = [];
-    
-    const keyIndex = headers.indexOf('key');
-    const breadcrumbsIndex = headers.indexOf('breadcrumbs');
-    const siteUrlIndex = headers.indexOf('siteUrl');
-    const titleIndex = headers.indexOf('title');
-    const linkIndex = headers.indexOf('link');
-    const dateIndex = headers.indexOf('date');
-    
-    for (let i = 1; i < lines.length; i++) {
-        const line = lines[i];
-        const values = [];
-        let currentValue = '';
-        let insideQuotes = false;
-        
-        // カンマ区切りの解析（タイトル内のカンマを考慮）
-        for (let j = 0; j < line.length; j++) {
-            const char = line[j];
-            if (char === '"') {
-                insideQuotes = !insideQuotes;
-            } else if (char === ',' && !insideQuotes) {
-                values.push(currentValue.trim());
-                currentValue = '';
-            } else {
-                currentValue += char;
-            }
-        }
-        values.push(currentValue.trim());
-        
-        if (values[keyIndex] && values[titleIndex]) {
-            items.push({
-                key: values[keyIndex],
-                breadcrumbs: values[breadcrumbsIndex] || '',
-                siteUrl: values[siteUrlIndex] || '',
-                title: values[titleIndex] || '',
-                link: values[linkIndex] || '',
-                pubDate: values[dateIndex] || ''
-            });
-        }
-    }
-    
-    return items;
-}
-
-// CSV解析関数（Single用）
-function parseSingleCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const items = [];
-    
-    const keyIndex = headers.indexOf('key');
-    const titleIndex = headers.indexOf('title');
-    const linkIndex = headers.indexOf('link');
-    const dateIndex = headers.indexOf('date');
-    
-    for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        
-        if (values[keyIndex] && values[titleIndex]) {
-            items.push({
-                key: values[keyIndex],
-                title: values[titleIndex],
-                link: values[linkIndex] || '',
-                pubDate: values[dateIndex] || ''
-            });
-        }
-    }
-    
-    return items;
-}
-
-// CSV解析関数（Contribution用）
-function parseContributionCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const items = [];
-    
-    const dateIndex = headers.indexOf('date');
-    const countIndex = headers.indexOf('count');
-    
-    for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        
-        if (values[dateIndex] && values[countIndex]) {
-            items.push({
-                date: values[dateIndex],
-                count: parseInt(values[countIndex], 10) || 0
-            });
-        }
-    }
-    
-    return items;
-}
-
-// カード自動生成関数（フィルタ対応）
 function generateCards(basicInfo, singleData, filterTag = null) {
-    // 全てのアイテムを表示
     let filteredInfo = basicInfo;
     
     // ハッシュタグフィルタを適用
@@ -378,14 +400,6 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             return tags.includes(filterTag);
         });
     }
-    
-    const groupedByCategory = {};
-    filteredInfo.forEach(item => {
-        if (!groupedByCategory[item.category]) {
-            groupedByCategory[item.category] = [];
-        }
-        groupedByCategory[item.category].push(item);
-    });
     
     const singleDataByKey = {};
     singleData.forEach(item => {
@@ -408,27 +422,29 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         });
     });
     
-    function isNewArticle(key) {
-        console.log(`=== Checking isNewArticle for key: ${key} ===`);
+    function isNewArticle(key, site = null) {
+        // basic-infoのcardDateをチェック（優先）
+        if (site && site.cardDate) {
+            const cardDate = new Date(site.cardDate);
+            const today = new Date();
+            const diffTime = today - cardDate;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= NEW_BADGE_DAYS) {
+                return true;
+            }
+        }
+        
+        // singleDataの最新記事日付をチェック（フォールバック）
         const articles = singleDataByKey[key];
         
-        if (!articles) {
-            console.log(`  - No articles found for key: ${key}`);
+        if (!articles || articles.length === 0) {
             return false;
         }
-        
-        if (articles.length === 0) {
-            console.log(`  - Articles array is empty for key: ${key}`);
-            return false;
-        }
-        
-        console.log(`  - Found ${articles.length} articles for key: ${key}`);
         
         const latestArticle = articles[0];
-        console.log(`  - Latest article:`, latestArticle);
         
         if (!latestArticle.pubDate) {
-            console.log(`  - Latest article has no pubDate`);
             return false;
         }
         
@@ -437,179 +453,247 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         const diffTime = today - articleDate;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
-        console.log(`  - Latest Date: ${latestArticle.pubDate}`);
-        console.log(`  - Today: ${today.toISOString().split('T')[0]}`);
-        console.log(`  - Days Ago: ${diffDays}`);
-        console.log(`  - NEW_BADGE_DAYS: ${NEW_BADGE_DAYS}`);
-        console.log(`  - Is New: ${diffDays <= NEW_BADGE_DAYS}`);
-        
         return diffDays <= NEW_BADGE_DAYS;
     }
     
-    const container = document.getElementById('card-content-container');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    // フィルタ時は全カードを1つのコンテナに並べる
-    if (filterTag) {
-        const cardContainer = document.createElement('div');
-        cardContainer.className = 'card-container';
+    function generateCardHTML(site, showCategory = false, includeFeed = false) {
+        const isNew = isNewArticle(site.key, site);
+        const newBadgeHtml = isNew 
+            ? '<span class="badge bg-danger new-badge">New!!</span>' 
+            : '';
         
-        // カテゴリ順序を維持するためのソート
-        const categoryOrder = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
-        const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
-            return categoryOrder.indexOf(a) - categoryOrder.indexOf(b);
-        });
+        const subImageHtml = site.subImage 
+            ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
+            : '';
         
-        sortedCategories.forEach(category => {
-            const items = groupedByCategory[category];
-            items.forEach(site => {
-                const cardWrapper = document.createElement('div');
-                cardWrapper.className = 'card-wrapper';
-                
-                const isNew = isNewArticle(site.key);
-                console.log(`>>> [FILTER] Card: ${site.siteTitle} (${site.key}), isNew: ${isNew}`);
-                
-                const newBadgeHtml = isNew 
-                    ? '<span class="badge bg-danger new-badge">New!!</span>' 
-                    : '';
-                
-                console.log(`>>> [FILTER] Badge HTML: ${newBadgeHtml ? 'Generated' : 'Empty'}, HTML length: ${newBadgeHtml.length}`);
-                
-                const subImageHtml = site.subImage 
-                    ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
-                    : '';
-                
-                // logo列が空白でない場合のみロゴを表示
-                const logoHtml = (site.logo && site.logo.trim() !== '')
-                    ? `<img src="${site.logo}" alt="logo" class="card-logo-img">`
-                    : '';
-                
-                const hashTagHtml = site.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small></div>` : '';
-                
-                // カテゴリ名を小さめの文字で表示
-                const categoryBadgeHtml = `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">${category}</small>`;
-                
-                cardWrapper.innerHTML = `
-                    <div class="card">
-                        <a href="${site.siteUrl}" target="_blank">
-                            <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}">
-                            ${newBadgeHtml}
-                            ${subImageHtml}
-                            ${logoHtml}
-                        </a>
-                        <div class="card-body">
-                            ${categoryBadgeHtml}
-                            <h5 class="card-title">${site.siteTitle}</h5>
-                            <div class="card-text">
-                                <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
-                            </div>
-                            <div class="card-action-area">
-                                <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
-                                ${hashTagHtml}
-                            </div>
-                        </div>
+        const logoHtml = (site.logo && site.logo.trim() !== '')
+            ? `<img src="${site.logo}" alt="logo" class="card-logo-img">`
+            : '';
+        
+        const hashTagHtml = site.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small></div>` : '';
+        
+        const categoryBadgeHtml = showCategory ? `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">${site.category}</small>` : '';
+        
+        // RSSフィードのHTMLを生成（includeFeedがtrueの場合）
+        let feedContentHtml = '';
+        if (includeFeed) {
+            console.log(`カード ${site.key} のフィード生成:`, singleDataByKey[site.key] ? `${singleDataByKey[site.key].length}件` : 'データなし');
+            
+            if (singleDataByKey[site.key]) {
+                    const articles = singleDataByKey[site.key].slice(0, singleMaxLength);
+                feedContentHtml = articles.map(item => {
+                    if (!item.title) return '';
+                    
+                    let dateSpan = '';
+                    if (item.pubDate) {
+                        const date = new Date(item.pubDate);
+                        const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+                        
+                        const today = new Date();
+                        const diffTime = today - date;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        let newBadge = '';
+                        if (diffDays <= NEW_BADGE_DAYS) {
+                            newBadge = '<span class="badge bg-danger" style="margin-right: 0.35rem; font-size: 0.65rem;">New!!</span>';
+                        }
+                        
+                        dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
+                    }
+                    
+                    let titleSpan = '';
+                    if (item.link) {
+                        titleSpan = `<a href="${item.link}" target="_blank" style="color: #dc3545; font-size: 0.9rem;">${item.title}</a>`;
+                    } else {
+                        titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${item.title}</span>`;
+                    }
+                    
+                    return `<div style="margin-bottom: 0.4rem; font-size: 0.9rem;">${dateSpan}${titleSpan}</div>`;
+                }).join('');
+            }
+        }
+        
+        return `
+            <div class="card">
+                <a href="${site.siteUrl}" target="_blank">
+                    <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}">
+                    ${newBadgeHtml}
+                    ${subImageHtml}
+                    ${logoHtml}
+                </a>
+                <div class="card-body">
+                    ${categoryBadgeHtml}
+                    <h5 class="card-title">${site.siteTitle}</h5>
+                    <div class="card-text">
+                        <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start">${feedContentHtml}</div>
                     </div>
-                `;
-                
-                // 生成後のHTMLにバッジが含まれているか確認
-                if (isNew) {
-                    const hasNewBadge = cardWrapper.innerHTML.includes('new-badge');
-                    console.log(`>>> [FILTER] Card HTML includes new-badge class: ${hasNewBadge}`);
-                }
-                
-                cardContainer.appendChild(cardWrapper);
-            });
+                    <div class="card-action-area">
+                        <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
+                        ${hashTagHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // フィルタモード
+    if (filterTag) {
+        console.log('フィルタモード:', filterTag);
+        console.log('フィルタされたカード数:', filteredInfo.length);
+        filteredInfo.forEach(item => {
+            console.log('- カード:', item.key, item.siteTitle, 'カテゴリ:', item.category);
         });
         
-        container.appendChild(cardContainer);
-    } else {
-        // 通常表示（カテゴリごとにセクション分け）
-        Object.entries(groupedByCategory).forEach(([category, items]) => {
-            const sectionTitle = document.createElement('h3');
-            sectionTitle.className = 'section-title';
-            sectionTitle.textContent = category;
-            container.appendChild(sectionTitle);
+        // フィルタタブを表示し、全体タブを選択状態にする
+        currentTab = 'filter';
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            // 全体タブ（data-tab="general"）のみactiveにする
+            if (btn.getAttribute('data-tab') === 'general') {
+                btn.classList.add('active');
+            }
+        });
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        const filterTab = document.getElementById('tab-filter');
+        if (filterTab) {
+            filterTab.classList.add('active');
+        }
+        
+        const container = document.getElementById('card-content-container-filter');
+        if (container) {
+            container.innerHTML = '';
             
             const cardContainer = document.createElement('div');
             cardContainer.className = 'card-container';
             
-            items.forEach(site => {
-                const cardWrapper = document.createElement('div');
-                cardWrapper.className = 'card-wrapper';
-                
-                const isNew = isNewArticle(site.key);
-                console.log(`>>> [NORMAL] Card: ${site.siteTitle} (${site.key}), isNew: ${isNew}`);
-                
-                const newBadgeHtml = isNew 
-                    ? '<span class="badge bg-danger new-badge">New!!</span>' 
-                    : '';
-                
-                console.log(`>>> [NORMAL] Badge HTML: ${newBadgeHtml ? 'Generated' : 'Empty'}, HTML length: ${newBadgeHtml.length}`);
-                
-                const subImageHtml = site.subImage 
-                    ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
-                    : '';
-                
-                // logo列が空白でない場合のみロゴを表示
-                const logoHtml = (site.logo && site.logo.trim() !== '')
-                    ? `<img src="${site.logo}" alt="logo" class="card-logo-img">`
-                    : '';
-                
-                const hashTagHtml = site.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small></div>` : '';
-                
-                cardWrapper.innerHTML = `
-                    <div class="card">
-                        <a href="${site.siteUrl}" target="_blank">
-                            <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}">
-                            ${newBadgeHtml}
-                            ${subImageHtml}
-                            ${logoHtml}
-                        </a>
-                        <div class="card-body">
-                            <h5 class="card-title">${site.siteTitle}</h5>
-                            <div class="card-text">
-                                <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start"></div>
-                            </div>
-                            <div class="card-action-area">
-                                <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
-                                ${hashTagHtml}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // 生成後のHTMLにバッジが含まれているか確認
-                if (isNew) {
-                    const hasNewBadge = cardWrapper.innerHTML.includes('new-badge');
-                    console.log(`>>> [NORMAL] Card HTML includes new-badge class: ${hasNewBadge}`);
+            // カテゴリ順序を維持するためのソート
+            const categoryOrder = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
+            const groupedByCategory = {};
+            filteredInfo.forEach(item => {
+                if (!groupedByCategory[item.category]) {
+                    groupedByCategory[item.category] = [];
                 }
-                
-                cardContainer.appendChild(cardWrapper);
+                groupedByCategory[item.category].push(item);
+            });
+            
+            const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
+                return categoryOrder.indexOf(a) - categoryOrder.indexOf(b);
+            });
+            
+            sortedCategories.forEach(category => {
+                const items = groupedByCategory[category];
+                items.forEach(site => {
+                    const cardWrapper = document.createElement('div');
+                    cardWrapper.className = 'card-wrapper';
+                    cardWrapper.id = site.key; // 各カードにIDを設定
+                    cardWrapper.innerHTML = generateCardHTML(site, true, true); // includeFeed=trueを追加
+                    cardContainer.appendChild(cardWrapper);
+                });
             });
             
             container.appendChild(cardContainer);
             
-            if (category === '共通コンテンツ') {
-                sectionTitle.id = 'common';
-            } else if (category === 'けびんケビンソン') {
-                sectionTitle.id = 'kevin';
-            } else if (category === 'イイダリョウ') {
-                sectionTitle.id = 'ryo';
-            }
+            // ハッシュタグ一覧を更新
+            renderHashTagListForTab('filter');
+        }
+    } else {
+        // 通常モード: タブごとにカードを生成
+        
+        // CSVのtabフィールドを基にタブを動的に生成
+        // タブ名とコンテナIDのマッピング
+        const tabContainerMap = {
+            'common': 'card-content-container-common',
+            'kevin': 'card-content-container-kevin',
+            'ryo': 'card-content-container-ryo'
+        };
+        
+        // 各タブごとにアイテムをグループ化
+        const itemsByTab = {
+            'common': [],
+            'kevin': [],
+            'ryo': []
+        };
+        
+        filteredInfo.forEach(item => {
+            const tabName = item.tabId || 'common'; // デフォルトはcommon
             
-            const hr = document.createElement('hr');
-            container.appendChild(hr);
+            // 各カードはそれぞれのtabIdに対応するタブにのみ追加
+            if (tabName === 'common' || tabName === '') {
+                itemsByTab['common'].push(item);
+            } else if (tabName === 'kevin') {
+                itemsByTab['kevin'].push(item);
+            } else if (tabName === 'ryo') {
+                itemsByTab['ryo'].push(item);
+            }
         });
+        
+        // 各タブを処理
+        Object.entries(itemsByTab).forEach(([tabName, tabItems]) => {
+            const containerId = tabContainerMap[tabName];
+            if (!containerId) return;
+            
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            // カテゴリごとにグループ化
+            const groupedByCategory = {};
+            tabItems.forEach(item => {
+                if (!groupedByCategory[item.category]) {
+                    groupedByCategory[item.category] = [];
+                }
+                groupedByCategory[item.category].push(item);
+            });
+            
+            Object.entries(groupedByCategory).forEach(([category, items]) => {
+                const sectionTitle = document.createElement('h3');
+                sectionTitle.className = 'section-title';
+                
+                // categoryフィールドの値をタイトルとして使用
+                sectionTitle.textContent = category;
+                sectionTitle.id = items[0].key; // カテゴリの最初のアイテムのkeyをIDとする
+                container.appendChild(sectionTitle);
+                
+                const cardContainer = document.createElement('div');
+                cardContainer.className = 'card-container';
+                
+                items.forEach(site => {
+                    const cardWrapper = document.createElement('div');
+                    cardWrapper.className = 'card-wrapper';
+                    cardWrapper.id = site.key; // 各カードにIDを設定
+                    cardWrapper.innerHTML = generateCardHTML(site, false, true); // includeFeed=trueに変更
+                    cardContainer.appendChild(cardWrapper);
+                });
+                
+                container.appendChild(cardContainer);
+                
+                const hr = document.createElement('hr');
+                container.appendChild(hr);
+            });
+        });
+        
+        // 各タブのハッシュタグ一覧を更新
+        renderHashTagListForTab('general');
+        renderHashTagListForTab('common');
+        renderHashTagListForTab('kevin');
+        renderHashTagListForTab('ryo');
+        
+        // タブリンクセクションを生成
+        generateTabLinksSection();
     }
     
-    if (singleData) {
-        loadSingleFeeds(singleData, filteredInfo.map(item => item.key));
+    // 通常モード時のみloadSingleFeedsを呼び出す（フィルタモードでは既に埋め込まれている）
+    if (singleData && !filterTag) {
+        // DOM更新が完了するのを待ってからフィードを読み込む
+        setTimeout(() => {
+            loadSingleFeeds(singleData, filteredInfo.map(item => item.key));
+        }, 50);
     }
 }
-
-function loadFeeds(multiData, singleData) {
+function loadFeeds(singleData) {
     const multiContainer = document.getElementById('multi-rss-feed-container');
     
     if (multiContainer) {
@@ -629,7 +713,7 @@ function loadFeeds(multiData, singleData) {
         
         let currentYear = null;
         
-        multiData.slice(0, multiMaxLength).forEach(item => {
+        singleData.slice(0, multiMaxLength).forEach(item => {
             const date = item.pubDate ? new Date(item.pubDate) : null;
             const year = date ? date.getFullYear() : null;
             const month = date ? String(date.getMonth() + 1).padStart(2, '0') : null;
@@ -668,15 +752,18 @@ function loadFeeds(multiData, singleData) {
                 newBadgeHtml = '<span style="display: inline-block; width: 3.5rem;"></span>'; // 空白スペース
             }
             
-            // breadcrumbsのリンク
-            let breadcrumbsHtml = '';
-            if (item.breadcrumbs && item.siteUrl) {
-                breadcrumbsHtml = `<a href="${item.siteUrl}" target="_blank" style="color: #0d6efd; text-decoration: none;">${item.breadcrumbs}</a>`;
-            } else if (item.breadcrumbs) {
-                breadcrumbsHtml = `<span style="color: #495057;">${item.breadcrumbs}</span>`;
+            // siteTitleのリンク（basic-info.jsから取得）
+            let siteTitleHtml = '';
+            const basicInfo = getBasicInfoByKey(item.key);
+            if (basicInfo) {
+                if (basicInfo.siteTitle && basicInfo.siteUrl) {
+                    siteTitleHtml = `<a href="${basicInfo.siteUrl}" target="_blank" style="color: #dc3545; text-decoration: none;">${basicInfo.siteTitle}</a>`;
+                } else if (basicInfo.siteTitle) {
+                    siteTitleHtml = `<span style="color: #495057;">${basicInfo.siteTitle}</span>`;
+                }
             }
             
-            cell1.innerHTML = newBadgeHtml + breadcrumbsHtml;
+            cell1.innerHTML = newBadgeHtml + siteTitleHtml;
             row1.appendChild(cell1);
             tbody.appendChild(row1);
             
@@ -699,7 +786,7 @@ function loadFeeds(multiData, singleData) {
                 const link = document.createElement('a');
                 link.href = item.link;
                 link.target = '_blank';
-                link.style.color = '#0d6efd';
+                link.style.color = '#dc3545';
                 link.style.textDecoration = 'none';
                 link.textContent = item.title;
                 link.addEventListener('mouseenter', () => {
@@ -726,9 +813,20 @@ function loadFeeds(multiData, singleData) {
 }
 
 function loadSingleFeeds(singleData, keys) {
+    console.log('loadSingleFeeds called with keys:', keys);
+    console.log('singleData length:', singleData ? singleData.length : 'null');
+    
     keys.forEach(key => {
         const feedContainer = document.getElementById(`single-rss-feed-container-${key}`);
+        console.log(`Looking for container: single-rss-feed-container-${key}`, feedContainer ? 'FOUND' : 'NOT FOUND');
+        
         if (!feedContainer) return;
+        
+        // 既に内容がある場合はスキップ（重複を防ぐ）
+        if (feedContainer.innerHTML.trim() !== '') {
+            console.log(`Container ${key} already has content, skipping`);
+            return;
+        }
         
         const filteredData = singleData
             .filter(item => item.key === key)
@@ -744,6 +842,8 @@ function loadSingleFeeds(singleData, keys) {
                 return dateB - dateA;
             })
             .slice(0, singleMaxLength);
+        
+        console.log(`Filtered data for ${key}:`, filteredData.length, 'items');
         
         filteredData.forEach(item => {
             if (!item.title) return;
@@ -771,7 +871,7 @@ function loadSingleFeeds(singleData, keys) {
             
             let titleSpan = '';
             if (item.link) {
-                titleSpan = `<a href="${item.link}" target="_blank" style="color: #0d6efd; font-size: 0.9rem;">${item.title}</a>`;
+                titleSpan = `<a href="${item.link}" target="_blank" style="color: #dc3545; font-size: 0.9rem;">${item.title}</a>`;
             } else {
                 titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${item.title}</span>`;
             }
@@ -848,19 +948,29 @@ function generateContributionGraph(contributionData) {
     yearsRow.style.marginBottom = '2px';
     
     let lastYear = -1;
+    let lastYearPosition = -999; // 最後に配置した年ラベルの位置
+    const minYearGap = 60; // 年ラベル間の最小間隔（px）
+    
     weeks.forEach((week, weekIndex) => {
         // 週の中で年が変わるかチェック
         for (let i = 0; i < week.length; i++) {
             const day = week[i];
             const year = day.date.getFullYear();
             
-            if (weekIndex === 0 || year !== lastYear) {
-                const yearLabel = document.createElement('div');
-                yearLabel.className = 'contribution-year';
-                yearLabel.textContent = `${year}年`;
-                yearLabel.style.position = 'absolute';
-                yearLabel.style.left = `${25 + weekIndex * 13}px`;
-                yearsRow.appendChild(yearLabel);
+            if (year !== lastYear) {
+                const currentPosition = 25 + weekIndex * 13;
+                
+                // 前の年ラベルから十分な距離がある場合、または最初の年の場合は表示
+                if (weekIndex === 0 || currentPosition - lastYearPosition >= minYearGap) {
+                    const yearLabel = document.createElement('div');
+                    yearLabel.className = 'contribution-year';
+                    yearLabel.textContent = `${year}年`;
+                    yearLabel.style.position = 'absolute';
+                    yearLabel.style.left = `${currentPosition}px`;
+                    yearLabel.style.whiteSpace = 'nowrap'; // 改行を防ぐ
+                    yearsRow.appendChild(yearLabel);
+                    lastYearPosition = currentPosition;
+                }
                 lastYear = year;
                 break;
             }
@@ -876,6 +986,9 @@ function generateContributionGraph(contributionData) {
     monthsRow.style.marginBottom = '5px';
     
     let lastMonth = -1;
+    let lastMonthPosition = -999; // 最後に配置した月ラベルの位置
+    const minMonthGap = 40; // 月ラベル間の最小間隔（px）
+    
     weeks.forEach((week, weekIndex) => {
         // 週の中で最初に表示される月を見つける
         for (let i = 0; i < week.length; i++) {
@@ -884,12 +997,19 @@ function generateContributionGraph(contributionData) {
             
             // 新しい月の最初の出現
             if (month !== lastMonth) {
-                const monthLabel = document.createElement('div');
-                monthLabel.className = 'contribution-month';
-                monthLabel.textContent = `${month + 1}月`;
-                monthLabel.style.position = 'absolute';
-                monthLabel.style.left = `${25 + weekIndex * 13}px`;
-                monthsRow.appendChild(monthLabel);
+                const currentPosition = 25 + weekIndex * 13;
+                
+                // 前の月ラベルから十分な距離がある場合のみ表示
+                if (currentPosition - lastMonthPosition >= minMonthGap) {
+                    const monthLabel = document.createElement('div');
+                    monthLabel.className = 'contribution-month';
+                    monthLabel.textContent = `${month + 1}月`;
+                    monthLabel.style.position = 'absolute';
+                    monthLabel.style.left = `${currentPosition}px`;
+                    monthLabel.style.whiteSpace = 'nowrap'; // 改行を防ぐ
+                    monthsRow.appendChild(monthLabel);
+                    lastMonthPosition = currentPosition;
+                }
                 lastMonth = month;
                 break;
             }
@@ -978,6 +1098,7 @@ function generateContributionGraph(contributionData) {
 // ヘッダー初期化
 function initHeaderScroll() {
     const header = document.getElementById('main-header');
+    const body = document.body;
     
     if (header) {
         let ticking = false;
@@ -985,8 +1106,10 @@ function initHeaderScroll() {
         const updateHeader = () => {
             if (window.scrollY > 50 || window.pageYOffset > 50) {
                 header.classList.add('scrolled');
+                body.classList.add('header-scrolled');
             } else {
                 header.classList.remove('scrolled');
+                body.classList.remove('header-scrolled');
             }
             ticking = false;
         };
@@ -1027,8 +1150,289 @@ function updateCurrentYear() {
     }
 }
 
+// タブ初期化
+function initTabs() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.dataset.tab;
+            switchTab(targetTab);
+        });
+    });
+}
+
+// タブ切り替え
+function switchTab(tabName) {
+    // フィルタモードの場合はフィルタを解除してから通常のタブ切り替えを行う
+    if (currentFilterTag) {
+        currentFilterTag = null;
+        
+        // フィルタタブのコンテンツをクリア
+        const filterContainer = document.getElementById('card-content-container-filter');
+        if (filterContainer) {
+            filterContainer.innerHTML = '';
+        }
+        
+        // フィルタUIを非表示
+        hideFilterUI();
+        
+        // カードを再生成（フィルタなし）
+        generateCards(basicInfoData, singleDataGlobal, null);
+    }
+    
+    // すべてのタブボタン（通常版とコンパクト版両方）とコンテンツから active と filtering クラスを削除
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.remove('filtering');
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // 選択されたタブをアクティブにする（通常版とコンパクト版両方）
+    const targetButtons = document.querySelectorAll(`.tab-button[data-tab="${tabName}"]`);
+    const targetContent = document.getElementById(`tab-${tabName}`);
+    
+    if (targetButtons.length > 0 && targetContent) {
+        targetButtons.forEach(btn => btn.classList.add('active'));
+        targetContent.classList.add('active');
+        currentTab = tabName;
+        
+        // previousTabも更新（次回のフィルタ用）
+        if (tabName !== 'filter') {
+            window.previousTab = tabName;
+        }
+        
+        // ジャンプメニューを更新
+        updateJumpMenuForCurrentTab();
+        
+        // ページトップにスクロール
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+// タブリンクセクションを生成
+function generateTabLinksSection() {
+    const container = document.getElementById('tab-links-section');
+    if (!container || !basicInfoData || !singleDataGlobal) return;
+    
+    // CSVデータから各タブの情報を動的に取得
+    // タブごとに最初のアイテムを取得してリンクカードを作成
+    const tabNames = ['common', 'kevin', 'ryo'];
+    const tabData = [];
+    
+    tabNames.forEach(tabName => {
+        // 該当するタブのアイテムを取得
+        const tabItems = basicInfoData.filter(item => item.tabId === tabName);
+        if (tabItems.length > 0) {
+            // 最初のアイテムから情報を取得
+            const firstItem = tabItems[0];
+            tabData.push({
+                tabId: tabName,
+                tabName: firstItem.tab, // 表示用のタブ名
+                name: firstItem.summary || firstItem.category, // summaryを優先、なければcategory
+                key: firstItem.key,
+                image: firstItem.image,
+                subImage: firstItem.subImage
+            });
+        }
+    });
+    
+    const linksHTML = tabData.map(tabInfo => {
+        const image = tabInfo.image || '';
+        
+        // アイコン画像の決定
+        let subImageSrc = '';
+        if (tabInfo.tabId === 'ryo') {
+            subImageSrc = './images/ryo-icon-tech.jpg';
+        } else {
+            subImageSrc = tabInfo.subImage || '';
+        }
+        
+        // tabIdに対応するkeyプレフィックスのマッピング
+        const tabKeyPrefixMap = {
+            'common': 'cmp',
+            'kevin': 'kevin',
+            'ryo': 'ryo'
+        };
+        
+        // 該当する記事を検索（keyプレフィックスで一致するもの）
+        const keyPrefix = tabKeyPrefixMap[tabInfo.tabId] || tabInfo.tabId;
+        const articles = singleDataGlobal.filter(article => 
+            article.key.startsWith(keyPrefix) && article.pubDate // pubDateがある記事のみ
+        );
+        
+        // 最新10件を取得
+        const sortedArticles = articles.sort((a, b) => {
+            const dateA = new Date(a.pubDate);
+            const dateB = new Date(b.pubDate);
+            // Invalid Dateの場合は後ろに配置
+            if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+            if (isNaN(dateA.getTime())) return 1;
+            if (isNaN(dateB.getTime())) return -1;
+            return dateB - dateA;
+        }).slice(0, 10);
+        
+        const latestArticle = sortedArticles[0];
+        
+        // NEW!!バッジの表示判定
+        let showNewBadge = false;
+        if (latestArticle && latestArticle.pubDate) {
+            const articleDate = new Date(latestArticle.pubDate);
+            const today = new Date();
+            const diffTime = today - articleDate;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            showNewBadge = diffDays <= NEW_BADGE_DAYS;
+        }
+        
+        // RSSフィード形式のHTML生成（日付とNew!!バッジ付き）
+        const feedItemsHTML = sortedArticles.map(article => {
+            let dateSpan = '';
+            if (article.pubDate) {
+                const date = new Date(article.pubDate);
+                const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+                
+                const today = new Date();
+                const diffTime = today - date;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                let newBadge = '';
+                if (diffDays <= NEW_BADGE_DAYS) {
+                    newBadge = '<span class="badge bg-danger" style="margin-right: 0.35rem; font-size: 0.65rem;">New!!</span>';
+                }
+                
+                dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
+            }
+            
+            return `
+                <div class="rss-item" style="margin-bottom: 0.4rem; font-size: 0.9rem;">
+                    ${dateSpan}<a href="${article.link}" target="_blank" rel="noopener noreferrer" style="color: #0d6efd; font-size: 0.9rem;">${article.title}</a>
+                </div>
+            `;
+        }).join('');
+        
+        return `
+            <div class="card-wrapper" id="${tabInfo.key}">
+                <div class="card">
+                    <a href="javascript:void(0);" onclick="switchTab('${tabInfo.tabId}'); return false;">
+                        <img src="${image}" class="card-img-top" alt="${tabInfo.name}">
+                        ${showNewBadge ? '<span class="new-badge">NEW!!</span>' : ''}
+                        ${subImageSrc ? `<img src="${subImageSrc}" class="card-sub-image" alt="${tabInfo.name} Icon">` : ''}
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">${tabInfo.name}</h5>
+                        <div class="card-text">
+                            <div class="rss-feed-container">
+                                ${feedItemsHTML}
+                            </div>
+                        </div>
+                        <div class="card-action-area">
+                            <button class="btn btn-primary btn-sm card-action-button" onclick="switchTab('${tabInfo.tabId}')">Go to Tab</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = `<div class="card-container">${linksHTML}</div>`;
+}
+
+// 現在のタブに応じてジャンプメニューを更新
+function updateJumpMenuForCurrentTab() {
+    const jumpMenuList = document.getElementById('jumpMenuList');
+    if (!jumpMenuList) return;
+    
+    if (currentFilterTag) {
+        // フィルタモード
+        jumpMenuList.innerHTML = `
+            <li><a class="dropdown-item" href="#" onclick="smoothScrollToTop(); return false;">ヘッダー</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('filter-ui-container'); return false;">フィルタ結果</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('footer'); return false;">フッター</a></li>
+        `;
+    } else {
+        // タブモード
+        let menuItems = '<li><a class="dropdown-item" href="#" onclick="smoothScrollToTop(); return false;">ヘッダー</a></li>';
+        menuItems += '<li><hr class="dropdown-divider"></li>';
+        
+        if (currentTab === 'general') {
+            // 各タブのカードへのリンクを生成
+            const tabNames = ['common', 'kevin', 'ryo'];
+            const tabKeyPrefixMap = {
+                'common': 'cmp',
+                'kevin': 'kevin',
+                'ryo': 'ryo'
+            };
+            
+            tabNames.forEach(tabName => {
+                const keyPrefix = tabKeyPrefixMap[tabName] || tabName;
+                const tabItems = basicInfoData.filter(item => item.key.startsWith(keyPrefix));
+                if (tabItems.length > 0) {
+                    const firstItem = tabItems[0];
+                    menuItems += `<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('${firstItem.key}'); return false;">${firstItem.summary || firstItem.category}</a></li>`;
+                }
+            });
+            menuItems += '<li><hr class="dropdown-divider"></li>';
+            menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'contribution-graph\'); return false;">ヒートマップ</a></li>';
+        } else {
+            // 各タブのカードセクションへのリンクを生成
+            const sections = getSectionsForTab(currentTab);
+            sections.forEach(section => {
+                menuItems += `<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('${section.id}'); return false;">${section.name}</a></li>`;
+            });
+        }
+        
+        menuItems += '<li><hr class="dropdown-divider"></li>';
+        menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'footer\'); return false;">フッター</a></li>';
+        
+        jumpMenuList.innerHTML = menuItems;
+    }
+}
+
+// スムーズスクロール関数
+function smoothScrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+function smoothScrollToElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+}
+
+// タブごとのセクション（個別のカード）を取得
+function getSectionsForTab(tabName) {
+    if (!basicInfoData) return [];
+    
+    let keyPrefix = '';
+    if (tabName === 'common') keyPrefix = 'cmp';
+    else if (tabName === 'kevin') keyPrefix = 'kevin';
+    else if (tabName === 'ryo') keyPrefix = 'ryo';
+    
+    // 該当するタブのアイテムをフィルタして、各カードの情報を返す
+    const sections = basicInfoData
+        .filter(item => item.key.startsWith(keyPrefix))
+        .map(item => ({
+            id: item.key, // 各カードのkeyをIDとする
+            name: item.siteTitle // カードのタイトルを表示名とする
+        }));
+    
+    return sections;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initHeaderScroll();
     initHeaderTitleClick();
     updateCurrentYear();
+    initTabs();
 });

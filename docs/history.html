@@ -27,16 +27,40 @@
 <body class="bg-light" id="history">
     <!-- ページヘッダー（固定） -->
     <header id="main-header" class="sticky-top bg-light border-bottom">
-        <h1 class="text-center py-3 mb-0">
+        <!-- 通常時のタイトル -->
+        <h1 class="text-center py-3 mb-0 header-title-normal">
             <a href="./" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
                 <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon">
                 <span class="header-text-cmp">CMP2000</span>
                 <span class="header-text-official">Official Portal</span>
             </a>
         </h1>
+        
+        <!-- スクロール時のコンパクトヘッダー（2段レイアウト） -->
+        <div class="header-compact">
+            <!-- 1段目：ロゴ + ページメニュー -->
+            <div class="header-compact-row1">
+                <div class="header-compact-logo">
+                    <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon-compact">
+                </div>
+                <div class="header-compact-page-menu">
+                    <a href="index.html" class="page-menu-link">Home</a>
+                    <span class="page-menu-separator">|</span>
+                    <a href="about.html" class="page-menu-link">About</a>
+                    <span class="page-menu-separator">|</span>
+                    <a href="history.html" class="page-menu-link active">History</a>
+                </div>
+            </div>
+            <!-- 2段目：フィルタ設定ボタン -->
+            <div class="header-compact-row2">
+                <div class="filter-controls-compact">
+                    <button class="btn btn-sm btn-outline-primary" onclick="scrollToFilterSettings(); return false;">⚙️ フィルタ設定</button>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <!-- ページメニュー -->
+    <!-- ページメニュー（通常時） -->
     <div class="page-menu-wrapper">
         <div class="page-menu">
             <a href="index.html" class="page-menu-item">Home</a>
@@ -44,6 +68,15 @@
             <a href="about.html" class="page-menu-item">About</a>
             <span class="page-menu-separator">|</span>
             <a href="history.html" class="page-menu-item active">History</a>
+        </div>
+    </div>
+
+    <!-- フィルタ設定ボタンエリア（通常時） -->
+    <div id="filter-nav-wrapper" class="filter-nav-wrapper">
+        <div class="filter-nav-container">
+            <div class="filter-controls">
+                <button class="btn btn-sm btn-outline-primary" onclick="scrollToFilterSettings(); return false;">⚙️ フィルタ設定</button>
+            </div>
         </div>
     </div>
 
@@ -55,7 +88,7 @@
         
         <h2 class="text-center mb-3">History since 1998</h2>
         
-        <!-- フィルター設定UI（アコーディオン） -->
+        <!-- フィルタ設定UI（アコーディオン） -->
         <div class="mb-3">
             <div class="card">
                 <div class="card-header bg-white">
@@ -65,7 +98,7 @@
                             data-bs-target="#filterSettings" 
                             aria-expanded="false" 
                             aria-controls="filterSettings">
-                        <strong>⚙️ フィルター設定</strong>
+                        <strong>⚙️ フィルタ設定</strong>
                     </button>
                 </div>
                 <div class="collapse" id="filterSettings">
@@ -155,11 +188,11 @@
                             </div>
                         </div>
 
-                        <!-- カテゴリーフィルター（グループ2） -->
+                        <!-- カテゴリフィルタ（グループ2） -->
                         <div class="card mb-3 border-success">
                             <div class="card-header bg-success bg-opacity-10 border-success">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <strong>🏷️ カテゴリー</strong>
+                                    <strong>🏷️ カテゴリ</strong>
                                     <div class="d-flex gap-2">
                                         <button class="btn btn-sm btn-outline-secondary" id="filterSelectAllBtn">全選択</button>
                                         <button class="btn btn-sm btn-outline-secondary" id="filterDeselectAllBtn">全解除</button>

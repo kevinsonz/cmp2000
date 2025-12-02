@@ -1164,9 +1164,21 @@ function initTabs() {
 
 // タブ切り替え
 function switchTab(tabName) {
-    // フィルタモードの場合は何もしない
+    // フィルタモードの場合はフィルタを解除してから通常のタブ切り替えを行う
     if (currentFilterTag) {
-        return;
+        currentFilterTag = null;
+        
+        // フィルタタブのコンテンツをクリア
+        const filterContainer = document.getElementById('card-content-container-filter');
+        if (filterContainer) {
+            filterContainer.innerHTML = '';
+        }
+        
+        // フィルタUIを非表示
+        hideFilterUI();
+        
+        // カードを再生成（フィルタなし）
+        generateCards(basicInfoData, singleDataGlobal, null);
     }
     
     // すべてのタブボタン（通常版とコンパクト版両方）とコンテンツから active と filtering クラスを削除

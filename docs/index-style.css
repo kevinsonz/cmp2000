@@ -2,8 +2,109 @@
    Index.html専用のスタイル
    ================================= */
 
+/* タブナビゲーションのスタイル */
+.tab-navigation-wrapper {
+    background-color: #ffffff;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0.75rem 0;
+}
+
+/* body.header-scrolledの時は非表示にする（CSSセレクタではできないのでstyle.cssで制御） */
+
+.tab-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tab-button {
+    flex: 1 1 0;
+    min-width: 120px;
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #495057;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    background-color: #e9ecef;
+}
+
+.tab-button.active {
+    background-color: white;
+    border-bottom-color: #dc3545;
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* タブコンテンツのスタイル */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* 共通/けびん/リョウタブの最初のセクションタイトルに上部余白を追加 */
+#tab-common > #card-content-container-common > .section-title:first-child,
+#tab-kevin > #card-content-container-kevin > .section-title:first-child,
+#tab-ryo > #card-content-container-ryo > .section-title:first-child {
+    margin-top: 2rem;
+}
+
+/* タブリンクセクションのスタイル */
+#tab-links-section {
+    margin: 1.5rem auto;
+    scroll-margin-top: 120px; /* ジャンプ時のオフセット */
+    max-width: none; /* page-containerのmax-widthを上書き */
+    padding: 0; /* page-containerのpaddingも上書き */
+}
+
+/* その他のジャンプ先要素にもscroll-margin-topを追加 */
+#multi-rss-feed-container,
+#contribution-graph,
+#filter-ui-container {
+    scroll-margin-top: 120px;
+}
+
+@media (max-width: 576px) {
+    #tab-links-section,
+    #multi-rss-feed-container,
+    #contribution-graph,
+    #filter-ui-container {
+        scroll-margin-top: 140px;
+    }
+}
+
+/* スマホでのタブナビゲーション調整 */
+@media (max-width: 576px) {
+    .tab-button {
+        min-width: 100px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+}
+
 /* カードコンテンツコンテナ（親要素）のスタイル */
-#card-content-container {
+#card-content-container,
+#card-content-container-common,
+#card-content-container-kevin,
+#card-content-container-ryo,
+#card-content-container-filter {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -13,21 +114,22 @@
 
 /* カードコンテナ用のスタイル */
 .card-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    justify-items: center;
     gap: 2rem;
     margin-top: 1.5rem;
     margin-left: auto;
     margin-right: auto;
-    max-width: 64rem; /* カード3列分: 20rem × 3 + gap 2rem × 2 = 64rem */
+    max-width: 68rem; /* カード3列分: 20rem × 3 + gap 2rem × 2 + 余白 = 68rem */
+    padding: 0 1rem; /* 左右に余白を追加 */
 }
 
 /* カードラッパー：レスポンシブな幅設定 */
 .card-wrapper {
-    flex: 0 0 auto;
     width: 20rem;
     max-width: 100%;
+    scroll-margin-top: 120px; /* ジャンプ時のオフセット */
 }
 
 /* カードの高さを固定し、flexboxレイアウトを使用 */
@@ -83,6 +185,15 @@
     margin-bottom: 0.75rem;
     min-height: 0; /* flexboxでのスクロール有効化に必要 */
     padding-right: 0.25rem; /* スクロールバー用の余白 */
+}
+
+/* カードテキスト内のリンクを赤系に統一（ボタンは除外） */
+.card-wrapper .card .card-text a:not(.btn) {
+    color: #dc3545 !important;
+}
+
+.card-wrapper .card .card-text a:not(.btn):hover {
+    color: #b02a37 !important;
 }
 
 /* カード内のRSSフィードコンテナ */
@@ -187,7 +298,7 @@
 }
 
 .card-hashtag-area a {
-    color: #0d6efd;
+    color: #dc3545 !important;
     text-decoration: none;
     margin-right: 0.25rem;
     display: inline;
@@ -195,6 +306,7 @@
 
 .card-hashtag-area a:hover {
     text-decoration: underline;
+    color: #b02a37 !important;
 }
 
 /* RSSフィードコンテナのスタイル（index専用） */
@@ -204,10 +316,36 @@
 
 #cmp .rss-feed-container a {
     font-size: 1rem;
+    color: #dc3545;
 }
 
 #cmp .rss-feed-container h3 {
     margin-bottom: .25rem;
+}
+
+/* ユニット・けびん・リョウタブ内の全てのリンクを赤系に（ボタンは除外） */
+#tab-common a:not(.btn),
+#tab-kevin a:not(.btn),
+#tab-ryo a:not(.btn),
+#card-content-container-common a:not(.btn),
+#card-content-container-kevin a:not(.btn),
+#card-content-container-ryo a:not(.btn),
+#hashtag-list-container-common a:not(.btn),
+#hashtag-list-container-kevin a:not(.btn),
+#hashtag-list-container-ryo a:not(.btn) {
+    color: #dc3545 !important;
+}
+
+#tab-common a:not(.btn):hover,
+#tab-kevin a:not(.btn):hover,
+#tab-ryo a:not(.btn):hover,
+#card-content-container-common a:not(.btn):hover,
+#card-content-container-kevin a:not(.btn):hover,
+#card-content-container-ryo a:not(.btn):hover,
+#hashtag-list-container-common a:not(.btn):hover,
+#hashtag-list-container-kevin a:not(.btn):hover,
+#hashtag-list-container-ryo a:not(.btn):hover {
+    color: #b02a37 !important;
 }
 
 /* セクションタイトルのスタイル */
@@ -215,14 +353,22 @@
     width: 100%;
     text-align: center;
     margin-bottom: 0;
-    scroll-margin-top: 100px; /* ヘッダー分のオフセット */
+    scroll-margin-top: 120px; /* ヘッダー分のオフセット（余裕を持たせる） */
 }
 
-/* スマホサイズでカード幅を調整 */
+/* スマホサイズでのスクロールマージン調整 */
+@media (max-width: 576px) {
+    .section-title {
+        scroll-margin-top: 140px; /* スマホではヘッダーが縦に並ぶため多めに */
+    }
+}
+
+/* スマホサイズでカード幅とスクロールマージンを調整 */
 @media (max-width: 576px) {
     .card-wrapper {
         width: 100%;
         max-width: 20rem;
+        scroll-margin-top: 140px; /* スマホでは多めに */
     }
 }
 
@@ -247,6 +393,7 @@
 .contribution-month {
     font-size: 11px;
     color: #666;
+    white-space: nowrap; /* 改行を防ぐ */
 }
 
 .contribution-main {
@@ -302,19 +449,19 @@
 }
 
 .contribution-day.level-1 {
-    background-color: #9be9a8;
+    background-color: #ffc9c9;
 }
 
 .contribution-day.level-2 {
-    background-color: #40c463;
+    background-color: #ff9999;
 }
 
 .contribution-day.level-3 {
-    background-color: #30a14e;
+    background-color: #ff6666;
 }
 
 .contribution-day.level-4 {
-    background-color: #216e39;
+    background-color: #dc3545;
 }
 
 .contribution-tooltip {

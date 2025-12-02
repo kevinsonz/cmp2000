@@ -62,6 +62,12 @@ function toggleAccordion(sectionId) {
 
 // 全開
 function openAllAccordions() {
+    // フィルタが適用されている場合は解除
+    if (currentFilterTag) {
+        clearHashTagFilter();
+        // フィルタ解除後、すべて開いた状態にするため処理を続行
+    }
+    
     sectionInfo.forEach(info => {
         const section = document.getElementById(info.id);
         if (!section) return;
@@ -79,6 +85,12 @@ function openAllAccordions() {
 
 // 全閉
 function closeAllAccordions() {
+    // フィルタが適用されている場合は解除
+    if (currentFilterTag) {
+        clearHashTagFilter();
+        // フィルタ解除後、すべて閉じた状態にするため処理を続行
+    }
+    
     sectionInfo.forEach(info => {
         const section = document.getElementById(info.id);
         if (!section) return;

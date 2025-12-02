@@ -26,18 +26,43 @@
 </head>
 
 <body class="bg-light">
-    <!-- ページヘッダー -->
+    <!-- ページヘッダー（固定） -->
     <header id="main-header" class="sticky-top bg-light border-bottom">
-        <h1 class="text-center py-3 mb-0">
+        <!-- 通常時のタイトル -->
+        <h1 class="text-center py-3 mb-0 header-title-normal">
             <a href="./" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
                 <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon">
                 <span class="header-text-cmp">CMP2000</span>
                 <span class="header-text-official">Official Portal</span>
             </a>
         </h1>
+        
+        <!-- スクロール時のコンパクトヘッダー（2段レイアウト） -->
+        <div class="header-compact">
+            <!-- 1段目：ロゴ + ページメニュー -->
+            <div class="header-compact-row1">
+                <div class="header-compact-logo">
+                    <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon-compact">
+                </div>
+                <div class="header-compact-page-menu">
+                    <a href="index.html" class="page-menu-link">Home</a>
+                    <span class="page-menu-separator">|</span>
+                    <a href="about.html" class="page-menu-link active">About</a>
+                    <span class="page-menu-separator">|</span>
+                    <a href="history.html" class="page-menu-link">History</a>
+                </div>
+            </div>
+            <!-- 2段目：全開・全閉ボタン -->
+            <div class="header-compact-row2">
+                <div class="accordion-controls-compact">
+                    <button id="openAllBtnCompact" class="btn btn-sm btn-outline-primary">+全開</button>
+                    <button id="closeAllBtnCompact" class="btn btn-sm btn-outline-secondary">-全閉</button>
+                </div>
+            </div>
+        </div>
     </header>
 
-    <!-- ページメニュー -->
+    <!-- ページメニュー（通常時） -->
     <div class="page-menu-wrapper">
         <div class="page-menu">
             <a href="index.html" class="page-menu-item">Home</a>
@@ -45,6 +70,16 @@
             <a href="about.html" class="page-menu-item active">About</a>
             <span class="page-menu-separator">|</span>
             <a href="history.html" class="page-menu-item">History</a>
+        </div>
+    </div>
+    
+    <!-- セクションナビゲーションバー（通常時） -->
+    <div id="section-nav-wrapper" class="section-nav-wrapper">
+        <div class="section-nav-container">
+            <div class="accordion-controls">
+                <button id="openAllBtn" class="btn btn-sm btn-outline-primary">+全開</button>
+                <button id="closeAllBtn" class="btn btn-sm btn-outline-secondary">-全閉</button>
+            </div>
         </div>
     </div>
 
@@ -63,31 +98,15 @@
                     <strong>CMP2000とは</strong>
                 </div>
                 <div class="card-body p-3">
-                    <p class="mb-3" style="line-height: 1.4;">
+                    <p class="mb-0" style="line-height: 1.4;">
                         <strong>Creation Meets Peace</strong>＝『創造』と『平和』の出会い。<br>
                         争いの絶えない世の中において、平和は自然に生まれるモノではなく、ヒトの創造によって実現されるモノである、という理念。
                     </p>
-                    
-                    <hr class="my-3">
-                    
-                    <div class="mb-3">
-                        <h6 class="mb-1 fw-bold">けびんケビンソン</h6>
-                        <p class="mb-0 small text-muted" style="line-height: 1.5;">
-                            2019年（コロナ禍）頃からの参画で、現在はCMP2000管理人の役割を担っている。「何か」をしたくて活動しており、現在も模索中。
-                        </p>
-                    </div>
-                    
-                    <div class="mb-0">
-                        <h6 class="mb-1 fw-bold">イイダリョウ</h6>
-                        <p class="mb-0 small text-muted" style="line-height: 1.5;">
-                            2014年頃から参画しているCMP2000主要メンバー。多岐に渡るキャリアを経ており、現在はフロントエンドを中心としたエンジニア。
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- フィルターUI表示エリア -->
+        <!-- フィルタUI表示エリア -->
         <div id="filter-ui-container" style="display: none; margin-bottom: 1rem;"></div>
         
         <div id="about-content" class="bg-white p-4 rounded shadow-sm">
@@ -100,17 +119,8 @@
         <button class="btn btn-primary rounded-circle shadow" type="button" id="jumpMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="width: 60px; height: 60px;">
             ☰
         </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jumpMenuButton">
-            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#common">共通コンテンツ</a></li>
-            <li><a class="dropdown-item" href="#kevin">けびんケビンソン</a></li>
-            <li><a class="dropdown-item" href="#ryo">イイダリョウ</a></li>
-            <li><a class="dropdown-item" href="#staff">スタッフ</a></li>
-            <li><a class="dropdown-item" href="#family">ファミリー</a></li>
-            <li><a class="dropdown-item" href="#special-thanks">スペシャルサンクス</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#footer">フッター</a></li>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jumpMenuButton" id="jumpMenuList">
+            <!-- JavaScriptで動的に生成されます -->
         </ul>
     </div>
 

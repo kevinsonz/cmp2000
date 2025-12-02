@@ -16,6 +16,101 @@ let allBasicInfo = [];
 let allArchiveInfo = [];
 let allFamilyInfo = [];
 
+// アコーディオン状態管理
+let accordionStates = {
+    'common': true,   // ユニット活動：初期状態で開く
+    'kevin': true,    // けびんケビンソン(ソロ)：初期状態で開く
+    'ryo': true,      // イイダリョウ(ソロ)：初期状態で開く
+    'staff': false,
+    'family': false,
+    'specialThanks': false
+};
+
+// フィルタ前の状態を保存
+let preFilterStates = null;
+
+// セクション情報
+const sectionInfo = [
+    { id: 'common', name: '共通', fullName: '共通コンテンツ' },
+    { id: 'kevin', name: 'けびん', fullName: 'けびんケビンソン' },
+    { id: 'ryo', name: 'リョウ', fullName: 'イイダリョウ' },
+    { id: 'staff', name: 'Staff', fullName: 'スタッフ' },
+    { id: 'family', name: 'Family', fullName: 'ファミリー' },
+    { id: 'specialThanks', name: 'Thanks', fullName: 'スペシャルサンクス' }
+];
+
+// アコーディオンの開閉を切り替え
+function toggleAccordion(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    
+    const body = section.querySelector('.accordion-body-custom');
+    const icon = section.querySelector('.accordion-toggle-icon');
+    
+    if (!body || !icon) return;
+    
+    if (body.classList.contains('show')) {
+        body.classList.remove('show');
+        icon.classList.add('collapsed');
+        accordionStates[sectionId] = false;
+    } else {
+        body.classList.add('show');
+        icon.classList.remove('collapsed');
+        accordionStates[sectionId] = true;
+    }
+}
+
+// 全開
+function openAllAccordions() {
+    // フィルタが適用されている場合は解除
+    if (currentFilterTag) {
+        clearHashTagFilter();
+        // フィルタ解除後、すべて開いた状態にするため処理を続行
+    }
+    
+    sectionInfo.forEach(info => {
+        const section = document.getElementById(info.id);
+        if (!section) return;
+        
+        const body = section.querySelector('.accordion-body-custom');
+        const icon = section.querySelector('.accordion-toggle-icon');
+        
+        if (!body || !icon) return;
+        
+        body.classList.add('show');
+        icon.classList.remove('collapsed');
+        accordionStates[info.id] = true;
+    });
+}
+
+// 全閉
+function closeAllAccordions() {
+    // フィルタが適用されている場合は解除
+    if (currentFilterTag) {
+        clearHashTagFilter();
+        // フィルタ解除後、すべて閉じた状態にするため処理を続行
+    }
+    
+    sectionInfo.forEach(info => {
+        const section = document.getElementById(info.id);
+        if (!section) return;
+        
+        const body = section.querySelector('.accordion-body-custom');
+        const icon = section.querySelector('.accordion-toggle-icon');
+        
+        if (!body || !icon) return;
+        
+        body.classList.remove('show');
+        icon.classList.add('collapsed');
+        accordionStates[info.id] = false;
+    });
+}
+
+// セクションナビゲーションを更新（削除）
+function updateSectionNavigation(filterTag = null) {
+    // セクションナビゲーションは削除されたため、何もしない
+}
+
 // 基本情報CSVの解析
 function parseBasicInfoCSV(csvText) {
     const lines = csvText.trim().split('\n');
@@ -29,6 +124,7 @@ function parseBasicInfoCSV(csvText) {
     const siteUrlIndex = headers.indexOf('siteUrl');
     const logoIndex = headers.indexOf('logo');
     const commentIndex = headers.indexOf('comment');
+    const summaryIndex = headers.indexOf('summary');
     
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
@@ -36,7 +132,6 @@ function parseBasicInfoCSV(csvText) {
         let currentValue = '';
         let insideQuotes = false;
         
-        // カンマ区切りの解析（コメント内のカンマを考慮）
         for (let j = 0; j < line.length; j++) {
             const char = line[j];
             if (char === '"') {
@@ -50,7 +145,6 @@ function parseBasicInfoCSV(csvText) {
         }
         values.push(currentValue.trim());
         
-        // cmp2000は除外
         if (values[keyIndex] === 'cmp2000') continue;
         
         if (values[keyIndex] && values[categoryIndex] && values[siteTitleIndex]) {
@@ -61,7 +155,8 @@ function parseBasicInfoCSV(csvText) {
                 hashTag: values[hashTagIndex] || '',
                 siteUrl: values[siteUrlIndex] || '#',
                 logo: values[logoIndex] || '',
-                comment: values[commentIndex] || ''
+                comment: values[commentIndex] || '',
+                summary: summaryIndex >= 0 ? (values[summaryIndex] || '') : ''
             });
         }
     }
@@ -71,9 +166,15 @@ function parseBasicInfoCSV(csvText) {
 
 // アーカイブCSVの解析
 function parseArchiveCSV(csvText) {
+    console.log('=== parseArchiveCSV開始 ===');
+    console.log('CSVテキスト長:', csvText.length);
+    console.log('CSVの最初の200文字:', csvText.substring(0, 200));
+    
     const lines = csvText.trim().split('\n');
     const headers = lines[0].split(',').map(h => h.trim());
     const items = [];
+    
+    console.log('ヘッダー:', headers);
     
     const categoryIndex = headers.indexOf('category');
     const siteTitleIndex = headers.indexOf('siteTitle');
@@ -82,13 +183,17 @@ function parseArchiveCSV(csvText) {
     const logoIndex = headers.indexOf('logo');
     const commentIndex = headers.indexOf('comment');
     
+    console.log('インデックス情報:');
+    console.log('  categoryIndex:', categoryIndex);
+    console.log('  siteTitleIndex:', siteTitleIndex);
+    console.log('  hashTagIndex:', hashTagIndex);
+    
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
         const values = [];
         let currentValue = '';
         let insideQuotes = false;
         
-        // カンマ区切りの解析（コメント内のカンマを考慮）
         for (let j = 0; j < line.length; j++) {
             const char = line[j];
             if (char === '"') {
@@ -114,6 +219,11 @@ function parseArchiveCSV(csvText) {
         }
     }
     
+    console.log('parseArchiveCSV完了: アイテム数=', items.length);
+    if (items.length > 0) {
+        console.log('最初のアイテム:', items[0]);
+    }
+    
     return items;
 }
 
@@ -134,7 +244,6 @@ function parseFamilyCSV(csvText) {
         let currentValue = '';
         let insideQuotes = false;
         
-        // カンマ区切りの解析（コメント内のカンマを考慮）
         for (let j = 0; j < line.length; j++) {
             const char = line[j];
             if (char === '"') {
@@ -161,14 +270,13 @@ function parseFamilyCSV(csvText) {
     return items;
 }
 
-// ハッシュタグをパースする関数（半角・全角スペース対応）
+// ハッシュタグをパースする関数
 function parseHashTags(hashTagString) {
     if (!hashTagString) return [];
-    // 半角スペースと全角スペースの両方で分割
     return hashTagString.split(/[\s\u3000]+/).filter(tag => tag.startsWith('#')).map(tag => tag.trim());
 }
 
-// すべてのハッシュタグを収集する関数（サイト、アーカイブ、ファミリーすべてから）
+// すべてのハッシュタグを収集
 function collectAllHashTags(basicInfo, archiveInfo, familyInfo) {
     const hashTagSet = new Set();
     basicInfo.forEach(item => {
@@ -186,7 +294,7 @@ function collectAllHashTags(basicInfo, archiveInfo, familyInfo) {
     return Array.from(hashTagSet).sort();
 }
 
-// ハッシュタグ一覧を生成する関数（ボタンスタイル）
+// ハッシュタグ一覧を生成
 function generateHashTagList(allTags, filterTag = null) {
     const container = document.getElementById('hashtag-list');
     if (!container) return;
@@ -222,56 +330,149 @@ function showFilterUI(tag) {
     
     container.style.display = 'block';
     container.innerHTML = `
-        <div class="alert alert-info d-flex justify-content-between align-items-center mb-3" role="alert">
-            <span>フィルタ適用中: <strong>${tag}</strong></span>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearHashTagFilter()">
+        <div class="alert alert-danger d-flex justify-content-between align-items-center mb-3" role="alert">
+            <span>フィルタ: <strong>${tag}</strong></span>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">
                 フィルタ解除
             </button>
         </div>
     `;
 }
 
-// ジャンプメニューを更新
-function updateJumpMenu(filterTag) {
-    const dropdownMenu = document.querySelector('#jumpMenuButton + .dropdown-menu');
-    if (!dropdownMenu) return;
-    
-    if (filterTag) {
-        dropdownMenu.innerHTML = `
-            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#filter-ui-container">フィルタ結果</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#footer">フッター</a></li>
-        `;
-    } else {
-        dropdownMenu.innerHTML = `
-            <li><a class="dropdown-item" href="#" onclick="window.scrollTo(0,0); return false;">ヘッダー</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#common">共通コンテンツ</a></li>
-            <li><a class="dropdown-item" href="#kevin">けびんケビンソン</a></li>
-            <li><a class="dropdown-item" href="#ryo">イイダリョウ</a></li>
-            <li><a class="dropdown-item" href="#staff">スタッフ</a></li>
-            <li><a class="dropdown-item" href="#family">ファミリー</a></li>
-            <li><a class="dropdown-item" href="#special-thanks">スペシャルサンクス</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#footer">フッター</a></li>
-        `;
-    }
-}
-
 // フィルタUIを非表示
 function hideFilterUI() {
     const container = document.getElementById('filter-ui-container');
-    if (!container) return;
+    if (container) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+    }
+}
+
+// ジャンプメニューを更新
+function updateJumpMenu(filterTag) {
+    const dropdownMenu = document.getElementById('jumpMenuList');
+    if (!dropdownMenu) return;
     
-    container.style.display = 'none';
-    container.innerHTML = '';
+    dropdownMenu.innerHTML = '';
+    
+    // ヘッダーへのリンク
+    const headerItem = document.createElement('li');
+    const headerLink = document.createElement('a');
+    headerLink.className = 'dropdown-item';
+    headerLink.href = '#';
+    headerLink.textContent = 'ヘッダー';
+    headerLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    headerItem.appendChild(headerLink);
+    dropdownMenu.appendChild(headerItem);
+    
+    // 区切り線
+    const divider1 = document.createElement('li');
+    divider1.innerHTML = '<hr class="dropdown-divider">';
+    dropdownMenu.appendChild(divider1);
+    
+    if (filterTag) {
+        const filterItem = document.createElement('li');
+        const filterLink = document.createElement('a');
+        filterLink.className = 'dropdown-item';
+        filterLink.href = '#filter-ui-container';
+        filterLink.textContent = 'フィルタ結果';
+        filterItem.appendChild(filterLink);
+        dropdownMenu.appendChild(filterItem);
+    } else {
+        // CSVデータから動的にセクションを生成
+        const sections = [];
+        
+        // カテゴリごとにグループ化（generateAboutPageと同じロジック）
+        const basicByCategory = {};
+        allBasicInfo.forEach(item => {
+            if (!basicByCategory[item.category]) {
+                basicByCategory[item.category] = [];
+            }
+            basicByCategory[item.category].push(item);
+        });
+        
+        const archiveByCategory = {};
+        allArchiveInfo.forEach(item => {
+            if (!archiveByCategory[item.category]) {
+                archiveByCategory[item.category] = [];
+            }
+            archiveByCategory[item.category].push(item);
+        });
+        
+        // ユニット活動、けびんケビンソン(ソロ)、イイダリョウ(ソロ)
+        ['ユニット活動', 'けびんケビンソン(ソロ)', 'イイダリョウ(ソロ)'].forEach(category => {
+            const hasBasic = basicByCategory[category] && basicByCategory[category].length > 0;
+            const hasArchive = archiveByCategory[category] && archiveByCategory[category].length > 0;
+            
+            if (hasBasic || hasArchive) {
+                const sectionId = category === 'ユニット活動' ? 'common' : 
+                                category === 'けびんケビンソン(ソロ)' ? 'kevin' : 'ryo';
+                sections.push({ id: sectionId, name: category });
+            }
+        });
+        
+        // ファミリー情報から各セクションを追加
+        const familyByCategory = {};
+        allFamilyInfo.forEach(member => {
+            if (!familyByCategory[member.category]) {
+                familyByCategory[member.category] = [];
+            }
+            familyByCategory[member.category].push(member);
+        });
+        
+        if (familyByCategory['スタッフ'] && familyByCategory['スタッフ'].length > 0) {
+            sections.push({ id: 'staff', name: 'スタッフ' });
+        }
+        
+        if (familyByCategory['ファミリー'] && familyByCategory['ファミリー'].length > 0) {
+            sections.push({ id: 'family', name: 'ファミリー' });
+        }
+        
+        if (familyByCategory['スペシャルサンクス'] && familyByCategory['スペシャルサンクス'].length > 0) {
+            sections.push({ id: 'specialThanks', name: 'スペシャルサンクス' });
+        }
+        
+        // セクションのリンクを生成
+        sections.forEach(section => {
+            const item = document.createElement('li');
+            const link = document.createElement('a');
+            link.className = 'dropdown-item';
+            link.href = `#${section.id}`;
+            link.textContent = section.name;
+            item.appendChild(link);
+            dropdownMenu.appendChild(item);
+        });
+    }
+    
+    // 区切り線
+    const divider2 = document.createElement('li');
+    divider2.innerHTML = '<hr class="dropdown-divider">';
+    dropdownMenu.appendChild(divider2);
+    
+    // フッターへのリンク
+    const footerItem = document.createElement('li');
+    const footerLink = document.createElement('a');
+    footerLink.className = 'dropdown-item';
+    footerLink.href = '#footer';
+    footerLink.textContent = 'フッター';
+    footerItem.appendChild(footerLink);
+    dropdownMenu.appendChild(footerItem);
 }
 
 // ハッシュタグフィルタを適用
 function applyHashTagFilter(tag) {
     currentFilterTag = tag;
+    
+    // 現在の開閉状態を保存
+    preFilterStates = { ...accordionStates };
+    
+    // 全開放状態にする
+    sectionInfo.forEach(info => {
+        accordionStates[info.id] = true;
+    });
     
     // フィルタ適用してページを再生成
     generateAboutPage(tag);
@@ -299,6 +500,12 @@ function applyHashTagFilter(tag) {
 function clearHashTagFilter() {
     currentFilterTag = null;
     
+    // 開閉状態を元に戻す
+    if (preFilterStates) {
+        accordionStates = { ...preFilterStates };
+        preFilterStates = null;
+    }
+    
     // フィルタなしでページを再生成
     generateAboutPage();
     
@@ -312,9 +519,6 @@ function clearHashTagFilter() {
     const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
     generateHashTagList(allTags);
     
-    // ジャンプメニューを更新
-    updateJumpMenu(null);
-    
     // 「共通コンテンツ」セクションにスムーズスクロール
     setTimeout(() => {
         const commonSection = document.getElementById('common');
@@ -324,7 +528,7 @@ function clearHashTagFilter() {
     }, 100);
 }
 
-// ハッシュタグをリンクに変換する関数
+// ハッシュタグをリンクに変換
 function convertHashTagsToLinks(hashTagString) {
     if (!hashTagString) return '';
     const tags = parseHashTags(hashTagString);
@@ -333,252 +537,382 @@ function convertHashTagsToLinks(hashTagString) {
     }).join(' ');
 }
 
-// アイテムがフィルタに一致するかチェック
-function matchesFilter(item, filterTag) {
-    if (!filterTag) return true;
-    if (!item.hashTag) return false;
-    const tags = parseHashTags(item.hashTag);
-    return tags.includes(filterTag);
-}
-
-// Aboutページを生成する関数（フィルタに対応）
+// About ページのコンテンツを生成（アコーディオン対応版）
 function generateAboutPage(filterTag = null) {
     const container = document.getElementById('about-content');
     if (!container) return;
     
     container.innerHTML = '';
     
-    // カテゴリーでグループ化（サイト情報）
-    const groupedByCategory = {};
+    // カテゴリごとにグループ化
+    const basicByCategory = {};
     allBasicInfo.forEach(item => {
-        if (!matchesFilter(item, filterTag)) return;
-        
-        if (!groupedByCategory[item.category]) {
-            groupedByCategory[item.category] = [];
+        if (!basicByCategory[item.category]) {
+            basicByCategory[item.category] = [];
         }
-        groupedByCategory[item.category].push(item);
+        basicByCategory[item.category].push(item);
     });
     
-    // カテゴリーでグループ化（ファミリー）
-    const familyByCategory = {};
-    allFamilyInfo.forEach(item => {
-        if (!matchesFilter(item, filterTag)) return;
-        
-        if (!familyByCategory[item.category]) {
-            familyByCategory[item.category] = [];
-        }
-        familyByCategory[item.category].push(item);
-    });
-    
-    // アーカイブ情報をカテゴリー別に整理
     const archiveByCategory = {};
     allArchiveInfo.forEach(item => {
-        if (!matchesFilter(item, filterTag)) return;
-        
         if (!archiveByCategory[item.category]) {
             archiveByCategory[item.category] = [];
         }
         archiveByCategory[item.category].push(item);
     });
     
-    // カテゴリーの順序を定義（共通、けびん、りょうの順）
-    const categoryOrder = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
+    // デバッグ用ログ
+    console.log('=== アーカイブデータのデバッグ ===');
+    console.log('allArchiveInfo件数:', allArchiveInfo.length);
+    console.log('archiveByCategoryのキー:', Object.keys(archiveByCategory));
+    console.log('archiveByCategory:', archiveByCategory);
     
-    // カテゴリーごとにセクションを生成
-    categoryOrder.forEach(category => {
-        const siteList = groupedByCategory[category] || [];
-        const archiveList = archiveByCategory[category] || [];
+    const familyByCategory = {};
+    allFamilyInfo.forEach(item => {
+        if (!familyByCategory[item.category]) {
+            familyByCategory[item.category] = [];
+        }
+        familyByCategory[item.category].push(item);
+    });
+    
+    // フィルタリング処理
+    if (filterTag) {
+        Object.keys(basicByCategory).forEach(category => {
+            basicByCategory[category] = basicByCategory[category].filter(item => {
+                const tags = parseHashTags(item.hashTag);
+                return tags.includes(filterTag);
+            });
+            if (basicByCategory[category].length === 0) {
+                delete basicByCategory[category];
+            }
+        });
         
-        // サイトまたはアーカイブがある場合のみセクションを表示
-        if (siteList.length > 0 || archiveList.length > 0) {
-            const sectionCard = document.createElement('div');
-            sectionCard.className = 'section-card card';
+        Object.keys(archiveByCategory).forEach(category => {
+            archiveByCategory[category] = archiveByCategory[category].filter(item => {
+                const tags = parseHashTags(item.hashTag);
+                return tags.includes(filterTag);
+            });
+            if (archiveByCategory[category].length === 0) {
+                delete archiveByCategory[category];
+            }
+        });
+        
+        Object.keys(familyByCategory).forEach(category => {
+            familyByCategory[category] = familyByCategory[category].filter(item => {
+                const tags = parseHashTags(item.hashTag);
+                return tags.includes(filterTag);
+            });
+            if (familyByCategory[category].length === 0) {
+                delete familyByCategory[category];
+            }
+        });
+    }
+    
+    // 共通、けびん、リョウのセクション（アコーディオン）
+    ['ユニット活動', 'けびんケビンソン(ソロ)', 'イイダリョウ(ソロ)'].forEach(category => {
+        const hasBasic = basicByCategory[category] && basicByCategory[category].length > 0;
+        const hasArchive = archiveByCategory[category] && archiveByCategory[category].length > 0;
+        
+        console.log(`カテゴリ "${category}":`, {
+            hasBasic,
+            basicCount: hasBasic ? basicByCategory[category].length : 0,
+            hasArchive,
+            archiveCount: hasArchive ? archiveByCategory[category].length : 0
+        });
+        
+        if (hasBasic || hasArchive) {
+            const sectionId = category === 'ユニット活動' ? 'common' : 
+                            category === 'けびんケビンソン(ソロ)' ? 'kevin' : 'ryo';
             
-            // セクションにIDを追加（ジャンプ用）
-            if (category === '共通コンテンツ') {
-                sectionCard.id = 'common';
-            } else if (category === 'けびんケビンソン') {
-                sectionCard.id = 'kevin';
-            } else if (category === 'イイダリョウ') {
-                sectionCard.id = 'ryo';
+            // 件数計算
+            const activeCount = hasBasic ? basicByCategory[category].length : 0;
+            const archiveCount = hasArchive ? archiveByCategory[category].length : 0;
+            
+            const accordionSection = document.createElement('div');
+            accordionSection.className = 'accordion-section';
+            accordionSection.id = sectionId;
+            
+            // アコーディオンヘッダー
+            const accordionHeader = document.createElement('div');
+            accordionHeader.className = 'accordion-header-custom';
+            
+            // categoryから見出しを取得（CSVのcategoryカラムの値をそのまま使用）
+            const headerTitle = document.createElement('div');
+            headerTitle.className = 'accordion-header-title';
+            headerTitle.textContent = category;
+            
+            const headerStats = document.createElement('div');
+            headerStats.className = 'accordion-header-stats';
+            
+            const activeBadge = document.createElement('span');
+            activeBadge.className = 'stat-badge active-count';
+            activeBadge.textContent = `アクティブ: ${activeCount}`;
+            
+            const archiveBadge = document.createElement('span');
+            archiveBadge.className = 'stat-badge archive-count';
+            archiveBadge.textContent = `アーカイブ: ${archiveCount}`;
+            
+            headerStats.appendChild(activeBadge);
+            headerStats.appendChild(archiveBadge);
+            
+            const toggleIcon = document.createElement('span');
+            toggleIcon.className = 'accordion-toggle-icon';
+            toggleIcon.textContent = '▼';
+            
+            accordionHeader.appendChild(headerTitle);
+            accordionHeader.appendChild(headerStats);
+            accordionHeader.appendChild(toggleIcon);
+            
+            // アコーディオンボディ
+            const accordionBody = document.createElement('div');
+            accordionBody.className = 'accordion-body-custom';
+            
+            // 説明文を追加（けびんとリョウのみ）
+            if (category === 'けびんケビンソン(ソロ)') {
+                const descDiv = document.createElement('p');
+                descDiv.className = 'person-description';
+                descDiv.style.cssText = 'margin-bottom: 1rem; color: #6c757d; line-height: 1.5;';
+                descDiv.textContent = '2019年（コロナ禍）頃からの参画で、現在はCMP2000管理人の役割を担っている。「何か」をしたくて活動しており、現在も模索中。';
+                accordionBody.appendChild(descDiv);
+            } else if (category === 'イイダリョウ(ソロ)') {
+                const descDiv = document.createElement('p');
+                descDiv.className = 'person-description';
+                descDiv.style.cssText = 'margin-bottom: 1rem; color: #6c757d; line-height: 1.5;';
+                descDiv.textContent = '2014年頃から参画しているCMP2000主要メンバー。多岐に渡るキャリアを経ており、現在はフロントエンドを中心としたエンジニア。';
+                accordionBody.appendChild(descDiv);
             }
             
-            const sectionHeader = document.createElement('div');
-            sectionHeader.className = 'section-header';
-            sectionHeader.textContent = category;
-            sectionCard.appendChild(sectionHeader);
-            
-            const sectionBody = document.createElement('div');
-            sectionBody.className = 'section-body';
-            
-            // サイト一覧を表示
-            if (siteList.length > 0) {
-                const siteSection = document.createElement('div');
-                siteSection.style.marginBottom = '1rem';
+            // アクティブなサイト（テーブル形式）
+            if (hasBasic) {
+                const tableContainer = document.createElement('div');
+                tableContainer.className = 'table-responsive';
                 
-                const siteListDiv = document.createElement('div');
-                siteListDiv.className = 'site-list';
+                const table = document.createElement('table');
+                table.className = 'table site-table';
                 
-                siteList.forEach(site => {
-                    const siteItem = document.createElement('div');
-                    siteItem.className = 'site-item';
-                    siteItem.style.display = 'block';
-                    siteItem.style.marginBottom = '0.5rem';
+                const tbody = document.createElement('tbody');
+                
+                basicByCategory[category].forEach(site => {
+                    const row = document.createElement('tr');
                     
-                    // タイトルとロゴのコンテナ
-                    const titleContainer = document.createElement('div');
-                    titleContainer.style.marginBottom = '0.25rem';
-                    
+                    // サイト名/リンク
+                    const titleCell = document.createElement('td');
+                    titleCell.className = 'site-title-cell';
                     const siteLink = document.createElement('a');
                     siteLink.href = site.siteUrl;
                     siteLink.target = '_blank';
                     siteLink.className = 'site-link';
                     siteLink.textContent = site.siteTitle;
+                    titleCell.appendChild(siteLink);
+                    row.appendChild(titleCell);
                     
-                    titleContainer.appendChild(siteLink);
-                    
-                    // logo列が空白でない場合のみロゴを表示
-                    if (site.logo && site.logo.trim() !== '') {
+                    // ロゴ
+                    const logoCell = document.createElement('td');
+                    logoCell.className = 'site-logo-cell';
+                    if (site.logo) {
                         const logoImg = document.createElement('img');
                         logoImg.src = site.logo;
                         logoImg.className = 'logo-img';
                         logoImg.alt = 'logo';
-                        titleContainer.appendChild(logoImg);
+                        logoCell.appendChild(logoImg);
                     }
+                    row.appendChild(logoCell);
                     
-                    // ハッシュタグがあれば表示
+                    // ハッシュタグ
+                    const hashTagCell = document.createElement('td');
+                    hashTagCell.className = 'site-hashtag-cell';
                     if (site.hashTag) {
                         const hashTagSpan = document.createElement('span');
                         hashTagSpan.className = 'hashtag-display';
                         hashTagSpan.innerHTML = convertHashTagsToLinks(site.hashTag);
-                        titleContainer.appendChild(hashTagSpan);
+                        hashTagCell.appendChild(hashTagSpan);
                     }
+                    row.appendChild(hashTagCell);
                     
-                    siteItem.appendChild(titleContainer);
-                    
-                    // コメントがあれば表示（archiveと同じスタイル）
-                    if (site.comment && site.comment.trim() !== '') {
-                        const commentSpan = document.createElement('span');
-                        commentSpan.className = 'archive-comment';
-                        commentSpan.textContent = site.comment;
-                        siteItem.appendChild(commentSpan);
+                    // コメント
+                    const commentCell = document.createElement('td');
+                    commentCell.className = 'site-comment-cell';
+                    if (site.comment) {
+                        commentCell.textContent = site.comment;
                     }
+                    row.appendChild(commentCell);
                     
-                    siteListDiv.appendChild(siteItem);
+                    tbody.appendChild(row);
                 });
                 
-                siteSection.appendChild(siteListDiv);
-                sectionBody.appendChild(siteSection);
+                table.appendChild(tbody);
+                tableContainer.appendChild(table);
+                accordionBody.appendChild(tableContainer);
             }
             
-            // アーカイブ一覧を表示（サイトの下に）
-            if (archiveList.length > 0) {
+            // アーカイブ（開閉可能）
+            if (hasArchive) {
                 const archiveSection = document.createElement('div');
-                archiveSection.className = 'archive-section';
-                // アーカイブセクション全体を囲う
-                archiveSection.style.border = '2px solid #adb5bd';
-                archiveSection.style.borderRadius = '0.5rem';
-                archiveSection.style.padding = '1rem';
-                archiveSection.style.marginTop = '0.5rem'; /* 1remから0.5remに縮小 */
-                archiveSection.style.backgroundColor = '#f8f9fa';
+                archiveSection.className = 'archive-accordion mt-3';
                 
-                // アーカイブセクションヘッダー
-                const archiveHeader = document.createElement('h6');
-                archiveHeader.textContent = 'アーカイブ';
+                // アーカイブヘッダー（クリック可能）
+                const archiveHeader = document.createElement('div');
                 archiveHeader.className = 'archive-header';
-                archiveHeader.style.marginTop = '0';
-                archiveHeader.style.marginBottom = '0.75rem';
+                archiveHeader.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background-color: #f8f9fa; border-radius: 0.25rem; cursor: pointer; user-select: none; transition: background-color 0.2s ease;';
+                
+                const archiveTitle = document.createElement('div');
+                archiveTitle.className = 'archive-title';
+                archiveTitle.style.cssText = 'font-weight: 600; color: #495057;';
+                archiveTitle.textContent = 'アーカイブ';
+                
+                const archiveToggleIcon = document.createElement('span');
+                archiveToggleIcon.className = 'archive-toggle-icon collapsed';
+                archiveToggleIcon.textContent = '▼';
+                
+                archiveHeader.appendChild(archiveTitle);
+                archiveHeader.appendChild(archiveToggleIcon);
                 archiveSection.appendChild(archiveHeader);
                 
-                const archiveListDiv = document.createElement('div');
-                archiveListDiv.className = 'archive-list';
+                // アーカイブボディ（初期状態は非表示）
+                const archiveBody = document.createElement('div');
+                archiveBody.className = 'archive-body';
+                archiveBody.style.cssText = 'padding: 1rem 0.5rem; display: none;';
                 
-                archiveList.forEach(archive => {
-                    const archiveItem = document.createElement('div');
-                    archiveItem.className = 'archive-item';
-                    archiveItem.style.display = 'block';
-                    archiveItem.style.marginBottom = '0.5rem';
+                const tableContainer = document.createElement('div');
+                tableContainer.className = 'table-responsive';
+                
+                const table = document.createElement('table');
+                table.className = 'table archive-table';
+                
+                const tbody = document.createElement('tbody');
+                
+                archiveByCategory[category].forEach(archive => {
+                    const row = document.createElement('tr');
                     
-                    // タイトルとロゴのコンテナ
-                    const titleContainer = document.createElement('div');
-                    titleContainer.style.marginBottom = '0.25rem';
+                    // サイト名/リンク
+                    const titleCell = document.createElement('td');
+                    titleCell.className = 'archive-title-cell';
                     
-                    // siteUrlが空白の場合はリンクなしテキスト、それ以外はリンク
                     if (archive.siteUrl && archive.siteUrl.trim() !== '' && archive.siteUrl !== '#') {
                         const archiveLink = document.createElement('a');
                         archiveLink.href = archive.siteUrl;
                         archiveLink.target = '_blank';
                         archiveLink.className = 'site-link';
                         archiveLink.textContent = archive.siteTitle;
-                        titleContainer.appendChild(archiveLink);
+                        titleCell.appendChild(archiveLink);
                     } else {
                         const archiveText = document.createElement('span');
                         archiveText.textContent = archive.siteTitle;
                         archiveText.style.color = '#6c757d';
-                        titleContainer.appendChild(archiveText);
+                        titleCell.appendChild(archiveText);
                     }
+                    row.appendChild(titleCell);
                     
-                    // ロゴがあれば表示
+                    // ロゴ
+                    const logoCell = document.createElement('td');
+                    logoCell.className = 'archive-logo-cell';
                     if (archive.logo) {
                         const logoImg = document.createElement('img');
                         logoImg.src = archive.logo;
                         logoImg.className = 'logo-img';
                         logoImg.alt = 'logo';
-                        titleContainer.appendChild(logoImg);
+                        logoCell.appendChild(logoImg);
                     }
+                    row.appendChild(logoCell);
                     
-                    // ハッシュタグがあれば表示
+                    // ハッシュタグ
+                    const hashTagCell = document.createElement('td');
+                    hashTagCell.className = 'archive-hashtag-cell';
                     if (archive.hashTag) {
                         const hashTagSpan = document.createElement('span');
                         hashTagSpan.className = 'hashtag-display';
                         hashTagSpan.innerHTML = convertHashTagsToLinks(archive.hashTag);
-                        titleContainer.appendChild(hashTagSpan);
+                        hashTagCell.appendChild(hashTagSpan);
                     }
+                    row.appendChild(hashTagCell);
                     
-                    archiveItem.appendChild(titleContainer);
-                    
-                    // コメントがあれば表示（ファミリーと同じスタイル）
+                    // コメント
+                    const commentCell = document.createElement('td');
+                    commentCell.className = 'archive-comment-cell';
                     if (archive.comment) {
-                        const commentSpan = document.createElement('span');
-                        commentSpan.className = 'archive-comment';
-                        commentSpan.textContent = archive.comment;
-                        archiveItem.appendChild(commentSpan);
+                        commentCell.textContent = archive.comment;
                     }
+                    row.appendChild(commentCell);
                     
-                    archiveListDiv.appendChild(archiveItem);
+                    tbody.appendChild(row);
                 });
                 
-                archiveSection.appendChild(archiveListDiv);
-                sectionBody.appendChild(archiveSection);
+                table.appendChild(tbody);
+                tableContainer.appendChild(table);
+                archiveBody.appendChild(tableContainer);
+                archiveSection.appendChild(archiveBody);
+                
+                // アーカイブの開閉イベント
+                archiveHeader.addEventListener('click', () => {
+                    if (archiveBody.classList.contains('show')) {
+                        archiveBody.classList.remove('show');
+                        archiveToggleIcon.classList.add('collapsed');
+                    } else {
+                        archiveBody.classList.add('show');
+                        archiveToggleIcon.classList.remove('collapsed');
+                    }
+                });
+                
+                accordionBody.appendChild(archiveSection);
             }
             
-            sectionCard.appendChild(sectionBody);
-            container.appendChild(sectionCard);
+            accordionSection.appendChild(accordionHeader);
+            accordionSection.appendChild(accordionBody);
+            container.appendChild(accordionSection);
+            
+            // クリックイベント
+            accordionHeader.addEventListener('click', () => {
+                toggleAccordion(sectionId);
+            });
+            
+            // 初期状態の設定
+            if (accordionStates[sectionId]) {
+                accordionBody.classList.add('show');
+            } else {
+                toggleIcon.classList.add('collapsed');
+            }
         }
     });
     
-    // スタッフ、ファミリー、スペシャルサンクスのセクション（並列に表示）
+    // スタッフ、ファミリー、スペシャルサンクス（アコーディオン）
     ['スタッフ', 'ファミリー', 'スペシャルサンクス'].forEach(familyCategory => {
         if (familyByCategory[familyCategory]) {
-            const sectionCard = document.createElement('div');
-            sectionCard.className = 'section-card card';
+            const sectionId = familyCategory === 'スタッフ' ? 'staff' :
+                            familyCategory === 'ファミリー' ? 'family' : 'specialThanks';
             
-            // セクションにIDを追加（ジャンプ用）
-            if (familyCategory === 'スタッフ') {
-                sectionCard.id = 'staff';
-            } else if (familyCategory === 'ファミリー') {
-                sectionCard.id = 'family';
-            } else if (familyCategory === 'スペシャルサンクス') {
-                sectionCard.id = 'special-thanks';
-            }
+            const memberCount = familyByCategory[familyCategory].length;
             
-            const sectionHeader = document.createElement('div');
-            sectionHeader.className = 'section-header';
-            sectionHeader.textContent = familyCategory;
-            sectionCard.appendChild(sectionHeader);
+            const accordionSection = document.createElement('div');
+            accordionSection.className = 'accordion-section';
+            accordionSection.id = sectionId;
             
-            const sectionBody = document.createElement('div');
-            sectionBody.className = 'section-body';
+            // アコーディオンヘッダー
+            const accordionHeader = document.createElement('div');
+            accordionHeader.className = 'accordion-header-custom';
+            
+            const headerTitle = document.createElement('div');
+            headerTitle.className = 'accordion-header-title';
+            headerTitle.textContent = familyCategory;
+            
+            const headerStats = document.createElement('div');
+            headerStats.className = 'accordion-header-stats';
+            
+            const countBadge = document.createElement('span');
+            countBadge.className = 'stat-badge';
+            countBadge.textContent = `${memberCount}件`;
+            headerStats.appendChild(countBadge);
+            
+            const toggleIcon = document.createElement('span');
+            toggleIcon.className = 'accordion-toggle-icon';
+            toggleIcon.textContent = '▼';
+            
+            accordionHeader.appendChild(headerTitle);
+            accordionHeader.appendChild(headerStats);
+            accordionHeader.appendChild(toggleIcon);
+            
+            // アコーディオンボディ
+            const accordionBody = document.createElement('div');
+            accordionBody.className = 'accordion-body-custom';
             
             familyByCategory[familyCategory].forEach(member => {
                 const familyItem = document.createElement('div');
@@ -592,7 +926,6 @@ function generateAboutPage(filterTag = null) {
                 familyName.textContent = member.name;
                 familyNameContainer.appendChild(familyName);
                 
-                // ハッシュタグがあれば名前の横に表示
                 if (member.hashTag) {
                     const hashTagSpan = document.createElement('span');
                     hashTagSpan.className = 'hashtag-display';
@@ -607,11 +940,24 @@ function generateAboutPage(filterTag = null) {
                 familyItem.appendChild(familyNameContainer);
                 familyItem.appendChild(familyComment);
                 
-                sectionBody.appendChild(familyItem);
+                accordionBody.appendChild(familyItem);
             });
             
-            sectionCard.appendChild(sectionBody);
-            container.appendChild(sectionCard);
+            accordionSection.appendChild(accordionHeader);
+            accordionSection.appendChild(accordionBody);
+            container.appendChild(accordionSection);
+            
+            // クリックイベント
+            accordionHeader.addEventListener('click', () => {
+                toggleAccordion(sectionId);
+            });
+            
+            // 初期状態の設定
+            if (accordionStates[sectionId]) {
+                accordionBody.classList.add('show');
+            } else {
+                toggleIcon.classList.add('collapsed');
+            }
         }
     });
     
@@ -620,6 +966,9 @@ function generateAboutPage(filterTag = null) {
         const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
         generateHashTagList(allTags);
     }
+    
+    // セクションナビゲーションを更新
+    updateSectionNavigation(filterTag);
 }
 
 // データ読み込みと初期化
@@ -634,6 +983,18 @@ function initializeAboutPage() {
         updateCurrentYear();
         initHeaderScroll();
         updateJumpMenu(null);
+        
+        // 全開/全閉ボタンのイベント（通常時）
+        const openAllBtn = document.getElementById('openAllBtn');
+        const closeAllBtn = document.getElementById('closeAllBtn');
+        if (openAllBtn) openAllBtn.addEventListener('click', openAllAccordions);
+        if (closeAllBtn) closeAllBtn.addEventListener('click', closeAllAccordions);
+        
+        // 全開/全閉ボタンのイベント（コンパクト版）
+        const openAllBtnCompact = document.getElementById('openAllBtnCompact');
+        const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
+        if (openAllBtnCompact) openAllBtnCompact.addEventListener('click', openAllAccordions);
+        if (closeAllBtnCompact) closeAllBtnCompact.addEventListener('click', closeAllAccordions);
     } else {
         console.log('オンラインモードで実行中（About）');
         
@@ -651,6 +1012,18 @@ function initializeAboutPage() {
             updateCurrentYear();
             initHeaderScroll();
             updateJumpMenu(null);
+            
+            // 全開/全閉ボタンのイベント（通常時）
+            const openAllBtn = document.getElementById('openAllBtn');
+            const closeAllBtn = document.getElementById('closeAllBtn');
+            if (openAllBtn) openAllBtn.addEventListener('click', openAllAccordions);
+            if (closeAllBtn) closeAllBtn.addEventListener('click', closeAllAccordions);
+            
+            // 全開/全閉ボタンのイベント（コンパクト版）
+            const openAllBtnCompact = document.getElementById('openAllBtnCompact');
+            const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
+            if (openAllBtnCompact) openAllBtnCompact.addEventListener('click', openAllAccordions);
+            if (closeAllBtnCompact) closeAllBtnCompact.addEventListener('click', closeAllAccordions);
         })
         .catch(error => {
             console.error('公開CSVの読み込みに失敗しました:', error);
@@ -677,8 +1050,10 @@ function initHeaderScroll() {
         const updateHeader = () => {
             if (window.scrollY > 50 || window.pageYOffset > 50) {
                 header.classList.add('scrolled');
+                document.body.classList.add('header-scrolled');
             } else {
                 header.classList.remove('scrolled');
+                document.body.classList.remove('header-scrolled');
             }
             ticking = false;
         };
@@ -690,10 +1065,7 @@ function initHeaderScroll() {
             }
         };
         
-        // passive: true でパフォーマンス向上（特にモバイル）
         window.addEventListener('scroll', onScroll, { passive: true });
-        
-        // 初回実行
         updateHeader();
     }
 }
