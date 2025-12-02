@@ -145,7 +145,9 @@ function parseBasicInfoCSV(csvText) {
         }
         values.push(currentValue.trim());
         
-        if (values[keyIndex] === 'cmp2000') continue;
+        // 表示対象外のkeyをスキップ
+        const excludedKeys = ['cmp2000', 'kevinKevinson', 'ryoIida'];
+        if (excludedKeys.includes(values[keyIndex])) continue;
         
         if (values[keyIndex] && values[categoryIndex] && values[siteTitleIndex]) {
             items.push({
