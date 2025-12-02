@@ -1305,9 +1305,17 @@ function generateTabLinksSection() {
                 dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
             }
             
+            // リンクの有無で表示を分岐
+            let titleSpan = '';
+            if (article.link) {
+                titleSpan = `<a href="${article.link}" target="_blank" rel="noopener noreferrer" style="color: #0d6efd; font-size: 0.9rem;">${article.title}</a>`;
+            } else {
+                titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${article.title}</span>`;
+            }
+            
             return `
                 <div class="rss-item" style="margin-bottom: 0.4rem; font-size: 0.9rem;">
-                    ${dateSpan}<a href="${article.link}" target="_blank" rel="noopener noreferrer" style="color: #0d6efd; font-size: 0.9rem;">${article.title}</a>
+                    ${dateSpan}${titleSpan}
                 </div>
             `;
         }).join('');
