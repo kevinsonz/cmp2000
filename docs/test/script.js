@@ -125,11 +125,6 @@ function clearHashTagFilter() {
     generateCards(basicInfoData, singleDataGlobal, null);
     hideFilterUI();
     
-    // タブボタンのfilteringクラスを削除
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('filtering');
-    });
-    
     // 元のタブに戻る（保存されたタブがない場合はgeneralに戻る）
     const targetTab = window.previousTab || 'general';
     currentTab = targetTab; // currentTabを直接設定
@@ -144,7 +139,7 @@ function showFilterUI(tag) {
     container.style.display = 'block';
     container.innerHTML = `
         <div class="alert alert-danger d-flex justify-content-between align-items-center">
-            <span>表示中: <strong>${tag}</strong></span>
+            <span>フィルタ: <strong>${tag}</strong></span>
             <button class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">フィルタ解除</button>
         </div>
     `;
@@ -549,11 +544,14 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             console.log('- カード:', item.key, item.siteTitle, 'カテゴリ:', item.category);
         });
         
-        // フィルタタブを表示
+        // フィルタタブを表示し、全体タブを選択状態にする
         currentTab = 'filter';
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('active');
-            btn.classList.add('filtering');
+            // 全体タブ（data-tab="general"）のみactiveにする
+            if (btn.getAttribute('data-tab') === 'general') {
+                btn.classList.add('active');
+            }
         });
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');

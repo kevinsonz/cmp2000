@@ -318,9 +318,9 @@ function showFilterUI(tag) {
     
     container.style.display = 'block';
     container.innerHTML = `
-        <div class="alert alert-info d-flex justify-content-between align-items-center mb-3" role="alert">
-            <span>フィルタ適用中: <strong>${tag}</strong></span>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearHashTagFilter()">
+        <div class="alert alert-danger d-flex justify-content-between align-items-center mb-3" role="alert">
+            <span>フィルタ: <strong>${tag}</strong></span>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="clearHashTagFilter()">
                 フィルタ解除
             </button>
         </div>

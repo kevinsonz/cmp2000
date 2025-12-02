@@ -50,12 +50,6 @@
     font-weight: 600;
 }
 
-.tab-button.filtering {
-    background-color: #f8d7da;
-    color: #842029;
-    border-bottom-color: #dc3545;
-}
-
 /* タブコンテンツのスタイル */
 .tab-content {
     display: none;
