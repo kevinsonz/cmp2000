@@ -45,6 +45,25 @@ function updateAccordionButtonStates() {
     const allOpen = sectionInfo.every(info => accordionStates[info.id] === true);
     const allClosed = sectionInfo.every(info => accordionStates[info.id] === false);
     
+    // 全てのアーカイブセクションの状態をチェック
+    const archiveBodies = document.querySelectorAll('.archive-body');
+    let allArchivesOpen = true;
+    let allArchivesClosed = true;
+    
+    if (archiveBodies.length > 0) {
+        archiveBodies.forEach(body => {
+            if (!body.classList.contains('show')) {
+                allArchivesOpen = false;
+            } else {
+                allArchivesClosed = false;
+            }
+        });
+    } else {
+        // アーカイブが存在しない場合は、メインセクションの状態のみで判定
+        allArchivesOpen = true;
+        allArchivesClosed = true;
+    }
+    
     // 通常時のボタン
     const openAllBtn = document.getElementById('openAllBtn');
     const closeAllBtn = document.getElementById('closeAllBtn');
@@ -53,10 +72,10 @@ function updateAccordionButtonStates() {
     const openAllBtnCompact = document.getElementById('openAllBtnCompact');
     const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
     
-    // 開くボタンの状態を更新
+    // 開くボタンの状態を更新（メインとアーカイブ両方が全開の場合のみ塗りつぶし）
     [openAllBtn, openAllBtnCompact].forEach(btn => {
         if (!btn) return;
-        if (allOpen) {
+        if (allOpen && allArchivesOpen) {
             // 全開状態: 塗りつぶし
             btn.className = 'btn btn-sm btn-primary';
         } else {
@@ -65,10 +84,10 @@ function updateAccordionButtonStates() {
         }
     });
     
-    // 閉じるボタンの状態を更新
+    // 閉じるボタンの状態を更新（メインとアーカイブ両方が全閉の場合のみ塗りつぶし）
     [closeAllBtn, closeAllBtnCompact].forEach(btn => {
         if (!btn) return;
-        if (allClosed) {
+        if (allClosed && allArchivesClosed) {
             // 全閉状態: 塗りつぶし
             btn.className = 'btn btn-sm btn-secondary';
         } else {
@@ -110,6 +129,7 @@ function openAllAccordions() {
         // フィルタ解除後、すべて開いた状態にするため処理を続行
     }
     
+    // メインセクションを全て開く
     sectionInfo.forEach(info => {
         const section = document.getElementById(info.id);
         if (!section) return;
@@ -124,6 +144,19 @@ function openAllAccordions() {
         accordionStates[info.id] = true;
     });
     
+    // 全てのアーカイブセクションも開く
+    const archiveBodies = document.querySelectorAll('.archive-body');
+    const archiveIcons = document.querySelectorAll('.archive-toggle-icon');
+    
+    archiveBodies.forEach(body => {
+        body.classList.add('show');
+        body.style.display = 'block';
+    });
+    
+    archiveIcons.forEach(icon => {
+        icon.classList.remove('collapsed');
+    });
+    
     // ボタンの状態を更新
     updateAccordionButtonStates();
 }
@@ -136,6 +169,7 @@ function closeAllAccordions() {
         // フィルタ解除後、すべて閉じた状態にするため処理を続行
     }
     
+    // メインセクションを全て閉じる
     sectionInfo.forEach(info => {
         const section = document.getElementById(info.id);
         if (!section) return;
@@ -148,6 +182,19 @@ function closeAllAccordions() {
         body.classList.remove('show');
         icon.classList.add('collapsed');
         accordionStates[info.id] = false;
+    });
+    
+    // 全てのアーカイブセクションも閉じる
+    const archiveBodies = document.querySelectorAll('.archive-body');
+    const archiveIcons = document.querySelectorAll('.archive-toggle-icon');
+    
+    archiveBodies.forEach(body => {
+        body.classList.remove('show');
+        body.style.display = 'none';
+    });
+    
+    archiveIcons.forEach(icon => {
+        icon.classList.add('collapsed');
     });
     
     // ボタンの状態を更新
@@ -896,11 +943,16 @@ function generateAboutPage(filterTag = null) {
                 archiveHeader.addEventListener('click', () => {
                     if (archiveBody.classList.contains('show')) {
                         archiveBody.classList.remove('show');
+                        archiveBody.style.display = 'none';
                         archiveToggleIcon.classList.add('collapsed');
                     } else {
                         archiveBody.classList.add('show');
+                        archiveBody.style.display = 'block';
                         archiveToggleIcon.classList.remove('collapsed');
                     }
+                    
+                    // ボタンの状態を更新
+                    updateAccordionButtonStates();
                 });
                 
                 accordionBody.appendChild(archiveSection);
