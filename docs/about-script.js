@@ -39,6 +39,45 @@ const sectionInfo = [
     { id: 'specialThanks', name: 'Thanks', fullName: 'スペシャルサンクス' }
 ];
 
+// ボタンの状態を更新する関数
+function updateAccordionButtonStates() {
+    // 全てのアコーディオンの状態をチェック
+    const allOpen = sectionInfo.every(info => accordionStates[info.id] === true);
+    const allClosed = sectionInfo.every(info => accordionStates[info.id] === false);
+    
+    // 通常時のボタン
+    const openAllBtn = document.getElementById('openAllBtn');
+    const closeAllBtn = document.getElementById('closeAllBtn');
+    
+    // コンパクト版のボタン
+    const openAllBtnCompact = document.getElementById('openAllBtnCompact');
+    const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
+    
+    // 開くボタンの状態を更新
+    [openAllBtn, openAllBtnCompact].forEach(btn => {
+        if (!btn) return;
+        if (allOpen) {
+            // 全開状態: 塗りつぶし
+            btn.className = 'btn btn-sm btn-primary';
+        } else {
+            // その他: アウトライン
+            btn.className = 'btn btn-sm btn-outline-primary';
+        }
+    });
+    
+    // 閉じるボタンの状態を更新
+    [closeAllBtn, closeAllBtnCompact].forEach(btn => {
+        if (!btn) return;
+        if (allClosed) {
+            // 全閉状態: 塗りつぶし
+            btn.className = 'btn btn-sm btn-secondary';
+        } else {
+            // その他: アウトライン
+            btn.className = 'btn btn-sm btn-outline-secondary';
+        }
+    });
+}
+
 // アコーディオンの開閉を切り替え
 function toggleAccordion(sectionId) {
     const section = document.getElementById(sectionId);
@@ -58,6 +97,9 @@ function toggleAccordion(sectionId) {
         icon.classList.remove('collapsed');
         accordionStates[sectionId] = true;
     }
+    
+    // ボタンの状態を更新
+    updateAccordionButtonStates();
 }
 
 // 全開
@@ -81,6 +123,9 @@ function openAllAccordions() {
         icon.classList.remove('collapsed');
         accordionStates[info.id] = true;
     });
+    
+    // ボタンの状態を更新
+    updateAccordionButtonStates();
 }
 
 // 全閉
@@ -104,6 +149,9 @@ function closeAllAccordions() {
         icon.classList.add('collapsed');
         accordionStates[info.id] = false;
     });
+    
+    // ボタンの状態を更新
+    updateAccordionButtonStates();
 }
 
 // セクションナビゲーションを更新（削除）
@@ -971,6 +1019,9 @@ function generateAboutPage(filterTag = null) {
     
     // セクションナビゲーションを更新
     updateSectionNavigation(filterTag);
+    
+    // ボタンの状態を更新
+    updateAccordionButtonStates();
 }
 
 // データ読み込みと初期化

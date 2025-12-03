@@ -99,6 +99,26 @@ function getJapaneseEra(year) {
     }
 }
 
+// フィルタ設定ボタンの状態を更新
+function updateFilterSettingsButtonState(isOpen) {
+    // 通常時のボタン（filter-nav-wrapper内）
+    const normalButton = document.querySelector('.filter-nav-wrapper .filter-controls button');
+    // コンパクト版のボタン（header-compact-row2内）
+    const compactButton = document.querySelector('.header-compact-row2 .filter-controls-compact button');
+    
+    [normalButton, compactButton].forEach(btn => {
+        if (!btn) return;
+        
+        if (isOpen) {
+            // 開いている状態: 塗りつぶし
+            btn.className = 'btn btn-sm btn-primary';
+        } else {
+            // 閉じている状態: アウトライン
+            btn.className = 'btn btn-sm btn-outline-primary';
+        }
+    });
+}
+
 // CSV解析関数
 function parseHistoryCSV(csvText) {
     const lines = csvText.trim().split('\n');
@@ -497,6 +517,24 @@ function initializePage() {
     // その他の初期化
     updateCurrentYear();
     initHeaderScroll();
+    
+    // フィルタ設定のcollapseイベントリスナーを追加
+    const filterSettings = document.getElementById('filterSettings');
+    if (filterSettings) {
+        // 開いた時
+        filterSettings.addEventListener('shown.bs.collapse', function() {
+            updateFilterSettingsButtonState(true);
+        });
+        
+        // 閉じた時
+        filterSettings.addEventListener('hidden.bs.collapse', function() {
+            updateFilterSettingsButtonState(false);
+        });
+        
+        // 初期状態を反映
+        const isOpen = filterSettings.classList.contains('show');
+        updateFilterSettingsButtonState(isOpen);
+    }
 }
 
 // カテゴリフィルタリストを生成
