@@ -1269,6 +1269,9 @@ function generateTabLinksSection() {
             subImageSrc = tabInfo.subImage || '';
         }
         
+        // 該当するタブのカード数をカウント
+        const tabCardCount = basicInfoData.filter(item => item.tabId === tabInfo.tabId).length;
+        
         // tabIdに対応するkeyプレフィックスのマッピング
         const tabKeyPrefixMap = {
             'common': 'cmp',
@@ -1356,6 +1359,7 @@ function generateTabLinksSection() {
                         </div>
                         <div class="card-action-area">
                             <button class="btn btn-primary btn-sm card-action-button" onclick="switchTab('${tabInfo.tabId}')">Go to Tab</button>
+                            <span style="margin-left: 0.5rem; color: #6c757d; font-size: 0.9rem;">コンテンツ数: ${tabCardCount}</span>
                         </div>
                     </div>
                 </div>
