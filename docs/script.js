@@ -1068,6 +1068,10 @@ function generateContributionGraph(contributionData) {
             activeTooltip.remove();
             activeTooltip = null;
         }
+        // 前のセルの選択状態を解除
+        if (activeTooltipElement) {
+            activeTooltipElement.classList.remove('selected');
+        }
         
         const tooltip = document.createElement('div');
         tooltip.className = 'contribution-tooltip';
@@ -1128,6 +1132,9 @@ function generateContributionGraph(contributionData) {
             
             tooltip.style.left = `${left}px`;
             tooltip.style.top = `${top}px`;
+            
+            // セルに選択状態を追加
+            dayElement.classList.add('selected');
         } else {
             // ホバー時：マウス位置を基準に計算（PCでの挙動を維持）
             let left = clientX + 10;
@@ -1158,9 +1165,12 @@ function generateContributionGraph(contributionData) {
         if (activeTooltip) {
             activeTooltip.remove();
             activeTooltip = null;
-            activeTooltipElement = null;
-            isTooltipPinned = false;
         }
+        if (activeTooltipElement) {
+            activeTooltipElement.classList.remove('selected');
+            activeTooltipElement = null;
+        }
+        isTooltipPinned = false;
     }
     
     weeks.forEach(week => {
