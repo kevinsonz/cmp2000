@@ -366,10 +366,29 @@ function renderHashTagListForTab(tabName) {
     const tagContainer = document.createElement('div');
     tagContainer.className = 'hashtag-list';
     
+    // 各ハッシュタグの出現数をカウント（全カードを対象）
+    const tagCounts = {};
+    allHashTags.forEach(tag => {
+        tagCounts[tag] = 0;
+    });
+    
+    if (basicInfoData) {
+        basicInfoData.forEach(item => {
+            if (item.hashTag) {
+                const tags = extractHashTags(item.hashTag);
+                tags.forEach(tag => {
+                    if (tagCounts.hasOwnProperty(tag)) {
+                        tagCounts[tag]++;
+                    }
+                });
+            }
+        });
+    }
+    
     allHashTags.forEach(tag => {
         const tagButton = document.createElement('button');
         tagButton.className = 'hashtag-button';
-        tagButton.textContent = tag;
+        tagButton.textContent = `${tag} (${tagCounts[tag]})`;
         
         if (currentFilterTag === tag) {
             tagButton.classList.add('active');

@@ -412,10 +412,30 @@ function generateHashTagList(allTags, filterTag = null) {
     
     container.innerHTML = '';
     
+    // 各ハッシュタグの出現数をカウント（全アコーディオンを対象）
+    const tagCounts = {};
+    allTags.forEach(tag => {
+        tagCounts[tag] = 0;
+    });
+    
+    // allBasicInfo, allArchiveInfo, allFamilyInfo の全データからカウント
+    [allBasicInfo, allArchiveInfo, allFamilyInfo].forEach(dataArray => {
+        dataArray.forEach(item => {
+            if (item.hashTag) {
+                const tags = parseHashTags(item.hashTag);
+                tags.forEach(tag => {
+                    if (tagCounts.hasOwnProperty(tag)) {
+                        tagCounts[tag]++;
+                    }
+                });
+            }
+        });
+    });
+    
     allTags.forEach(tag => {
         const tagButton = document.createElement('button');
         tagButton.className = 'hashtag-button';
-        tagButton.textContent = tag;
+        tagButton.textContent = `${tag} (${tagCounts[tag]})`;
         
         if (filterTag && tag === filterTag) {
             tagButton.classList.add('active');
