@@ -1071,13 +1071,82 @@ function generateContributionGraph(contributionData) {
         
         const tooltip = document.createElement('div');
         tooltip.className = 'contribution-tooltip';
-        tooltip.textContent = `${day.dateStr} (${day.count}件)`;
+        
+        // 曜日を取得
+        const date = new Date(day.dateStr);
+        const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+        
+        tooltip.textContent = `${day.dateStr}(${dayOfWeek}) - ${day.count}件`;
         tooltip.style.display = 'block';
         tooltip.style.position = 'fixed';
-        tooltip.style.left = `${clientX + 10}px`;
-        tooltip.style.top = `${clientY - 30}px`;
         tooltip.style.zIndex = '10000';
+        
+        // 一旦DOMに追加してサイズを取得
         document.body.appendChild(tooltip);
+        const tooltipRect = tooltip.getBoundingClientRect();
+        
+        // 固定表示（タップ）の場合：マスの位置を基準に計算
+        if (pinned) {
+            const dayRect = dayElement.getBoundingClientRect();
+            const margin = 8; // マスからの距離
+            const screenPadding = 10; // 画面端からの余白
+            
+            let left, top;
+            
+            // 優先順位: 右下 → 左下 → 右上 → 左上
+            // 1. 右下を試す
+            left = dayRect.right + margin;
+            top = dayRect.bottom + margin;
+            
+            // 右側がはみ出る場合は左側に
+            if (left + tooltipRect.width > window.innerWidth - screenPadding) {
+                left = dayRect.left - tooltipRect.width - margin;
+            }
+            
+            // 下側がはみ出る場合は上側に
+            if (top + tooltipRect.height > window.innerHeight - screenPadding) {
+                top = dayRect.top - tooltipRect.height - margin;
+            }
+            
+            // 左側がはみ出る場合は右端に寄せる
+            if (left < screenPadding) {
+                left = dayRect.right + margin;
+                // それでもはみ出る場合は画面右端に寄せる
+                if (left + tooltipRect.width > window.innerWidth - screenPadding) {
+                    left = window.innerWidth - tooltipRect.width - screenPadding;
+                }
+            }
+            
+            // 上側がはみ出る場合は下端に寄せる
+            if (top < screenPadding) {
+                top = dayRect.bottom + margin;
+                // それでもはみ出る場合は画面下端に寄せる
+                if (top + tooltipRect.height > window.innerHeight - screenPadding) {
+                    top = window.innerHeight - tooltipRect.height - screenPadding;
+                }
+            }
+            
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+        } else {
+            // ホバー時：マウス位置を基準に計算（PCでの挙動を維持）
+            let left = clientX + 10;
+            let top = clientY - 30;
+            
+            // 画面からはみ出る場合の調整
+            if (left + tooltipRect.width > window.innerWidth - 10) {
+                left = clientX - tooltipRect.width - 10;
+            }
+            if (top < 10) {
+                top = clientY + 10;
+            }
+            if (top + tooltipRect.height > window.innerHeight - 10) {
+                top = clientY - tooltipRect.height - 10;
+            }
+            
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+        }
         
         activeTooltip = tooltip;
         activeTooltipElement = dayElement;
@@ -1114,8 +1183,23 @@ function generateContributionGraph(contributionData) {
             // マウス移動：ツールチップを追従（固定されていない場合のみ）
             dayElement.addEventListener('mousemove', (e) => {
                 if (activeTooltip && !isTooltipPinned) {
-                    activeTooltip.style.left = `${e.clientX + 10}px`;
-                    activeTooltip.style.top = `${e.clientY - 30}px`;
+                    const tooltipRect = activeTooltip.getBoundingClientRect();
+                    let left = e.clientX + 10;
+                    let top = e.clientY - 30;
+                    
+                    // 画面からはみ出る場合の調整
+                    if (left + tooltipRect.width > window.innerWidth - 10) {
+                        left = e.clientX - tooltipRect.width - 10;
+                    }
+                    if (top < 10) {
+                        top = e.clientY + 10;
+                    }
+                    if (top + tooltipRect.height > window.innerHeight - 10) {
+                        top = e.clientY - tooltipRect.height - 10;
+                    }
+                    
+                    activeTooltip.style.left = `${left}px`;
+                    activeTooltip.style.top = `${top}px`;
                 }
             });
             
