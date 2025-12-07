@@ -1056,6 +1056,41 @@ function generateContributionGraph(contributionData) {
     const weeksContainer = document.createElement('div');
     weeksContainer.className = 'contribution-weeks';
     
+    // アクティブなツールチップを管理する変数
+    let activeTooltip = null;
+    let activeTooltipElement = null;
+    
+    // ツールチップを表示する関数
+    function showTooltip(dayElement, day, clientX, clientY) {
+        // 既存のツールチップを削除
+        if (activeTooltip) {
+            activeTooltip.remove();
+            activeTooltip = null;
+        }
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'contribution-tooltip';
+        tooltip.textContent = `${day.dateStr} (${day.count}件)`;
+        tooltip.style.display = 'block';
+        tooltip.style.position = 'fixed';
+        tooltip.style.left = `${clientX + 10}px`;
+        tooltip.style.top = `${clientY - 30}px`;
+        tooltip.style.zIndex = '10000';
+        document.body.appendChild(tooltip);
+        
+        activeTooltip = tooltip;
+        activeTooltipElement = dayElement;
+    }
+    
+    // ツールチップを非表示にする関数
+    function hideTooltip() {
+        if (activeTooltip) {
+            activeTooltip.remove();
+            activeTooltip = null;
+            activeTooltipElement = null;
+        }
+    }
+    
     weeks.forEach(week => {
         const weekElement = document.createElement('div');
         weekElement.className = 'contribution-week';
@@ -1066,21 +1101,33 @@ function generateContributionGraph(contributionData) {
             dayElement.dataset.date = day.dateStr;
             dayElement.dataset.count = day.count;
             
+            // PC用: マウスホバー
             dayElement.addEventListener('mouseenter', (e) => {
-                const tooltip = document.createElement('div');
-                tooltip.className = 'contribution-tooltip';
-                tooltip.textContent = `${day.dateStr}: ${day.count}件`;
-                tooltip.style.display = 'block';
-                tooltip.style.left = `${e.pageX + 10}px`;
-                tooltip.style.top = `${e.pageY - 30}px`;
-                document.body.appendChild(tooltip);
-                dayElement._tooltip = tooltip;
+                showTooltip(dayElement, day, e.clientX, e.clientY);
+            });
+            
+            dayElement.addEventListener('mousemove', (e) => {
+                if (activeTooltip) {
+                    activeTooltip.style.left = `${e.clientX + 10}px`;
+                    activeTooltip.style.top = `${e.clientY - 30}px`;
+                }
             });
             
             dayElement.addEventListener('mouseleave', () => {
-                if (dayElement._tooltip) {
-                    dayElement._tooltip.remove();
-                    dayElement._tooltip = null;
+                hideTooltip();
+            });
+            
+            // スマホ用: タップトグル
+            dayElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // 既に表示中の場合はトグル（非表示に）
+                if (activeTooltipElement === dayElement) {
+                    hideTooltip();
+                } else {
+                    // 新しいツールチップを表示
+                    showTooltip(dayElement, day, e.clientX, e.clientY);
                 }
             });
             
@@ -1088,6 +1135,13 @@ function generateContributionGraph(contributionData) {
         });
         
         weeksContainer.appendChild(weekElement);
+    });
+    
+    // 画面の他の場所をクリック/タップした時にツールチップを閉じる
+    document.addEventListener('click', (e) => {
+        if (activeTooltip && !e.target.classList.contains('contribution-day')) {
+            hideTooltip();
+        }
     });
     
     mainContent.appendChild(weeksContainer);
