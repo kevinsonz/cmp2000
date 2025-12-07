@@ -1060,6 +1060,7 @@ function generateContributionGraph(contributionData) {
     let activeTooltip = null;
     let activeTooltipElement = null;
     let isTooltipPinned = false; // ツールチップが固定されているかどうか
+    let activeDayData = null; // 固定表示中のdayデータ
     
     // ツールチップを表示する関数
     function showTooltip(dayElement, day, clientX, clientY, pinned = false) {
@@ -1158,6 +1159,7 @@ function generateContributionGraph(contributionData) {
         activeTooltip = tooltip;
         activeTooltipElement = dayElement;
         isTooltipPinned = pinned;
+        activeDayData = pinned ? day : null; // 固定表示時のみdayデータを保存
     }
     
     // ツールチップを非表示にする関数
@@ -1171,6 +1173,54 @@ function generateContributionGraph(contributionData) {
             activeTooltipElement = null;
         }
         isTooltipPinned = false;
+        activeDayData = null;
+    }
+    
+    // ツールチップ位置を更新する関数（ピンチズーム対応）
+    function updateTooltipPosition() {
+        if (!isTooltipPinned || !activeTooltip || !activeTooltipElement || !activeDayData) {
+            return;
+        }
+        
+        const dayRect = activeTooltipElement.getBoundingClientRect();
+        const tooltipRect = activeTooltip.getBoundingClientRect();
+        const margin = 8;
+        const screenPadding = 10;
+        
+        let left, top;
+        
+        // 優先順位: 右下 → 左下 → 右上 → 左上
+        left = dayRect.right + margin;
+        top = dayRect.bottom + margin;
+        
+        // 右側がはみ出る場合は左側に
+        if (left + tooltipRect.width > window.innerWidth - screenPadding) {
+            left = dayRect.left - tooltipRect.width - margin;
+        }
+        
+        // 下側がはみ出る場合は上側に
+        if (top + tooltipRect.height > window.innerHeight - screenPadding) {
+            top = dayRect.top - tooltipRect.height - margin;
+        }
+        
+        // 左側がはみ出る場合は右端に寄せる
+        if (left < screenPadding) {
+            left = dayRect.right + margin;
+            if (left + tooltipRect.width > window.innerWidth - screenPadding) {
+                left = window.innerWidth - tooltipRect.width - screenPadding;
+            }
+        }
+        
+        // 上側がはみ出る場合は下端に寄せる
+        if (top < screenPadding) {
+            top = dayRect.bottom + margin;
+            if (top + tooltipRect.height > window.innerHeight - screenPadding) {
+                top = window.innerHeight - tooltipRect.height - screenPadding;
+            }
+        }
+        
+        activeTooltip.style.left = `${left}px`;
+        activeTooltip.style.top = `${top}px`;
     }
     
     weeks.forEach(week => {
@@ -1245,6 +1295,11 @@ function generateContributionGraph(contributionData) {
         if (activeTooltip && isTooltipPinned && !e.target.classList.contains('contribution-day')) {
             hideTooltip();
         }
+    });
+    
+    // ピンチズーム時にツールチップ位置を更新
+    window.addEventListener('resize', () => {
+        updateTooltipPosition();
     });
     
     mainContent.appendChild(weeksContainer);
