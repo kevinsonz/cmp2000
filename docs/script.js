@@ -1353,14 +1353,26 @@ function updateJumpMenuForCurrentTab() {
     if (!jumpMenuList) return;
     
     if (currentFilterTag) {
-        // フィルタモード
-        jumpMenuList.innerHTML = `
-            <li><a class="dropdown-item" href="#" onclick="smoothScrollToTop(); return false;">ヘッダー</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('filter-ui-container'); return false;">フィルタ結果</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('footer'); return false;">フッター</a></li>
-        `;
+        // フィルタモード - 各フィルタ結果カードへのジャンプメニューを生成
+        let menuItems = '<li><a class="dropdown-item" href="#" onclick="smoothScrollToTop(); return false;">ヘッダー</a></li>';
+        menuItems += '<li><hr class="dropdown-divider"></li>';
+        
+        // フィルタ結果のカードを取得
+        const filteredItems = basicInfoData.filter(item => {
+            if (!item.hashTag) return false;
+            const itemTags = extractHashTags(item.hashTag);
+            return itemTags.includes(currentFilterTag);
+        });
+        
+        // 各カードへのジャンプリンクを生成
+        filteredItems.forEach(item => {
+            menuItems += `<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('${item.key}'); return false;">${item.siteTitle}</a></li>`;
+        });
+        
+        menuItems += '<li><hr class="dropdown-divider"></li>';
+        menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'footer\'); return false;">フッター</a></li>';
+        
+        jumpMenuList.innerHTML = menuItems;
     } else {
         // タブモード
         let menuItems = '<li><a class="dropdown-item" href="#" onclick="smoothScrollToTop(); return false;">ヘッダー</a></li>';

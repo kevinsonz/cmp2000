@@ -41,7 +41,29 @@ const sectionInfo = [
 
 // ボタンの状態を更新する関数
 function updateAccordionButtonStates() {
-    // 全てのアコーディオンの状態をチェック
+    // 通常時のボタン
+    const openAllBtn = document.getElementById('openAllBtn');
+    const closeAllBtn = document.getElementById('closeAllBtn');
+    
+    // コンパクト版のボタン
+    const openAllBtnCompact = document.getElementById('openAllBtnCompact');
+    const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
+    
+    // フィルタ中は両方のボタンをアウトライン表示
+    if (currentFilterTag) {
+        [openAllBtn, openAllBtnCompact].forEach(btn => {
+            if (!btn) return;
+            btn.className = 'btn btn-sm btn-outline-primary';
+        });
+        
+        [closeAllBtn, closeAllBtnCompact].forEach(btn => {
+            if (!btn) return;
+            btn.className = 'btn btn-sm btn-outline-secondary';
+        });
+        return; // フィルタ中は以降の処理をスキップ
+    }
+    
+    // 通常時：全てのアコーディオンの状態をチェック
     const allOpen = sectionInfo.every(info => accordionStates[info.id] === true);
     const allClosed = sectionInfo.every(info => accordionStates[info.id] === false);
     
@@ -63,14 +85,6 @@ function updateAccordionButtonStates() {
         allArchivesOpen = true;
         allArchivesClosed = true;
     }
-    
-    // 通常時のボタン
-    const openAllBtn = document.getElementById('openAllBtn');
-    const closeAllBtn = document.getElementById('closeAllBtn');
-    
-    // コンパクト版のボタン
-    const openAllBtnCompact = document.getElementById('openAllBtnCompact');
-    const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
     
     // 開くボタンの状態を更新（メインとアーカイブ両方が全開の場合のみ塗りつぶし）
     [openAllBtn, openAllBtnCompact].forEach(btn => {
@@ -471,13 +485,75 @@ function updateJumpMenu(filterTag) {
     dropdownMenu.appendChild(divider1);
     
     if (filterTag) {
-        const filterItem = document.createElement('li');
-        const filterLink = document.createElement('a');
-        filterLink.className = 'dropdown-item';
-        filterLink.href = '#filter-ui-container';
-        filterLink.textContent = 'フィルタ結果';
-        filterItem.appendChild(filterLink);
-        dropdownMenu.appendChild(filterItem);
+        // フィルタに該当するカテゴリを特定
+        const matchingSections = [];
+        
+        // basicInfoからフィルタに該当するカテゴリを取得
+        const basicByCategory = {};
+        allBasicInfo.forEach(item => {
+            const tags = parseHashTags(item.hashTag);
+            if (tags.includes(filterTag)) {
+                if (!basicByCategory[item.category]) {
+                    basicByCategory[item.category] = true;
+                }
+            }
+        });
+        
+        // archiveInfoからフィルタに該当するカテゴリを取得
+        const archiveByCategory = {};
+        allArchiveInfo.forEach(item => {
+            const tags = parseHashTags(item.hashTag);
+            if (tags.includes(filterTag)) {
+                if (!archiveByCategory[item.category]) {
+                    archiveByCategory[item.category] = true;
+                }
+            }
+        });
+        
+        // familyInfoからフィルタに該当するカテゴリを取得
+        const familyByCategory = {};
+        allFamilyInfo.forEach(item => {
+            const tags = parseHashTags(item.hashTag);
+            if (tags.includes(filterTag)) {
+                if (!familyByCategory[item.category]) {
+                    familyByCategory[item.category] = true;
+                }
+            }
+        });
+        
+        // メインカテゴリ（ユニット活動、けびん、リョウ）のジャンプリンクを生成
+        ['ユニット活動', 'けびんケビンソン(ソロ)', 'イイダリョウ(ソロ)'].forEach(category => {
+            const hasBasic = basicByCategory[category];
+            const hasArchive = archiveByCategory[category];
+            
+            if (hasBasic || hasArchive) {
+                const sectionId = category === 'ユニット活動' ? 'common' : 
+                                category === 'けびんケビンソン(ソロ)' ? 'kevin' : 'ryo';
+                matchingSections.push({ id: sectionId, name: category });
+            }
+        });
+        
+        // ファミリーカテゴリのジャンプリンクを生成
+        if (familyByCategory['スタッフ']) {
+            matchingSections.push({ id: 'staff', name: 'スタッフ' });
+        }
+        if (familyByCategory['ファミリー']) {
+            matchingSections.push({ id: 'family', name: 'ファミリー' });
+        }
+        if (familyByCategory['スペシャルサンクス']) {
+            matchingSections.push({ id: 'specialThanks', name: 'スペシャルサンクス' });
+        }
+        
+        // ジャンプリンクを生成
+        matchingSections.forEach(section => {
+            const item = document.createElement('li');
+            const link = document.createElement('a');
+            link.className = 'dropdown-item';
+            link.href = `#${section.id}`;
+            link.textContent = section.name;
+            item.appendChild(link);
+            dropdownMenu.appendChild(item);
+        });
     } else {
         // CSVデータから動的にセクションを生成
         const sections = [];
@@ -566,9 +642,56 @@ function applyHashTagFilter(tag) {
     // 現在の開閉状態を保存
     preFilterStates = { ...accordionStates };
     
-    // 全開放状態にする
+    // フィルタに該当するカテゴリを特定
+    const basicByCategory = {};
+    allBasicInfo.forEach(item => {
+        const tags = parseHashTags(item.hashTag);
+        if (tags.includes(tag)) {
+            if (!basicByCategory[item.category]) {
+                basicByCategory[item.category] = true;
+            }
+        }
+    });
+    
+    const archiveByCategory = {};
+    allArchiveInfo.forEach(item => {
+        const tags = parseHashTags(item.hashTag);
+        if (tags.includes(tag)) {
+            if (!archiveByCategory[item.category]) {
+                archiveByCategory[item.category] = true;
+            }
+        }
+    });
+    
+    const familyByCategory = {};
+    allFamilyInfo.forEach(item => {
+        const tags = parseHashTags(item.hashTag);
+        if (tags.includes(tag)) {
+            if (!familyByCategory[item.category]) {
+                familyByCategory[item.category] = true;
+            }
+        }
+    });
+    
+    // フィルタに該当するアコーディオンのみを開く
     sectionInfo.forEach(info => {
-        accordionStates[info.id] = true;
+        let shouldOpen = false;
+        
+        if (info.id === 'common') {
+            shouldOpen = basicByCategory['ユニット活動'] || archiveByCategory['ユニット活動'];
+        } else if (info.id === 'kevin') {
+            shouldOpen = basicByCategory['けびんケビンソン(ソロ)'] || archiveByCategory['けびんケビンソン(ソロ)'];
+        } else if (info.id === 'ryo') {
+            shouldOpen = basicByCategory['イイダリョウ(ソロ)'] || archiveByCategory['イイダリョウ(ソロ)'];
+        } else if (info.id === 'staff') {
+            shouldOpen = familyByCategory['スタッフ'];
+        } else if (info.id === 'family') {
+            shouldOpen = familyByCategory['ファミリー'];
+        } else if (info.id === 'specialThanks') {
+            shouldOpen = familyByCategory['スペシャルサンクス'];
+        }
+        
+        accordionStates[info.id] = shouldOpen;
     });
     
     // フィルタ適用してページを再生成
@@ -583,6 +706,9 @@ function applyHashTagFilter(tag) {
     // ハッシュタグ一覧の状態を更新
     const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
     generateHashTagList(allTags, tag);
+    
+    // ボタンの状態を更新（フィルタ中はアウトライン表示）
+    updateAccordionButtonStates();
     
     // フィルタUI表示位置にスムーズスクロール
     setTimeout(() => {
@@ -615,6 +741,9 @@ function clearHashTagFilter() {
     // ハッシュタグボタンの状態を更新
     const allTags = collectAllHashTags(allBasicInfo, allArchiveInfo, allFamilyInfo);
     generateHashTagList(allTags);
+    
+    // ボタンの状態を更新（フィルタ解除後の状態に戻す）
+    updateAccordionButtonStates();
     
     // 「共通コンテンツ」セクションにスムーズスクロール
     setTimeout(() => {
@@ -954,6 +1083,13 @@ function generateAboutPage(filterTag = null) {
                     // ボタンの状態を更新
                     updateAccordionButtonStates();
                 });
+                
+                // フィルタモード時はアーカイブも自動的に開く
+                if (filterTag) {
+                    archiveBody.classList.add('show');
+                    archiveBody.style.display = 'block';
+                    archiveToggleIcon.classList.remove('collapsed');
+                }
                 
                 accordionBody.appendChild(archiveSection);
             }
