@@ -1091,60 +1091,52 @@ function generateContributionGraph(contributionData) {
         
         // 固定表示（タップ）の場合：マスの位置を基準に計算
         if (pinned) {
-            // レイアウト確定後に位置を計算（ピンチズーム対応）
+            // レイアウト完全確定後に位置を計算（ピンチズーム対応：2フレーム待つ）
             requestAnimationFrame(() => {
-                const dayRect = dayElement.getBoundingClientRect();
-                const tooltipRect = tooltip.getBoundingClientRect();
-                const margin = 8; // マスからの距離
-                const screenPadding = 10; // 画面端からの余白
-                
-                // visualViewportでピンチズームのスケールとオフセットを取得
-                const viewport = window.visualViewport;
-                const scale = viewport ? viewport.scale : 1;
-                const offsetX = viewport ? viewport.offsetLeft : 0;
-                const offsetY = viewport ? viewport.offsetTop : 0;
-                
-                // ビューポートの実際のサイズ
-                const viewportWidth = viewport ? viewport.width : window.innerWidth;
-                const viewportHeight = viewport ? viewport.height : window.innerHeight;
-                
-                let left, top;
-                
-                // 優先順位: 右下 → 左下 → 右上 → 左上
-                // 1. 右下を試す
-                left = dayRect.right + margin;
-                top = dayRect.bottom + margin;
-                
-                // 右側がはみ出る場合は左側に
-                if (left + tooltipRect.width > viewportWidth - screenPadding) {
-                    left = dayRect.left - tooltipRect.width - margin;
-                }
-                
-                // 下側がはみ出る場合は上側に
-                if (top + tooltipRect.height > viewportHeight - screenPadding) {
-                    top = dayRect.top - tooltipRect.height - margin;
-                }
-                
-                // 左側がはみ出る場合は右端に寄せる
-                if (left < screenPadding) {
+                requestAnimationFrame(() => {
+                    const dayRect = dayElement.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+                    const margin = 8; // マスからの距離
+                    const screenPadding = 10; // 画面端からの余白
+                    
+                    let left, top;
+                    
+                    // 優先順位: 右下 → 左下 → 右上 → 左上
+                    // 1. 右下を試す
                     left = dayRect.right + margin;
-                    // それでもはみ出る場合は画面右端に寄せる
-                    if (left + tooltipRect.width > viewportWidth - screenPadding) {
-                        left = viewportWidth - tooltipRect.width - screenPadding;
-                    }
-                }
-                
-                // 上側がはみ出る場合は下端に寄せる
-                if (top < screenPadding) {
                     top = dayRect.bottom + margin;
-                    // それでもはみ出る場合は画面下端に寄せる
-                    if (top + tooltipRect.height > viewportHeight - screenPadding) {
-                        top = viewportHeight - tooltipRect.height - screenPadding;
+                    
+                    // 右側がはみ出る場合は左側に
+                    if (left + tooltipRect.width > window.innerWidth - screenPadding) {
+                        left = dayRect.left - tooltipRect.width - margin;
                     }
-                }
-                
-                tooltip.style.left = `${left}px`;
-                tooltip.style.top = `${top}px`;
+                    
+                    // 下側がはみ出る場合は上側に
+                    if (top + tooltipRect.height > window.innerHeight - screenPadding) {
+                        top = dayRect.top - tooltipRect.height - margin;
+                    }
+                    
+                    // 左側がはみ出る場合は右端に寄せる
+                    if (left < screenPadding) {
+                        left = dayRect.right + margin;
+                        // それでもはみ出る場合は画面右端に寄せる
+                        if (left + tooltipRect.width > window.innerWidth - screenPadding) {
+                            left = window.innerWidth - tooltipRect.width - screenPadding;
+                        }
+                    }
+                    
+                    // 上側がはみ出る場合は下端に寄せる
+                    if (top < screenPadding) {
+                        top = dayRect.bottom + margin;
+                        // それでもはみ出る場合は画面下端に寄せる
+                        if (top + tooltipRect.height > window.innerHeight - screenPadding) {
+                            top = window.innerHeight - tooltipRect.height - screenPadding;
+                        }
+                    }
+                    
+                    tooltip.style.left = `${left}px`;
+                    tooltip.style.top = `${top}px`;
+                });
             });
             
             // セルに選択状態を追加
@@ -1152,23 +1144,17 @@ function generateContributionGraph(contributionData) {
         } else {
             // ホバー時：マウス位置を基準に計算（PCでの挙動を維持）
             const tooltipRect = tooltip.getBoundingClientRect();
-            
-            // visualViewportでピンチズームを考慮
-            const viewport = window.visualViewport;
-            const viewportWidth = viewport ? viewport.width : window.innerWidth;
-            const viewportHeight = viewport ? viewport.height : window.innerHeight;
-            
             let left = clientX + 10;
             let top = clientY - 30;
             
             // 画面からはみ出る場合の調整
-            if (left + tooltipRect.width > viewportWidth - 10) {
+            if (left + tooltipRect.width > window.innerWidth - 10) {
                 left = clientX - tooltipRect.width - 10;
             }
             if (top < 10) {
                 top = clientY + 10;
             }
-            if (top + tooltipRect.height > viewportHeight - 10) {
+            if (top + tooltipRect.height > window.innerHeight - 10) {
                 top = clientY - tooltipRect.height - 10;
             }
             
@@ -1202,61 +1188,53 @@ function generateContributionGraph(contributionData) {
             return;
         }
         
-        // レイアウト確定後に位置を更新
+        // レイアウト完全確定後に位置を更新（2フレーム待つ）
         requestAnimationFrame(() => {
-            if (!isTooltipPinned || !activeTooltip || !activeTooltipElement) {
-                return; // 実行中にツールチップが閉じられた場合
-            }
-            
-            const dayRect = activeTooltipElement.getBoundingClientRect();
-            const tooltipRect = activeTooltip.getBoundingClientRect();
-            const margin = 8;
-            const screenPadding = 10;
-            
-            // visualViewportでピンチズームのスケールとオフセットを取得
-            const viewport = window.visualViewport;
-            const scale = viewport ? viewport.scale : 1;
-            const offsetX = viewport ? viewport.offsetLeft : 0;
-            const offsetY = viewport ? viewport.offsetTop : 0;
-            
-            // ビューポートの実際のサイズ
-            const viewportWidth = viewport ? viewport.width : window.innerWidth;
-            const viewportHeight = viewport ? viewport.height : window.innerHeight;
-            
-            let left, top;
-            
-            // 優先順位: 右下 → 左下 → 右上 → 左上
-            left = dayRect.right + margin;
-            top = dayRect.bottom + margin;
-            
-            // 右側がはみ出る場合は左側に
-            if (left + tooltipRect.width > viewportWidth - screenPadding) {
-                left = dayRect.left - tooltipRect.width - margin;
-            }
-            
-            // 下側がはみ出る場合は上側に
-            if (top + tooltipRect.height > viewportHeight - screenPadding) {
-                top = dayRect.top - tooltipRect.height - margin;
-            }
-            
-            // 左側がはみ出る場合は右端に寄せる
-            if (left < screenPadding) {
+            requestAnimationFrame(() => {
+                if (!isTooltipPinned || !activeTooltip || !activeTooltipElement) {
+                    return; // 実行中にツールチップが閉じられた場合
+                }
+                
+                const dayRect = activeTooltipElement.getBoundingClientRect();
+                const tooltipRect = activeTooltip.getBoundingClientRect();
+                const margin = 8;
+                const screenPadding = 10;
+                
+                let left, top;
+                
+                // 優先順位: 右下 → 左下 → 右上 → 左上
                 left = dayRect.right + margin;
-                if (left + tooltipRect.width > viewportWidth - screenPadding) {
-                    left = viewportWidth - tooltipRect.width - screenPadding;
-                }
-            }
-            
-            // 上側がはみ出る場合は下端に寄せる
-            if (top < screenPadding) {
                 top = dayRect.bottom + margin;
-                if (top + tooltipRect.height > viewportHeight - screenPadding) {
-                    top = viewportHeight - tooltipRect.height - screenPadding;
+                
+                // 右側がはみ出る場合は左側に
+                if (left + tooltipRect.width > window.innerWidth - screenPadding) {
+                    left = dayRect.left - tooltipRect.width - margin;
                 }
-            }
-            
-            activeTooltip.style.left = `${left}px`;
-            activeTooltip.style.top = `${top}px`;
+                
+                // 下側がはみ出る場合は上側に
+                if (top + tooltipRect.height > window.innerHeight - screenPadding) {
+                    top = dayRect.top - tooltipRect.height - margin;
+                }
+                
+                // 左側がはみ出る場合は右端に寄せる
+                if (left < screenPadding) {
+                    left = dayRect.right + margin;
+                    if (left + tooltipRect.width > window.innerWidth - screenPadding) {
+                        left = window.innerWidth - tooltipRect.width - screenPadding;
+                    }
+                }
+                
+                // 上側がはみ出る場合は下端に寄せる
+                if (top < screenPadding) {
+                    top = dayRect.bottom + margin;
+                    if (top + tooltipRect.height > window.innerHeight - screenPadding) {
+                        top = window.innerHeight - tooltipRect.height - screenPadding;
+                    }
+                }
+                
+                activeTooltip.style.left = `${left}px`;
+                activeTooltip.style.top = `${top}px`;
+            });
         });
     }
     
@@ -1281,23 +1259,17 @@ function generateContributionGraph(contributionData) {
             dayElement.addEventListener('mousemove', (e) => {
                 if (activeTooltip && !isTooltipPinned) {
                     const tooltipRect = activeTooltip.getBoundingClientRect();
-                    
-                    // visualViewportでピンチズームを考慮
-                    const viewport = window.visualViewport;
-                    const viewportWidth = viewport ? viewport.width : window.innerWidth;
-                    const viewportHeight = viewport ? viewport.height : window.innerHeight;
-                    
                     let left = e.clientX + 10;
                     let top = e.clientY - 30;
                     
                     // 画面からはみ出る場合の調整
-                    if (left + tooltipRect.width > viewportWidth - 10) {
+                    if (left + tooltipRect.width > window.innerWidth - 10) {
                         left = e.clientX - tooltipRect.width - 10;
                     }
                     if (top < 10) {
                         top = e.clientY + 10;
                     }
-                    if (top + tooltipRect.height > viewportHeight - 10) {
+                    if (top + tooltipRect.height > window.innerHeight - 10) {
                         top = e.clientY - tooltipRect.height - 10;
                     }
                     
@@ -1344,16 +1316,6 @@ function generateContributionGraph(contributionData) {
     window.addEventListener('resize', () => {
         updateTooltipPosition();
     });
-    
-    // visualViewportのイベントも監視（より正確なピンチズーム対応）
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', () => {
-            updateTooltipPosition();
-        });
-        window.visualViewport.addEventListener('scroll', () => {
-            updateTooltipPosition();
-        });
-    }
     
     mainContent.appendChild(weeksContainer);
     
