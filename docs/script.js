@@ -1059,9 +1059,10 @@ function generateContributionGraph(contributionData) {
     // アクティブなツールチップを管理する変数
     let activeTooltip = null;
     let activeTooltipElement = null;
+    let isTooltipPinned = false; // ツールチップが固定されているかどうか
     
     // ツールチップを表示する関数
-    function showTooltip(dayElement, day, clientX, clientY) {
+    function showTooltip(dayElement, day, clientX, clientY, pinned = false) {
         // 既存のツールチップを削除
         if (activeTooltip) {
             activeTooltip.remove();
@@ -1080,6 +1081,7 @@ function generateContributionGraph(contributionData) {
         
         activeTooltip = tooltip;
         activeTooltipElement = dayElement;
+        isTooltipPinned = pinned;
     }
     
     // ツールチップを非表示にする関数
@@ -1088,6 +1090,7 @@ function generateContributionGraph(contributionData) {
             activeTooltip.remove();
             activeTooltip = null;
             activeTooltipElement = null;
+            isTooltipPinned = false;
         }
     }
     
@@ -1101,33 +1104,39 @@ function generateContributionGraph(contributionData) {
             dayElement.dataset.date = day.dateStr;
             dayElement.dataset.count = day.count;
             
-            // PC用: マウスホバー
+            // ホバー時：ツールチップを一時表示（固定されていない場合のみ）
             dayElement.addEventListener('mouseenter', (e) => {
-                showTooltip(dayElement, day, e.clientX, e.clientY);
+                if (!isTooltipPinned) {
+                    showTooltip(dayElement, day, e.clientX, e.clientY, false);
+                }
             });
             
+            // マウス移動：ツールチップを追従（固定されていない場合のみ）
             dayElement.addEventListener('mousemove', (e) => {
-                if (activeTooltip) {
+                if (activeTooltip && !isTooltipPinned) {
                     activeTooltip.style.left = `${e.clientX + 10}px`;
                     activeTooltip.style.top = `${e.clientY - 30}px`;
                 }
             });
             
+            // マウスを離す：ツールチップを消す（固定されていない場合のみ）
             dayElement.addEventListener('mouseleave', () => {
-                hideTooltip();
+                if (!isTooltipPinned) {
+                    hideTooltip();
+                }
             });
             
-            // スマホ用: タップトグル
+            // クリック/タップ：ツールチップを固定表示/解除
             dayElement.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // 既に表示中の場合はトグル（非表示に）
-                if (activeTooltipElement === dayElement) {
+                // 同じセルを再度クリック → 固定解除
+                if (activeTooltipElement === dayElement && isTooltipPinned) {
                     hideTooltip();
                 } else {
-                    // 新しいツールチップを表示
-                    showTooltip(dayElement, day, e.clientX, e.clientY);
+                    // 新しいツールチップを固定表示
+                    showTooltip(dayElement, day, e.clientX, e.clientY, true);
                 }
             });
             
@@ -1137,9 +1146,9 @@ function generateContributionGraph(contributionData) {
         weeksContainer.appendChild(weekElement);
     });
     
-    // 画面の他の場所をクリック/タップした時にツールチップを閉じる
+    // 画面の他の場所をクリック/タップした時にツールチップを閉じる（固定時のみ）
     document.addEventListener('click', (e) => {
-        if (activeTooltip && !e.target.classList.contains('contribution-day')) {
+        if (activeTooltip && isTooltipPinned && !e.target.classList.contains('contribution-day')) {
             hideTooltip();
         }
     });
