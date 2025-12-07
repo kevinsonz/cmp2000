@@ -478,21 +478,39 @@
     display: none;
 }
 
-/* ヒートマップ下の固定ツールチップ表示エリア */
-.contribution-tooltip-fixed {
-    text-align: center;
+/* ヒートマップの横スクロールコンテナ */
+.contribution-graph-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     padding: 10px;
-    margin-top: 10px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    border-radius: 3px;
-    font-size: 12px;
-    min-height: 20px;
-    display: none;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    position: relative; /* 固定表示エリアの基準点 */
+    padding-bottom: 60px; /* 固定表示エリア用のスペースを確保 */
 }
 
-.contribution-tooltip-fixed.show {
-    display: block;
+/* ヒートマップ下の固定ツールチップ表示エリア */
+.contribution-tooltip-fixed {
+    position: absolute;
+    bottom: 10px; /* wrapperの下部から10px */
+    text-align: center;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    min-height: 20px;
+    min-width: 200px; /* 最小幅を確保 */
+    display: block; /* 常に表示 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    white-space: nowrap; /* 改行を防ぐ */
+}
+
+/* contribution-graph-containerに相対位置指定を追加 */
+.contribution-graph-container {
+    position: relative;
 }
 
 /* セルのホバー時のスタイル */
@@ -542,6 +560,7 @@
         max-width: 900px;
         margin: 0 auto;
         padding: 20px 10px; /* 拡大による余白を確保 */
+        padding-bottom: 80px; /* 固定表示エリア用のスペースを確保（拡大を考慮） */
     }
     
     /* グラフ全体を1.2倍に拡大 */

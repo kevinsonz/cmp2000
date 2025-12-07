@@ -959,6 +959,7 @@ function generateContributionGraph(contributionData) {
     
     const graphContainer = document.createElement('div');
     graphContainer.className = 'contribution-graph-container';
+    graphContainer.style.position = 'relative'; // 子要素のabsolute配置の基準点にする
     
     const yearsRow = document.createElement('div');
     yearsRow.className = 'contribution-years';
@@ -1011,8 +1012,6 @@ function generateContributionGraph(contributionData) {
     monthsRow.style.marginBottom = '5px';
     
     let lastMonth = -1;
-    let lastMonthPosition = -999; // 最後に配置した月ラベルの位置
-    const minMonthGap = 40; // 月ラベル間の最小間隔（px）
     
     weeks.forEach((week, weekIndex) => {
         // 週の中で最初に表示される月を見つける
@@ -1020,21 +1019,18 @@ function generateContributionGraph(contributionData) {
             const day = week[i];
             const month = day.date.getMonth();
             
-            // 新しい月の最初の出現
+            // 新しい月の最初の出現（月が変わる場合は必ず表示）
             if (month !== lastMonth) {
                 const currentPosition = 25 + weekIndex * 13;
                 
-                // 前の月ラベルから十分な距離がある場合のみ表示
-                if (currentPosition - lastMonthPosition >= minMonthGap) {
-                    const monthLabel = document.createElement('div');
-                    monthLabel.className = 'contribution-month';
-                    monthLabel.textContent = `${month + 1}月`;
-                    monthLabel.style.position = 'absolute';
-                    monthLabel.style.left = `${currentPosition}px`;
-                    monthLabel.style.whiteSpace = 'nowrap'; // 改行を防ぐ
-                    monthsRow.appendChild(monthLabel);
-                    lastMonthPosition = currentPosition;
-                }
+                const monthLabel = document.createElement('div');
+                monthLabel.className = 'contribution-month';
+                monthLabel.textContent = `${month + 1}月`;
+                monthLabel.style.position = 'absolute';
+                monthLabel.style.left = `${currentPosition}px`;
+                monthLabel.style.whiteSpace = 'nowrap'; // 改行を防ぐ
+                monthsRow.appendChild(monthLabel);
+                
                 lastMonth = month;
                 break;
             }
@@ -1094,7 +1090,17 @@ function generateContributionGraph(contributionData) {
             const fixedTooltipArea = document.getElementById('contribution-fixed-tooltip');
             if (fixedTooltipArea) {
                 fixedTooltipArea.textContent = tooltipText;
-                fixedTooltipArea.classList.add('show');
+                // 位置を再計算（テキスト変更で幅が変わる可能性があるため）
+                setTimeout(() => {
+                    const graphWrapper = document.querySelector('.contribution-graph-wrapper');
+                    if (graphWrapper) {
+                        const scrollLeft = graphWrapper.scrollLeft;
+                        const visibleWidth = graphWrapper.clientWidth;
+                        const tooltipWidth = fixedTooltipArea.offsetWidth;
+                        const centerPosition = scrollLeft + (visibleWidth / 2) - (tooltipWidth / 2);
+                        fixedTooltipArea.style.left = `${centerPosition}px`;
+                    }
+                }, 0);
             }
             
             // セルに選択状態を追加
@@ -1156,11 +1162,21 @@ function generateContributionGraph(contributionData) {
             activeTooltipElement.classList.remove('selected');
             activeTooltipElement = null;
         }
-        // 固定表示エリアも非表示に
+        // 固定表示エリアを初期テキストに戻す
         const fixedTooltipArea = document.getElementById('contribution-fixed-tooltip');
         if (fixedTooltipArea) {
-            fixedTooltipArea.classList.remove('show');
-            fixedTooltipArea.textContent = '';
+            fixedTooltipArea.textContent = 'セルを選択すると件数が確認できます';
+            // 位置を再計算
+            setTimeout(() => {
+                const graphWrapper = document.querySelector('.contribution-graph-wrapper');
+                if (graphWrapper) {
+                    const scrollLeft = graphWrapper.scrollLeft;
+                    const visibleWidth = graphWrapper.clientWidth;
+                    const tooltipWidth = fixedTooltipArea.offsetWidth;
+                    const centerPosition = scrollLeft + (visibleWidth / 2) - (tooltipWidth / 2);
+                    fixedTooltipArea.style.left = `${centerPosition}px`;
+                }
+            }, 0);
         }
         isTooltipPinned = false;
         activeDayData = null;
@@ -1176,52 +1192,54 @@ function generateContributionGraph(contributionData) {
             dayElement.dataset.date = day.dateStr;
             dayElement.dataset.count = day.count;
             
-            // ホバー時：ツールチップを表示（選択状態と並行可能）
-            dayElement.addEventListener('mouseenter', (e) => {
-                showTooltip(dayElement, day, e.clientX, e.clientY, false);
-            });
-            
-            // マウス移動：ツールチップを追従（ホバーツールチップのみ）
-            dayElement.addEventListener('mousemove', (e) => {
-                if (activeTooltip) {
-                    const tooltipRect = activeTooltip.getBoundingClientRect();
-                    
-                    // visualViewportで座標変換（ページ座標 → ビューポート座標）
-                    const viewport = window.visualViewport;
-                    const offsetX = viewport ? viewport.offsetLeft : 0;
-                    const offsetY = viewport ? viewport.offsetTop : 0;
-                    const viewportWidth = viewport ? viewport.width : window.innerWidth;
-                    const viewportHeight = viewport ? viewport.height : window.innerHeight;
-                    
-                    // マウス位置もビューポート座標に変換
-                    let left = e.clientX - offsetX + 10;
-                    let top = e.clientY - offsetY - 30;
-                    
-                    // 画面からはみ出る場合の調整
-                    if (left + tooltipRect.width > viewportWidth - 10) {
-                        left = e.clientX - offsetX - tooltipRect.width - 10;
+            // ホバー時：ツールチップを表示（PCのみ）
+            if (!isMobile) {
+                dayElement.addEventListener('mouseenter', (e) => {
+                    showTooltip(dayElement, day, e.clientX, e.clientY, false);
+                });
+                
+                // マウス移動：ツールチップを追従（ホバーツールチップのみ、PCのみ）
+                dayElement.addEventListener('mousemove', (e) => {
+                    if (activeTooltip) {
+                        const tooltipRect = activeTooltip.getBoundingClientRect();
+                        
+                        // visualViewportで座標変換（ページ座標 → ビューポート座標）
+                        const viewport = window.visualViewport;
+                        const offsetX = viewport ? viewport.offsetLeft : 0;
+                        const offsetY = viewport ? viewport.offsetTop : 0;
+                        const viewportWidth = viewport ? viewport.width : window.innerWidth;
+                        const viewportHeight = viewport ? viewport.height : window.innerHeight;
+                        
+                        // マウス位置もビューポート座標に変換
+                        let left = e.clientX - offsetX + 10;
+                        let top = e.clientY - offsetY - 30;
+                        
+                        // 画面からはみ出る場合の調整
+                        if (left + tooltipRect.width > viewportWidth - 10) {
+                            left = e.clientX - offsetX - tooltipRect.width - 10;
+                        }
+                        if (top < 10) {
+                            top = e.clientY - offsetY + 10;
+                        }
+                        if (top + tooltipRect.height > viewportHeight - 10) {
+                            top = e.clientY - offsetY - tooltipRect.height - 10;
+                        }
+                        
+                        activeTooltip.style.left = `${left}px`;
+                        activeTooltip.style.top = `${top}px`;
                     }
-                    if (top < 10) {
-                        top = e.clientY - offsetY + 10;
+                });
+                
+                // マウスを離す：ホバーツールチップだけを消す（固定表示は維持、PCのみ）
+                dayElement.addEventListener('mouseleave', () => {
+                    if (activeTooltip) {
+                        activeTooltip.remove();
+                        activeTooltip = null;
                     }
-                    if (top + tooltipRect.height > viewportHeight - 10) {
-                        top = e.clientY - offsetY - tooltipRect.height - 10;
-                    }
-                    
-                    activeTooltip.style.left = `${left}px`;
-                    activeTooltip.style.top = `${top}px`;
-                }
-            });
+                });
+            }
             
-            // マウスを離す：ホバーツールチップだけを消す（固定表示は維持）
-            dayElement.addEventListener('mouseleave', () => {
-                if (activeTooltip) {
-                    activeTooltip.remove();
-                    activeTooltip = null;
-                }
-            });
-            
-            // クリック/タップ：ツールチップを固定表示/解除
+            // クリック/タップ：ツールチップを固定表示/解除（PC・スマホ共通）
             dayElement.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1264,20 +1282,51 @@ function generateContributionGraph(contributionData) {
     
     graphContainer.appendChild(mainContent);
     
-    // ヒートマップ下の固定ツールチップ表示エリア
+    container.appendChild(graphContainer);
+    
+    // 横スクロールに追従させる処理
+    const graphWrapper = document.querySelector('.contribution-graph-wrapper');
+    
+    // ヒートマップ下の固定ツールチップ表示エリア（横スクロールに追従）
     const fixedTooltipArea = document.createElement('div');
     fixedTooltipArea.className = 'contribution-tooltip-fixed';
     fixedTooltipArea.id = 'contribution-fixed-tooltip';
-    graphContainer.appendChild(fixedTooltipArea);
+    fixedTooltipArea.textContent = 'セルを選択すると件数が確認できます'; // 初期テキスト
+    fixedTooltipArea.style.display = 'block'; // 明示的に表示
     
-    container.appendChild(graphContainer);
-    
-    setTimeout(() => {
-        const graphWrapper = document.querySelector('.contribution-graph-wrapper');
-        if (graphWrapper) {
+    if (graphWrapper) {
+        // graphWrapperの末尾に追加（overflow-y: hiddenの影響を受けないように）
+        graphWrapper.appendChild(fixedTooltipArea);
+        
+        // 初期位置を設定
+        updateTooltipPosition();
+        
+        // スクロールイベントで位置を更新
+        graphWrapper.addEventListener('scroll', updateTooltipPosition);
+        
+        // リサイズイベントでも位置を更新
+        window.addEventListener('resize', updateTooltipPosition);
+        
+        // 初期スクロール位置を右端に設定
+        setTimeout(() => {
             graphWrapper.scrollLeft = graphWrapper.scrollWidth;
-        }
-    }, 100);
+            updateTooltipPosition();
+        }, 100);
+    }
+    
+    // ツールチップ位置を更新する関数
+    function updateTooltipPosition() {
+        if (!graphWrapper || !fixedTooltipArea) return;
+        
+        const scrollLeft = graphWrapper.scrollLeft;
+        const visibleWidth = graphWrapper.clientWidth;
+        const tooltipWidth = fixedTooltipArea.offsetWidth || 200; // デフォルト200px
+        
+        // 画面中央に配置する計算
+        const centerPosition = scrollLeft + (visibleWidth / 2) - (tooltipWidth / 2);
+        
+        fixedTooltipArea.style.left = `${centerPosition}px`;
+    }
 }
 
 // ヘッダー初期化
