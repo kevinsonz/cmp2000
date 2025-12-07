@@ -22,6 +22,10 @@ a:hover {
     z-index: 1000;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     overflow: visible !important; /* ドロップダウンメニューがヘッダー外にはみ出せるように */
+    /* position: stickyはBootstrapのsticky-topクラスで設定される */
+    /* stickyはrelativeのように振る舞うため、absoluteの子要素の基準点になる */
+    /* 高さはJavaScriptで動的に設定される */
+    transition: height 0.2s ease;
 }
 
 /* sticky-topクラスのoverflowを上書き */
@@ -37,14 +41,26 @@ a:hover {
     justify-content: center;
     gap: 0.5rem;
     flex-wrap: nowrap;
+    /* 位置はCSSで固定、表示制御はJavaScriptで行う */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 /* スクロール時のコンパクトヘッダー（初期状態では非表示） */
 .header-compact {
-    display: none;
+    display: flex;
     flex-direction: column;
     padding: 0;
     overflow: visible !important;
+    /* 位置はCSSで固定、表示制御はJavaScriptで行う */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 /* 1段目：ロゴ + ページメニュー（スクロール時は非表示） */
@@ -160,11 +176,13 @@ a:hover {
 
 /* スクロール時の表示制御 */
 #main-header.scrolled .header-title-normal {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
 }
 
 #main-header.scrolled .header-compact {
-    display: flex;
+    opacity: 1;
+    visibility: visible;
 }
 
 #main-header.scrolled + .page-menu-wrapper {

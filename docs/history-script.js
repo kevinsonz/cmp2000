@@ -1052,16 +1052,103 @@ function updateYearRangeDisplay() {
 // ヘッダースクロール効果の初期化
 function initHeaderScroll() {
     const header = document.getElementById('main-header');
+    const normalHeader = header ? header.querySelector('.header-title-normal') : null;
+    const compactHeader = header ? header.querySelector('.header-compact') : null;
     
-    if (header) {
+    console.log('initHeaderScroll called (History)');
+    console.log('header:', header);
+    console.log('normalHeader:', normalHeader);
+    console.log('compactHeader:', compactHeader);
+    
+    if (header && normalHeader && compactHeader) {
         let ticking = false;
+        let lastScrollY = window.scrollY || window.pageYOffset;
+        
+        // 各ヘッダーの高さを取得（初回のみ）
+        let normalHeight = null;
+        let compactHeight = null;
+        
+        const measureHeights = () => {
+            // 通常ヘッダーの高さを測定
+            normalHeader.style.position = 'relative';
+            normalHeader.style.opacity = '1';
+            normalHeader.style.visibility = 'visible';
+            compactHeader.style.position = 'absolute';
+            compactHeader.style.opacity = '0';
+            compactHeader.style.visibility = 'hidden';
+            // 強制的にレイアウト再計算
+            normalHeight = normalHeader.offsetHeight;
+            
+            // コンパクトヘッダーの高さを測定
+            normalHeader.style.position = 'absolute';
+            normalHeader.style.opacity = '0';
+            normalHeader.style.visibility = 'hidden';
+            compactHeader.style.position = 'relative';
+            compactHeader.style.opacity = '1';
+            compactHeader.style.visibility = 'visible';
+            // 強制的にレイアウト再計算
+            compactHeight = compactHeader.offsetHeight;
+            
+            // 位置を元に戻す（両方absoluteに）
+            normalHeader.style.position = 'absolute';
+            compactHeader.style.position = 'absolute';
+            
+            // 初期状態を設定（通常ヘッダー表示）
+            normalHeader.style.opacity = '1';
+            normalHeader.style.visibility = 'visible';
+            compactHeader.style.opacity = '0';
+            compactHeader.style.visibility = 'hidden';
+            header.style.height = normalHeight + 'px';
+            
+            console.log('normalHeight:', normalHeight);
+            console.log('compactHeight:', compactHeight);
+        };
+        
+        // 初回測定
+        measureHeights();
         
         const updateHeader = () => {
-            if (window.scrollY > 50 || window.pageYOffset > 50) {
+            const currentScrollY = window.scrollY || window.pageYOffset;
+            const scrollingDown = currentScrollY > lastScrollY;
+            
+            // ヒステリシス実装：スクロール方向によって異なる閾値を使用
+            const threshold = scrollingDown ? 60 : 40;
+            
+            console.log('updateHeader - scrollY:', currentScrollY, 'threshold:', threshold);
+            
+            if (currentScrollY > threshold) {
                 header.classList.add('scrolled');
+                // コンパクトヘッダーを表示
+                normalHeader.style.opacity = '0';
+                normalHeader.style.visibility = 'hidden';
+                compactHeader.style.opacity = '1';
+                compactHeader.style.visibility = 'visible';
+                // コンパクトヘッダーの高さに変更
+                if (compactHeight !== null) {
+                    header.style.height = compactHeight + 'px';
+                }
+                console.log('Added scrolled class');
+                console.log('compactHeader styles:', {
+                    opacity: compactHeader.style.opacity,
+                    visibility: compactHeader.style.visibility,
+                    position: compactHeader.style.position,
+                    display: window.getComputedStyle(compactHeader).display
+                });
             } else {
                 header.classList.remove('scrolled');
+                // 通常ヘッダーを表示
+                normalHeader.style.opacity = '1';
+                normalHeader.style.visibility = 'visible';
+                compactHeader.style.opacity = '0';
+                compactHeader.style.visibility = 'hidden';
+                // 通常ヘッダーの高さに変更
+                if (normalHeight !== null) {
+                    header.style.height = normalHeight + 'px';
+                }
+                console.log('Removed scrolled class');
             }
+            
+            lastScrollY = currentScrollY;
             ticking = false;
         };
         
@@ -1072,8 +1159,21 @@ function initHeaderScroll() {
             }
         };
         
+        // リサイズ時に高さを再測定
+        let resizeTimeout;
+        const onResize = () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                measureHeights();
+                updateHeader();
+            }, 100);
+        };
+        
         window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onResize, { passive: true });
         updateHeader();
+    } else {
+        console.error('Header elements not found! (History)');
     }
 }
 
