@@ -968,7 +968,8 @@ function generateContributionGraph(contributionData) {
     
     let lastYear = -1;
     let lastYearPosition = -999; // 最後に配置した年ラベルの位置
-    const minYearGap = 60; // 年ラベル間の最小間隔（px）
+    const edgeWeeks = 4; // 端の定義：最初と最後の4週間
+    const totalWeeks = weeks.length; // 全週数を取得
     
     weeks.forEach((week, weekIndex) => {
         // 週の中で年が変わるかチェック
@@ -979,17 +980,22 @@ function generateContributionGraph(contributionData) {
             if (year !== lastYear) {
                 const currentPosition = 25 + weekIndex * 13;
                 
-                // 前の年ラベルから十分な距離がある場合、または最初の年の場合は表示
-                if (weekIndex === 0 || currentPosition - lastYearPosition >= minYearGap) {
-                    const yearLabel = document.createElement('div');
-                    yearLabel.className = 'contribution-year';
-                    yearLabel.textContent = `${year}年`;
-                    yearLabel.style.position = 'absolute';
-                    yearLabel.style.left = `${currentPosition}px`;
-                    yearLabel.style.whiteSpace = 'nowrap'; // 改行を防ぐ
-                    yearsRow.appendChild(yearLabel);
-                    lastYearPosition = currentPosition;
-                }
+                // 左端（最初の4週間）または右端（最後の4週間）かどうかで表示形式を決定
+                const isLeftEdge = weekIndex < edgeWeeks;
+                const isRightEdge = weekIndex >= totalWeeks - edgeWeeks;
+                const isEdge = isLeftEdge || isRightEdge;
+                const yearText = isEdge ? `${String(year).slice(-2)}年` : `${year}年`;
+                
+                // 年が変わる場合は必ず表示（lastYear !== yearの条件内なので常にtrue）
+                const yearLabel = document.createElement('div');
+                yearLabel.className = 'contribution-year';
+                yearLabel.textContent = yearText;
+                yearLabel.style.position = 'absolute';
+                yearLabel.style.left = `${currentPosition}px`;
+                yearLabel.style.whiteSpace = 'nowrap'; // 改行を防ぐ
+                yearsRow.appendChild(yearLabel);
+                lastYearPosition = currentPosition;
+                
                 lastYear = year;
                 break;
             }
@@ -1067,115 +1073,77 @@ function generateContributionGraph(contributionData) {
     
     // ツールチップを表示する関数
     function showTooltip(dayElement, day, clientX, clientY, pinned = false) {
-        // 既存のツールチップを削除
-        if (activeTooltip) {
+        // 既存のホバーツールチップを削除（固定表示は維持）
+        if (activeTooltip && !isTooltipPinned) {
             activeTooltip.remove();
             activeTooltip = null;
         }
-        // 前のセルの選択状態を解除
-        if (activeTooltipElement) {
+        
+        // 固定表示の場合のみ、前のセルの選択状態を解除
+        if (pinned && activeTooltipElement) {
             activeTooltipElement.classList.remove('selected');
         }
-        
-        const tooltip = document.createElement('div');
-        tooltip.className = 'contribution-tooltip';
         
         // 曜日を取得
         const date = new Date(day.dateStr);
         const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+        const tooltipText = `${day.dateStr}(${dayOfWeek}) - ${day.count}件`;
         
-        tooltip.textContent = `${day.dateStr}(${dayOfWeek}) - ${day.count}件`;
-        tooltip.style.display = 'block';
-        tooltip.style.position = 'fixed';
-        tooltip.style.zIndex = '10000';
-        
-        // 一旦DOMに追加してサイズを取得
-        document.body.appendChild(tooltip);
-        
-        // 固定表示（タップ）の場合：マスの位置を基準に計算
+        // 固定表示（クリック/タップ）の場合：下部の固定エリアに表示
         if (pinned) {
-            // 位置を計算する関数
-            const calculatePosition = () => {
-                const dayRect = dayElement.getBoundingClientRect();
-                const tooltipRect = tooltip.getBoundingClientRect();
-                const margin = 8; // マスからの距離
-                const screenPadding = 10; // 画面端からの余白
-                
-                let left, top;
-                
-                // 優先順位: 右下 → 左下 → 右上 → 左上
-                // 1. 右下を試す
-                left = dayRect.right + margin;
-                top = dayRect.bottom + margin;
-                
-                // 右側がはみ出る場合は左側に
-                if (left + tooltipRect.width > window.innerWidth - screenPadding) {
-                    left = dayRect.left - tooltipRect.width - margin;
-                }
-                
-                // 下側がはみ出る場合は上側に
-                if (top + tooltipRect.height > window.innerHeight - screenPadding) {
-                    top = dayRect.top - tooltipRect.height - margin;
-                }
-                
-                // 左側がはみ出る場合は右端に寄せる
-                if (left < screenPadding) {
-                    left = dayRect.right + margin;
-                    // それでもはみ出る場合は画面右端に寄せる
-                    if (left + tooltipRect.width > window.innerWidth - screenPadding) {
-                        left = window.innerWidth - tooltipRect.width - screenPadding;
-                    }
-                }
-                
-                // 上側がはみ出る場合は下端に寄せる
-                if (top < screenPadding) {
-                    top = dayRect.bottom + margin;
-                    // それでもはみ出る場合は画面下端に寄せる
-                    if (top + tooltipRect.height > window.innerHeight - screenPadding) {
-                        top = window.innerHeight - tooltipRect.height - screenPadding;
-                    }
-                }
-                
-                tooltip.style.left = `${left}px`;
-                tooltip.style.top = `${top}px`;
-            };
-            
-            // モバイルはレイアウト確定を待つため200ms遅延、PCは即座に実行
-            if (isMobile) {
-                setTimeout(calculatePosition, 200);
-            } else {
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(calculatePosition);
-                });
+            const fixedTooltipArea = document.getElementById('contribution-fixed-tooltip');
+            if (fixedTooltipArea) {
+                fixedTooltipArea.textContent = tooltipText;
+                fixedTooltipArea.classList.add('show');
             }
             
             // セルに選択状態を追加
             dayElement.classList.add('selected');
+            
+            activeTooltipElement = dayElement;
+            isTooltipPinned = true;
+            activeDayData = day;
         } else {
-            // ホバー時：マウス位置を基準に計算（PCでの挙動を維持）
+            // ホバー時：従来通りマウス追従のツールチップ（選択状態は維持）
+            const tooltip = document.createElement('div');
+            tooltip.className = 'contribution-tooltip';
+            tooltip.textContent = tooltipText;
+            tooltip.style.display = 'block';
+            tooltip.style.position = 'fixed';
+            tooltip.style.zIndex = '10000';
+            
+            // 一旦DOMに追加してサイズを取得
+            document.body.appendChild(tooltip);
             const tooltipRect = tooltip.getBoundingClientRect();
-            let left = clientX + 10;
-            let top = clientY - 30;
+            
+            // visualViewportで座標変換（ページ座標 → ビューポート座標）
+            const viewport = window.visualViewport;
+            const offsetX = viewport ? viewport.offsetLeft : 0;
+            const offsetY = viewport ? viewport.offsetTop : 0;
+            const viewportWidth = viewport ? viewport.width : window.innerWidth;
+            const viewportHeight = viewport ? viewport.height : window.innerHeight;
+            
+            // マウス位置もビューポート座標に変換
+            let left = clientX - offsetX + 10;
+            let top = clientY - offsetY - 30;
             
             // 画面からはみ出る場合の調整
-            if (left + tooltipRect.width > window.innerWidth - 10) {
-                left = clientX - tooltipRect.width - 10;
+            if (left + tooltipRect.width > viewportWidth - 10) {
+                left = clientX - offsetX - tooltipRect.width - 10;
             }
             if (top < 10) {
-                top = clientY + 10;
+                top = clientY - offsetY + 10;
             }
-            if (top + tooltipRect.height > window.innerHeight - 10) {
-                top = clientY - tooltipRect.height - 10;
+            if (top + tooltipRect.height > viewportHeight - 10) {
+                top = clientY - offsetY - tooltipRect.height - 10;
             }
             
             tooltip.style.left = `${left}px`;
             tooltip.style.top = `${top}px`;
+            
+            // ホバーツールチップだけを設定（選択状態は維持）
+            activeTooltip = tooltip;
         }
-        
-        activeTooltip = tooltip;
-        activeTooltipElement = dayElement;
-        isTooltipPinned = pinned;
-        activeDayData = pinned ? day : null; // 固定表示時のみdayデータを保存
     }
     
     // ツールチップを非表示にする関数
@@ -1188,71 +1156,14 @@ function generateContributionGraph(contributionData) {
             activeTooltipElement.classList.remove('selected');
             activeTooltipElement = null;
         }
+        // 固定表示エリアも非表示に
+        const fixedTooltipArea = document.getElementById('contribution-fixed-tooltip');
+        if (fixedTooltipArea) {
+            fixedTooltipArea.classList.remove('show');
+            fixedTooltipArea.textContent = '';
+        }
         isTooltipPinned = false;
         activeDayData = null;
-    }
-    
-    // ツールチップ位置を更新する関数（ピンチズーム対応）
-    function updateTooltipPosition() {
-        if (!isTooltipPinned || !activeTooltip || !activeTooltipElement || !activeDayData) {
-            return;
-        }
-        
-        // 位置を計算する関数
-        const calculatePosition = () => {
-            if (!isTooltipPinned || !activeTooltip || !activeTooltipElement) {
-                return; // 実行中にツールチップが閉じられた場合
-            }
-            
-            const dayRect = activeTooltipElement.getBoundingClientRect();
-            const tooltipRect = activeTooltip.getBoundingClientRect();
-            const margin = 8;
-            const screenPadding = 10;
-            
-            let left, top;
-            
-            // 優先順位: 右下 → 左下 → 右上 → 左上
-            left = dayRect.right + margin;
-            top = dayRect.bottom + margin;
-            
-            // 右側がはみ出る場合は左側に
-            if (left + tooltipRect.width > window.innerWidth - screenPadding) {
-                left = dayRect.left - tooltipRect.width - margin;
-            }
-            
-            // 下側がはみ出る場合は上側に
-            if (top + tooltipRect.height > window.innerHeight - screenPadding) {
-                top = dayRect.top - tooltipRect.height - margin;
-            }
-            
-            // 左側がはみ出る場合は右端に寄せる
-            if (left < screenPadding) {
-                left = dayRect.right + margin;
-                if (left + tooltipRect.width > window.innerWidth - screenPadding) {
-                    left = window.innerWidth - tooltipRect.width - screenPadding;
-                }
-            }
-            
-            // 上側がはみ出る場合は下端に寄せる
-            if (top < screenPadding) {
-                top = dayRect.bottom + margin;
-                if (top + tooltipRect.height > window.innerHeight - screenPadding) {
-                    top = window.innerHeight - tooltipRect.height - screenPadding;
-                }
-            }
-            
-            activeTooltip.style.left = `${left}px`;
-            activeTooltip.style.top = `${top}px`;
-        };
-        
-        // モバイルは200ms遅延、PCは即座に実行
-        if (isMobile) {
-            setTimeout(calculatePosition, 200);
-        } else {
-            requestAnimationFrame(() => {
-                requestAnimationFrame(calculatePosition);
-            });
-        }
     }
     
     weeks.forEach(week => {
@@ -1265,29 +1176,36 @@ function generateContributionGraph(contributionData) {
             dayElement.dataset.date = day.dateStr;
             dayElement.dataset.count = day.count;
             
-            // ホバー時：ツールチップを一時表示（固定されていない場合のみ）
+            // ホバー時：ツールチップを表示（選択状態と並行可能）
             dayElement.addEventListener('mouseenter', (e) => {
-                if (!isTooltipPinned) {
-                    showTooltip(dayElement, day, e.clientX, e.clientY, false);
-                }
+                showTooltip(dayElement, day, e.clientX, e.clientY, false);
             });
             
-            // マウス移動：ツールチップを追従（固定されていない場合のみ）
+            // マウス移動：ツールチップを追従（ホバーツールチップのみ）
             dayElement.addEventListener('mousemove', (e) => {
-                if (activeTooltip && !isTooltipPinned) {
+                if (activeTooltip) {
                     const tooltipRect = activeTooltip.getBoundingClientRect();
-                    let left = e.clientX + 10;
-                    let top = e.clientY - 30;
+                    
+                    // visualViewportで座標変換（ページ座標 → ビューポート座標）
+                    const viewport = window.visualViewport;
+                    const offsetX = viewport ? viewport.offsetLeft : 0;
+                    const offsetY = viewport ? viewport.offsetTop : 0;
+                    const viewportWidth = viewport ? viewport.width : window.innerWidth;
+                    const viewportHeight = viewport ? viewport.height : window.innerHeight;
+                    
+                    // マウス位置もビューポート座標に変換
+                    let left = e.clientX - offsetX + 10;
+                    let top = e.clientY - offsetY - 30;
                     
                     // 画面からはみ出る場合の調整
-                    if (left + tooltipRect.width > window.innerWidth - 10) {
-                        left = e.clientX - tooltipRect.width - 10;
+                    if (left + tooltipRect.width > viewportWidth - 10) {
+                        left = e.clientX - offsetX - tooltipRect.width - 10;
                     }
                     if (top < 10) {
-                        top = e.clientY + 10;
+                        top = e.clientY - offsetY + 10;
                     }
-                    if (top + tooltipRect.height > window.innerHeight - 10) {
-                        top = e.clientY - tooltipRect.height - 10;
+                    if (top + tooltipRect.height > viewportHeight - 10) {
+                        top = e.clientY - offsetY - tooltipRect.height - 10;
                     }
                     
                     activeTooltip.style.left = `${left}px`;
@@ -1295,10 +1213,11 @@ function generateContributionGraph(contributionData) {
                 }
             });
             
-            // マウスを離す：ツールチップを消す（固定されていない場合のみ）
+            // マウスを離す：ホバーツールチップだけを消す（固定表示は維持）
             dayElement.addEventListener('mouseleave', () => {
-                if (!isTooltipPinned) {
-                    hideTooltip();
+                if (activeTooltip) {
+                    activeTooltip.remove();
+                    activeTooltip = null;
                 }
             });
             
@@ -1322,17 +1241,13 @@ function generateContributionGraph(contributionData) {
         weeksContainer.appendChild(weekElement);
     });
     
-    // 画面の他の場所をクリック/タップした時にツールチップを閉じる（固定時のみ）
+    // 画面の他の場所をクリック/タップした時に固定表示を閉じる
     document.addEventListener('click', (e) => {
-        if (activeTooltip && isTooltipPinned && !e.target.classList.contains('contribution-day')) {
+        if (isTooltipPinned && !e.target.classList.contains('contribution-day')) {
             hideTooltip();
         }
     });
     
-    // ピンチズーム時にツールチップ位置を更新
-    window.addEventListener('resize', () => {
-        updateTooltipPosition();
-    });
     
     mainContent.appendChild(weeksContainer);
     
@@ -1348,6 +1263,13 @@ function generateContributionGraph(contributionData) {
     mainContent.appendChild(weekdaysRight);
     
     graphContainer.appendChild(mainContent);
+    
+    // ヒートマップ下の固定ツールチップ表示エリア
+    const fixedTooltipArea = document.createElement('div');
+    fixedTooltipArea.className = 'contribution-tooltip-fixed';
+    fixedTooltipArea.id = 'contribution-fixed-tooltip';
+    graphContainer.appendChild(fixedTooltipArea);
+    
     container.appendChild(graphContainer);
     
     setTimeout(() => {
