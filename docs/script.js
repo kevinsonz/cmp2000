@@ -1760,23 +1760,78 @@ function smoothScrollToTop() {
 
 function smoothScrollToElement(elementId) {
     const element = document.getElementById(elementId);
-    if (element) {
-        element.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
+    if (!element) return;
+    
+    // 固定ヘッダーの高さを取得（スクロール後はコンパクトヘッダーになるため、その高さを想定）
+    const header = document.getElementById('main-header');
+    const compactHeader = header ? header.querySelector('.header-compact') : null;
+    
+    // コンパクトヘッダーの高さを取得（存在しない場合は現在のヘッダー高さ）
+    let targetHeaderHeight = 0;
+    if (compactHeader) {
+        // 一時的にコンパクトヘッダーを表示して高さを測定
+        const originalDisplay = compactHeader.style.display;
+        const originalPosition = compactHeader.style.position;
+        const originalOpacity = compactHeader.style.opacity;
+        const originalVisibility = compactHeader.style.visibility;
         
-        // ヒートマップ(コントリビューショングラフ)の場合、横スクロールを右端に移動
-        if (elementId === 'contribution-graph') {
-            // scrollIntoViewが完了するまで待つ
-            setTimeout(() => {
-                const graphWrapper = document.querySelector('.contribution-graph-wrapper');
-                if (graphWrapper) {
-                    // 横スクロールを最大値(右端)に設定
-                    graphWrapper.scrollLeft = graphWrapper.scrollWidth - graphWrapper.clientWidth;
-                }
-            }, 500); // スクロールアニメーションの完了を待つ
+        compactHeader.style.display = 'flex';
+        compactHeader.style.position = 'relative';
+        compactHeader.style.opacity = '1';
+        compactHeader.style.visibility = 'visible';
+        
+        targetHeaderHeight = compactHeader.offsetHeight;
+        
+        // 元に戻す
+        compactHeader.style.display = originalDisplay;
+        compactHeader.style.position = originalPosition;
+        compactHeader.style.opacity = originalOpacity;
+        compactHeader.style.visibility = originalVisibility;
+    } else if (header) {
+        targetHeaderHeight = header.offsetHeight;
+    }
+    
+    // 追加の余白（カード画像が見やすいように）
+    const additionalOffset = 20;
+    
+    // 要素の位置を取得
+    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+    
+    // スクロール先の位置を計算（コンパクトヘッダーの高さ + 余白分を引く）
+    const scrollToPosition = elementPosition - targetHeaderHeight - additionalOffset;
+    
+    // スムーズスクロール
+    window.scrollTo({
+        top: scrollToPosition,
+        behavior: 'smooth'
+    });
+    
+    // スクロール完了後に位置を微調整（ヘッダーの切り替えによるズレを補正）
+    setTimeout(() => {
+        const currentHeader = document.getElementById('main-header');
+        const currentHeaderHeight = currentHeader ? currentHeader.offsetHeight : 0;
+        const currentElementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const adjustedPosition = currentElementPosition - currentHeaderHeight - additionalOffset;
+        
+        // 現在位置と理想位置のズレが大きい場合のみ再調整
+        if (Math.abs(window.pageYOffset - adjustedPosition) > 5) {
+            window.scrollTo({
+                top: adjustedPosition,
+                behavior: 'smooth'
+            });
         }
+    }, 600); // スクロールアニメーションの完了を待つ
+    
+    // ヒートマップ(コントリビューショングラフ)の場合、横スクロールを右端に移動
+    if (elementId === 'contribution-graph') {
+        // scrollが完了するまで待つ
+        setTimeout(() => {
+            const graphWrapper = document.querySelector('.contribution-graph-wrapper');
+            if (graphWrapper) {
+                // 横スクロールを最大値(右端)に設定
+                graphWrapper.scrollLeft = graphWrapper.scrollWidth - graphWrapper.clientWidth;
+            }
+        }, 700); // 位置調整の後に実行
     }
 }
 

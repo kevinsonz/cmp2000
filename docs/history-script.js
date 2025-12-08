@@ -954,6 +954,24 @@ function updateJumpMenu() {
     divider1.innerHTML = '<hr class="dropdown-divider">';
     jumpMenuList.appendChild(divider1);
     
+    // フィルタ設定へのジャンプ
+    const filterItem = document.createElement('li');
+    const filterLink = document.createElement('a');
+    filterLink.className = 'dropdown-item';
+    filterLink.href = '#';
+    filterLink.textContent = 'フィルタ設定';
+    filterLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        scrollToFilterSettings();
+    });
+    filterItem.appendChild(filterLink);
+    jumpMenuList.appendChild(filterItem);
+    
+    // 区切り線
+    const divider2 = document.createElement('li');
+    divider2.innerHTML = '<hr class="dropdown-divider">';
+    jumpMenuList.appendChild(divider2);
+    
     // 記事が存在する年を収集
     const yearsWithData = new Set();
     historyData.forEach(item => {
@@ -1005,9 +1023,9 @@ function updateJumpMenu() {
     });
     
     // 区切り線
-    const divider2 = document.createElement('li');
-    divider2.innerHTML = '<hr class="dropdown-divider">';
-    jumpMenuList.appendChild(divider2);
+    const divider3 = document.createElement('li');
+    divider3.innerHTML = '<hr class="dropdown-divider">';
+    jumpMenuList.appendChild(divider3);
     
     // フッターへのジャンプ
     const footerItem = document.createElement('li');
@@ -1018,19 +1036,73 @@ function updateJumpMenu() {
 // 指定した年にスクロール
 function scrollToYear(year) {
     const element = document.getElementById(`year-${year}`);
-    if (element) {
-        const headerHeight = document.getElementById('main-header').offsetHeight;
-        const tableHeaderHeight = document.querySelector('.history-table thead').offsetHeight;
-        const offset = headerHeight + tableHeaderHeight + 10;
+    if (!element) return;
+    
+    // 固定ヘッダーの高さを取得（スクロール後はコンパクトヘッダーになるため、その高さを想定）
+    const header = document.getElementById('main-header');
+    const compactHeader = header ? header.querySelector('.header-compact') : null;
+    
+    // コンパクトヘッダーの高さを取得（存在しない場合は現在のヘッダー高さ）
+    let targetHeaderHeight = 0;
+    if (compactHeader) {
+        // 一時的にコンパクトヘッダーを表示して高さを測定
+        const originalDisplay = compactHeader.style.display;
+        const originalPosition = compactHeader.style.position;
+        const originalOpacity = compactHeader.style.opacity;
+        const originalVisibility = compactHeader.style.visibility;
         
-        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-        const offsetPosition = elementPosition - offset;
+        compactHeader.style.display = 'flex';
+        compactHeader.style.position = 'relative';
+        compactHeader.style.opacity = '1';
+        compactHeader.style.visibility = 'visible';
         
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth'
-        });
+        targetHeaderHeight = compactHeader.offsetHeight;
+        
+        // 元に戻す
+        compactHeader.style.display = originalDisplay;
+        compactHeader.style.position = originalPosition;
+        compactHeader.style.opacity = originalOpacity;
+        compactHeader.style.visibility = originalVisibility;
+    } else if (header) {
+        targetHeaderHeight = header.offsetHeight;
     }
+    
+    // テーブルヘッダーの高さを取得
+    const tableHeader = document.querySelector('.history-table thead');
+    const tableHeaderHeight = tableHeader ? tableHeader.offsetHeight : 0;
+    
+    // 追加の余白
+    const additionalOffset = 10;
+    
+    // 要素の位置を取得
+    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+    
+    // スクロール先の位置を計算（コンパクトヘッダー + テーブルヘッダー + 余白分を引く）
+    const offsetPosition = elementPosition - targetHeaderHeight - tableHeaderHeight - additionalOffset;
+    
+    // スムーズスクロール
+    window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+    });
+    
+    // スクロール完了後に位置を微調整（ヘッダーの切り替えによるズレを補正）
+    setTimeout(() => {
+        const currentHeader = document.getElementById('main-header');
+        const currentHeaderHeight = currentHeader ? currentHeader.offsetHeight : 0;
+        const currentTableHeader = document.querySelector('.history-table thead');
+        const currentTableHeaderHeight = currentTableHeader ? currentTableHeader.offsetHeight : 0;
+        const currentElementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const adjustedPosition = currentElementPosition - currentHeaderHeight - currentTableHeaderHeight - additionalOffset;
+        
+        // 現在位置と理想位置のズレが大きい場合のみ再調整
+        if (Math.abs(window.pageYOffset - adjustedPosition) > 5) {
+            window.scrollTo({
+                top: adjustedPosition,
+                behavior: 'smooth'
+            });
+        }
+    }, 600); // スクロールアニメーションの完了を待つ
 }
 
 // 現在年を更新
@@ -1180,37 +1252,99 @@ function initHeaderScroll() {
 // フィルタ設定へスクロールする関数
 function scrollToFilterSettings() {
     const filterSettings = document.getElementById('filterSettings');
-    if (filterSettings) {
-        const isOpen = filterSettings.classList.contains('show');
+    if (!filterSettings) return;
+    
+    // アコーディオンの見出しを含む親要素（.card）を取得
+    const filterCard = filterSettings.closest('.card');
+    if (!filterCard) return;
+    
+    const isOpen = filterSettings.classList.contains('show');
+    
+    // コンパクトヘッダーの高さを事前に取得
+    const header = document.getElementById('main-header');
+    const compactHeader = header ? header.querySelector('.header-compact') : null;
+    
+    let targetHeaderHeight = 0;
+    if (compactHeader) {
+        // 一時的にコンパクトヘッダーを表示して高さを測定
+        const originalDisplay = compactHeader.style.display;
+        const originalPosition = compactHeader.style.position;
+        const originalOpacity = compactHeader.style.opacity;
+        const originalVisibility = compactHeader.style.visibility;
         
-        if (!isOpen) {
-            // 閉じている場合は開く
-            const collapseElement = new bootstrap.Collapse(filterSettings, {
-                show: true
-            });
-            
-            // アコーディオンが開いた後にスクロール
-            setTimeout(() => {
-                const headerHeight = document.getElementById('main-header').offsetHeight;
-                const elementPosition = filterSettings.getBoundingClientRect().top + window.pageYOffset;
-                const offsetPosition = elementPosition - headerHeight - 20; // 余白を追加
-                
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: 'smooth'
-                });
-            }, 300); // アニメーション時間を考慮
-        } else {
-            // 既に開いている場合はスクロールのみ
-            const headerHeight = document.getElementById('main-header').offsetHeight;
-            const elementPosition = filterSettings.getBoundingClientRect().top + window.pageYOffset;
-            const offsetPosition = elementPosition - headerHeight - 20; // 余白を追加
+        compactHeader.style.display = 'flex';
+        compactHeader.style.position = 'relative';
+        compactHeader.style.opacity = '1';
+        compactHeader.style.visibility = 'visible';
+        
+        targetHeaderHeight = compactHeader.offsetHeight;
+        
+        // 元に戻す
+        compactHeader.style.display = originalDisplay;
+        compactHeader.style.position = originalPosition;
+        compactHeader.style.opacity = originalOpacity;
+        compactHeader.style.visibility = originalVisibility;
+    } else if (header) {
+        targetHeaderHeight = header.offsetHeight;
+    }
+    
+    const additionalOffset = 20;
+    
+    if (!isOpen) {
+        // 閉じている場合は開く
+        const collapseElement = new bootstrap.Collapse(filterSettings, {
+            show: true
+        });
+        
+        // アコーディオンが開いた後にスクロール（見出しを含む.card要素にスクロール）
+        setTimeout(() => {
+            const elementPosition = filterCard.getBoundingClientRect().top + window.pageYOffset;
+            const offsetPosition = elementPosition - targetHeaderHeight - additionalOffset;
             
             window.scrollTo({
                 top: offsetPosition,
                 behavior: 'smooth'
             });
-        }
+            
+            // スクロール完了後に位置を微調整
+            setTimeout(() => {
+                const currentHeader = document.getElementById('main-header');
+                const currentHeaderHeight = currentHeader ? currentHeader.offsetHeight : 0;
+                const currentElementPosition = filterCard.getBoundingClientRect().top + window.pageYOffset;
+                const adjustedPosition = currentElementPosition - currentHeaderHeight - additionalOffset;
+                
+                if (Math.abs(window.pageYOffset - adjustedPosition) > 5) {
+                    window.scrollTo({
+                        top: adjustedPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 600);
+        }, 300); // アニメーション時間を考慮
+    } else {
+        // 既に開いている場合はスクロールのみ（見出しを含む.card要素にスクロール）
+        const elementPosition = filterCard.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - targetHeaderHeight - additionalOffset;
+        
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+        
+        // スクロール完了後に位置を微調整
+        setTimeout(() => {
+            const currentHeader = document.getElementById('main-header');
+            const currentHeaderHeight = currentHeader ? currentHeader.offsetHeight : 0;
+            const currentElementPosition = filterCard.getBoundingClientRect().top + window.pageYOffset;
+            const adjustedPosition = currentElementPosition - currentHeaderHeight - additionalOffset;
+            
+            if (Math.abs(window.pageYOffset - adjustedPosition) > 5) {
+                window.scrollTo({
+                    top: adjustedPosition,
+                    behavior: 'smooth'
+                });
+            }
+        }, 600);
     }
 }
 

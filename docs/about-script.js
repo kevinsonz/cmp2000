@@ -482,18 +482,67 @@ function hideFilterUI() {
 // ヘッダーの高さを考慮してセクションにスクロール
 function scrollToSection(sectionId) {
     const section = document.getElementById(sectionId);
-    const header = document.getElementById('main-header');
+    if (!section) return;
     
-    if (section && header) {
-        const headerHeight = header.offsetHeight;
-        const sectionTop = section.getBoundingClientRect().top + window.pageYOffset;
-        const offsetPosition = sectionTop - headerHeight - 10; // 10pxの余白を追加
+    // 固定ヘッダーの高さを取得（スクロール後はコンパクトヘッダーになるため、その高さを想定）
+    const header = document.getElementById('main-header');
+    const compactHeader = header ? header.querySelector('.header-compact') : null;
+    
+    // コンパクトヘッダーの高さを取得（存在しない場合は現在のヘッダー高さ）
+    let targetHeaderHeight = 0;
+    if (compactHeader) {
+        // 一時的にコンパクトヘッダーを表示して高さを測定
+        const originalDisplay = compactHeader.style.display;
+        const originalPosition = compactHeader.style.position;
+        const originalOpacity = compactHeader.style.opacity;
+        const originalVisibility = compactHeader.style.visibility;
         
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth'
-        });
+        compactHeader.style.display = 'flex';
+        compactHeader.style.position = 'relative';
+        compactHeader.style.opacity = '1';
+        compactHeader.style.visibility = 'visible';
+        
+        targetHeaderHeight = compactHeader.offsetHeight;
+        
+        // 元に戻す
+        compactHeader.style.display = originalDisplay;
+        compactHeader.style.position = originalPosition;
+        compactHeader.style.opacity = originalOpacity;
+        compactHeader.style.visibility = originalVisibility;
+    } else if (header) {
+        targetHeaderHeight = header.offsetHeight;
     }
+    
+    // 追加の余白
+    const additionalOffset = 10;
+    
+    // 要素の位置を取得
+    const sectionTop = section.getBoundingClientRect().top + window.pageYOffset;
+    
+    // スクロール先の位置を計算（コンパクトヘッダーの高さ + 余白分を引く）
+    const offsetPosition = sectionTop - targetHeaderHeight - additionalOffset;
+    
+    // スムーズスクロール
+    window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+    });
+    
+    // スクロール完了後に位置を微調整（ヘッダーの切り替えによるズレを補正）
+    setTimeout(() => {
+        const currentHeader = document.getElementById('main-header');
+        const currentHeaderHeight = currentHeader ? currentHeader.offsetHeight : 0;
+        const currentSectionTop = section.getBoundingClientRect().top + window.pageYOffset;
+        const adjustedPosition = currentSectionTop - currentHeaderHeight - additionalOffset;
+        
+        // 現在位置と理想位置のズレが大きい場合のみ再調整
+        if (Math.abs(window.pageYOffset - adjustedPosition) > 5) {
+            window.scrollTo({
+                top: adjustedPosition,
+                behavior: 'smooth'
+            });
+        }
+    }, 600); // スクロールアニメーションの完了を待つ
 }
 
 // ページ読み込み時にURLハッシュをチェックして該当セクションに移動
