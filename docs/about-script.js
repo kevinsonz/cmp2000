@@ -16,6 +16,9 @@ let allBasicInfo = [];
 let allArchiveInfo = [];
 let allFamilyInfo = [];
 
+// 元のCSVテキストを保存（commentを取得するため）
+let basicInfoCsvText = '';
+
 // アコーディオン状態管理
 let accordionStates = {
     'common': true,   // ユニット活動：初期状態で開く
@@ -218,6 +221,43 @@ function closeAllAccordions() {
 // セクションナビゲーションを更新（削除）
 function updateSectionNavigation(filterTag = null) {
     // セクションナビゲーションは削除されたため、何もしない
+}
+
+// CSVから特定keyのcommentを取得するヘルパー関数
+function getCommentByKey(csvText, targetKey) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    
+    const keyIndex = headers.indexOf('key');
+    const commentIndex = headers.indexOf('comment');
+    
+    if (keyIndex === -1 || commentIndex === -1) return '';
+    
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        
+        if (values[keyIndex] === targetKey) {
+            return values[commentIndex] || '';
+        }
+    }
+    
+    return '';
 }
 
 // 基本情報CSVの解析
@@ -1047,19 +1087,25 @@ function generateAboutPage(filterTag = null) {
             const accordionBody = document.createElement('div');
             accordionBody.className = 'accordion-body-custom';
             
-            // 説明文を追加（けびんとリョウのみ）
-            if (category === 'けびんケビンソン(ソロ)') {
-                const descDiv = document.createElement('p');
-                descDiv.className = 'person-description';
-                descDiv.style.cssText = 'margin-bottom: 1rem; color: #6c757d; line-height: 1.5;';
-                descDiv.textContent = '2019年（コロナ禍）頃からの参画で、現在はCMP2000管理人の役割を担っている。「何か」をしたくて活動しており、現在も模索中。';
-                accordionBody.appendChild(descDiv);
+            // 説明文を追加（CSVのcommentから取得）
+            let descriptionKey = '';
+            if (category === 'ユニット活動') {
+                descriptionKey = 'cmp2000';
+            } else if (category === 'けびんケビンソン(ソロ)') {
+                descriptionKey = 'kevinKevinson';
             } else if (category === 'イイダリョウ(ソロ)') {
-                const descDiv = document.createElement('p');
-                descDiv.className = 'person-description';
-                descDiv.style.cssText = 'margin-bottom: 1rem; color: #6c757d; line-height: 1.5;';
-                descDiv.textContent = '2014年頃から参画しているCMP2000主要メンバー。多岐に渡るキャリアを経ており、現在はフロントエンドを中心としたエンジニア。';
-                accordionBody.appendChild(descDiv);
+                descriptionKey = 'ryoIida';
+            }
+            
+            if (descriptionKey && basicInfoCsvText) {
+                const description = getCommentByKey(basicInfoCsvText, descriptionKey);
+                if (description) {
+                    const descDiv = document.createElement('p');
+                    descDiv.className = 'person-description';
+                    descDiv.style.cssText = 'margin-bottom: 1rem; color: #6c757d; line-height: 1.5;';
+                    descDiv.textContent = description;
+                    accordionBody.appendChild(descDiv);
+                }
             }
             
             // アクティブなサイト（テーブル形式）
@@ -1370,6 +1416,7 @@ function generateAboutPage(filterTag = null) {
 function initializeAboutPage() {
     if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof ABOUT_DATA !== 'undefined') {
         console.log('ローカルモードで実行中（About）');
+        basicInfoCsvText = BASIC_INFO_CSV;
         allBasicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
         allArchiveInfo = parseArchiveCSV(ABOUT_DATA.ARCHIVE_CSV);
         allFamilyInfo = parseFamilyCSV(ABOUT_DATA.FAMILY_CSV);
@@ -1402,6 +1449,7 @@ function initializeAboutPage() {
             fetch(PUBLIC_FAMILY_CSV_URL).then(response => response.text())
         ])
         .then(([basicCsvText, archiveCsvText, familyCsvText]) => {
+            basicInfoCsvText = basicCsvText;
             allBasicInfo = parseBasicInfoCSV(basicCsvText);
             allArchiveInfo = parseArchiveCSV(archiveCsvText);
             allFamilyInfo = parseFamilyCSV(familyCsvText);
