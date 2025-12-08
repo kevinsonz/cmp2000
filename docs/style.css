@@ -397,6 +397,11 @@ a:hover {
     max-width: 960px;
 }
 
+/* フッター（ハッシュジャンプ用のオフセット） */
+#footer {
+    scroll-margin-top: 120px;
+}
+
 /* セクションナビゲーションバーのスタイル */
 .section-nav-wrapper {
     background-color: #ffffff;
@@ -470,6 +475,7 @@ a:hover {
     border-radius: 0.5rem;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    scroll-margin-top: 120px; /* 固定ヘッダーの高さ分のオフセット */
 }
 
 .accordion-header-custom {

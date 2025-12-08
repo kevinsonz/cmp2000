@@ -479,6 +479,79 @@ function hideFilterUI() {
     }
 }
 
+// ヘッダーの高さを考慮してセクションにスクロール
+function scrollToSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    const header = document.getElementById('main-header');
+    
+    if (section && header) {
+        const headerHeight = header.offsetHeight;
+        const sectionTop = section.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = sectionTop - headerHeight - 10; // 10pxの余白を追加
+        
+        window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// ページ読み込み時にURLハッシュをチェックして該当セクションに移動
+function handleInitialHash() {
+    const hash = window.location.hash.replace('#', '');
+    
+    // 有効なセクションIDのリスト
+    const validSections = ['common', 'kevin', 'ryo', 'staff', 'family', 'specialThanks'];
+    
+    if (hash && validSections.includes(hash)) {
+        // すべてのアコーディオンを閉じる
+        sectionInfo.forEach(info => {
+            const section = document.getElementById(info.id);
+            if (!section) return;
+            
+            const body = section.querySelector('.accordion-body-custom');
+            const icon = section.querySelector('.accordion-toggle-icon');
+            
+            if (body && icon) {
+                body.classList.remove('show');
+                icon.classList.add('collapsed');
+                accordionStates[info.id] = false;
+            }
+        });
+        
+        // 該当セクションのメインアコーディオンを開く
+        const targetSection = document.getElementById(hash);
+        if (targetSection) {
+            const body = targetSection.querySelector('.accordion-body-custom');
+            const icon = targetSection.querySelector('.accordion-toggle-icon');
+            
+            if (body && icon) {
+                body.classList.add('show');
+                icon.classList.remove('collapsed');
+                accordionStates[hash] = true;
+            }
+            
+            // 該当セクションのアーカイブアコーディオンも開く
+            const archiveBody = targetSection.querySelector('.archive-body');
+            const archiveIcon = targetSection.querySelector('.archive-toggle-icon');
+            
+            if (archiveBody && archiveIcon) {
+                archiveBody.classList.add('show');
+                archiveBody.style.display = 'block';
+                archiveIcon.classList.remove('collapsed');
+            }
+        }
+        
+        // ボタンの状態を更新
+        updateAccordionButtonStates();
+        
+        // スクロール位置を調整（CSSのscroll-margin-topと併用してより確実に）
+        setTimeout(() => {
+            scrollToSection(hash);
+        }, 500);
+    }
+}
+
 // ジャンプメニューを更新
 function updateJumpMenu(filterTag) {
     const dropdownMenu = document.getElementById('jumpMenuList');
@@ -571,6 +644,10 @@ function updateJumpMenu(filterTag) {
             link.className = 'dropdown-item';
             link.href = `#${section.id}`;
             link.textContent = section.name;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                scrollToSection(section.id);
+            });
             item.appendChild(link);
             dropdownMenu.appendChild(item);
         });
@@ -635,6 +712,10 @@ function updateJumpMenu(filterTag) {
             link.className = 'dropdown-item';
             link.href = `#${section.id}`;
             link.textContent = section.name;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                scrollToSection(section.id);
+            });
             item.appendChild(link);
             dropdownMenu.appendChild(item);
         });
@@ -651,6 +732,10 @@ function updateJumpMenu(filterTag) {
     footerLink.className = 'dropdown-item';
     footerLink.href = '#footer';
     footerLink.textContent = 'フッター';
+    footerLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        scrollToSection('footer');
+    });
     footerItem.appendChild(footerLink);
     dropdownMenu.appendChild(footerItem);
 }
@@ -1256,6 +1341,9 @@ function initializeAboutPage() {
         const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
         if (openAllBtnCompact) openAllBtnCompact.addEventListener('click', openAllAccordions);
         if (closeAllBtnCompact) closeAllBtnCompact.addEventListener('click', closeAllAccordions);
+        
+        // URLハッシュをチェックして該当セクションに移動
+        handleInitialHash();
     } else {
         console.log('オンラインモードで実行中（About）');
         
@@ -1285,6 +1373,9 @@ function initializeAboutPage() {
             const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
             if (openAllBtnCompact) openAllBtnCompact.addEventListener('click', openAllAccordions);
             if (closeAllBtnCompact) closeAllBtnCompact.addEventListener('click', closeAllAccordions);
+            
+            // URLハッシュをチェックして該当セクションに移動
+            handleInitialHash();
         })
         .catch(error => {
             console.error('公開CSVの読み込みに失敗しました:', error);
