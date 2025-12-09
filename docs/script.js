@@ -6,48 +6,76 @@ const NEW_BADGE_DAYS = 30;
 
 // 公開スプレッドシートのCSV URL
 const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
-// PUBLIC_MULTI_CSV_URLは廃止されました（MULTI_CSVは使用されなくなりました）
+const PUBLIC_MULTI_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=195059601&single=true&output=csv';
 const PUBLIC_SINGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=900915820&single=true&output=csv';
-const PUBLIC_CONTRIBUTION_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=928202728&single=true&output=csv';
 
 // グローバル変数（ハッシュタグフィルタリング用）
 let allHashTags = [];
 let currentFilterTag = null;
 let basicInfoData = null;
+let multiDataGlobal = null;
 let singleDataGlobal = null;
 let currentTab = 'general'; // 現在のタブを追跡
 
 // 環境判定
 const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined');
 
+// MULTI_CSVからコントリビューションデータを生成する関数
+function generateContributionDataFromMulti(multiData) {
+    if (!multiData || !Array.isArray(multiData) || multiData.length === 0) {
+        return [];
+    }
+    
+    // dateごとにグループ化してカウント
+    const dateCounts = {};
+    multiData.forEach(item => {
+        if (item.date) {
+            dateCounts[item.date] = (dateCounts[item.date] || 0) + 1;
+        }
+    });
+    
+    // {date: '2024-12-09', count: 3} の形式に変換
+    return Object.keys(dateCounts).map(date => ({
+        date: date,
+        count: dateCounts[date]
+    }));
+}
+
 if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined') {
     console.log('ローカルモードで実行中');
     const basicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
+    const multiData = TEST_DATA.MULTI_CSV ? parseMultiCSV(TEST_DATA.MULTI_CSV) : [];
     const singleData = parseSingleCSV(TEST_DATA.SINGLE_CSV);
-    const contributionData = parseContributionCSV(TEST_DATA.CONTRIBUTION_CSV);
+    const contributionData = generateContributionDataFromMulti(multiData);
     
     basicInfoData = basicInfo;
+    multiDataGlobal = multiData;
     singleDataGlobal = singleData;
     allHashTags = collectAllHashTags(basicInfo);
     
     generateCards(basicInfo, singleData);
     loadFeeds(singleData);
     generateContributionGraph(contributionData);
-    updateJumpMenuForCurrentTab(); // ローカルモード時はここでジャンプメニューを更新
+    updateJumpMenuForCurrentTab();
 } else {
     console.log('オンラインモードで実行中');
     
     Promise.all([
         fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
-        fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text()),
-        fetch(PUBLIC_CONTRIBUTION_CSV_URL).then(response => response.text())
+        fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()).catch(err => {
+            console.warn('MULTI_CSV読み込み失敗:', err);
+            return ''; // 空文字列を返して処理を継続
+        }),
+        fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text())
     ])
-    .then(([basicCsvText, singleCsvText, contributionCsvText]) => {
+    .then(([basicCsvText, multiCsvText, singleCsvText]) => {
         const basicInfo = parseBasicInfoCSV(basicCsvText);
+        const multiData = multiCsvText ? parseMultiCSV(multiCsvText) : [];
         const singleData = parseSingleCSV(singleCsvText);
-        const contributionData = parseContributionCSV(contributionCsvText);
+        const contributionData = generateContributionDataFromMulti(multiData);
         
         basicInfoData = basicInfo;
+        multiDataGlobal = multiData;
         singleDataGlobal = singleData;
         allHashTags = collectAllHashTags(basicInfo);
         
@@ -220,10 +248,19 @@ function parseBasicInfoCSV(csvText) {
     return items;
 }
 
-// CSV解析関数（Multi用） - 廃止されました（MULTI_CSVは使用されなくなりました）
-/*
+// CSV解析関数（Multi用）
 function parseMultiCSV(csvText) {
+    if (!csvText || csvText.trim() === '') {
+        console.warn('parseMultiCSV: 空のCSVテキストが渡されました');
+        return [];
+    }
+    
     const lines = csvText.trim().split('\n');
+    if (lines.length <= 1) {
+        console.warn('parseMultiCSV: CSVにデータ行がありません');
+        return [];
+    }
+    
     const headers = lines[0].split(',').map(h => h.trim());
     const items = [];
     
@@ -232,8 +269,15 @@ function parseMultiCSV(csvText) {
     const linkIndex = headers.indexOf('link');
     const dateIndex = headers.indexOf('date');
     
+    if (keyIndex === -1 || titleIndex === -1) {
+        console.warn('parseMultiCSV: 必要なカラム（key, title）が見つかりません');
+        return [];
+    }
+    
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
+        if (!line || line.trim() === '') continue; // 空行をスキップ
+        
         const values = [];
         let currentValue = '';
         let insideQuotes = false;
@@ -257,14 +301,13 @@ function parseMultiCSV(csvText) {
                 key: values[keyIndex],
                 title: values[titleIndex],
                 link: values[linkIndex] || '',
-                pubDate: values[dateIndex] || '' // dateをpubDateとして使用
+                date: values[dateIndex] || '' // dateフィールドとして使用
             });
         }
     }
     
     return items;
 }
-*/
 
 // keyを基にbasic-info.jsから情報を取得するヘルパー関数
 function getBasicInfoByKey(key) {
@@ -318,7 +361,7 @@ function parseSingleCSV(csvText) {
                 key: removeQuotes(values[keyIndex]),
                 title: removeQuotes(values[titleIndex]),
                 link: removeQuotes(values[linkIndex] || ''),
-                pubDate: removeQuotes(values[dateIndex] || '')
+                date: removeQuotes(values[dateIndex] || '')
             });
         }
     }
@@ -327,28 +370,6 @@ function parseSingleCSV(csvText) {
 }
 
 // CSV解析関数（Contribution用）
-function parseContributionCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const items = [];
-    
-    const dateIndex = headers.indexOf('date');
-    const countIndex = headers.indexOf('count');
-    
-    for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        
-        if (values[dateIndex] && values[countIndex]) {
-            items.push({
-                date: values[dateIndex],
-                count: parseInt(values[countIndex], 10) || 0
-            });
-        }
-    }
-    
-    return items;
-}
-
 // カード自動生成関数（フィルタ対応）
 
 // タブごとのハッシュタグ一覧を表示
@@ -431,12 +452,12 @@ function generateCards(basicInfo, singleData, filterTag = null) {
     // 各キーのデータを日付順にソート
     Object.keys(singleDataByKey).forEach(key => {
         singleDataByKey[key].sort((a, b) => {
-            if (!a.pubDate && !b.pubDate) return 0;
-            if (!a.pubDate) return -1;
-            if (!b.pubDate) return 1;
+            if (!a.date && !b.date) return 0;
+            if (!a.date) return -1;
+            if (!b.date) return 1;
             
-            const dateA = new Date(a.pubDate);
-            const dateB = new Date(b.pubDate);
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
             return dateB - dateA; // 新しい順
         });
     });
@@ -463,11 +484,11 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         
         const latestArticle = articles[0];
         
-        if (!latestArticle.pubDate) {
+        if (!latestArticle.date) {
             return false;
         }
         
-        const articleDate = new Date(latestArticle.pubDate);
+        const articleDate = new Date(latestArticle.date);
         const today = new Date();
         const diffTime = today - articleDate;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -496,16 +517,14 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         // RSSフィードのHTMLを生成（includeFeedがtrueの場合）
         let feedContentHtml = '';
         if (includeFeed) {
-            console.log(`カード ${site.key} のフィード生成:`, singleDataByKey[site.key] ? `${singleDataByKey[site.key].length}件` : 'データなし');
-            
             if (singleDataByKey[site.key]) {
                     const articles = singleDataByKey[site.key].slice(0, singleMaxLength);
                 feedContentHtml = articles.map(item => {
                     if (!item.title) return '';
                     
                     let dateSpan = '';
-                    if (item.pubDate) {
-                        const date = new Date(item.pubDate);
+                    if (item.date) {
+                        const date = new Date(item.date);
                         const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
                         
                         const today = new Date();
@@ -733,7 +752,7 @@ function loadFeeds(singleData) {
         let currentYear = null;
         
         singleData.slice(0, multiMaxLength).forEach(item => {
-            const date = item.pubDate ? new Date(item.pubDate) : null;
+            const date = item.date ? new Date(item.date) : null;
             const year = date ? date.getFullYear() : null;
             const month = date ? String(date.getMonth() + 1).padStart(2, '0') : null;
             const day = date ? String(date.getDate()).padStart(2, '0') : null;
@@ -832,18 +851,13 @@ function loadFeeds(singleData) {
 }
 
 function loadSingleFeeds(singleData, keys) {
-    console.log('loadSingleFeeds called with keys:', keys);
-    console.log('singleData length:', singleData ? singleData.length : 'null');
-    
     keys.forEach(key => {
         const feedContainer = document.getElementById(`single-rss-feed-container-${key}`);
-        console.log(`Looking for container: single-rss-feed-container-${key}`, feedContainer ? 'FOUND' : 'NOT FOUND');
         
         if (!feedContainer) return;
         
         // 既に内容がある場合はスキップ（重複を防ぐ）
         if (feedContainer.innerHTML.trim() !== '') {
-            console.log(`Container ${key} already has content, skipping`);
             return;
         }
         
@@ -851,18 +865,16 @@ function loadSingleFeeds(singleData, keys) {
             .filter(item => item.key === key)
             .sort((a, b) => {
                 // 日付なし項目を最上位に
-                if (!a.pubDate && !b.pubDate) return 0;
-                if (!a.pubDate) return -1;
-                if (!b.pubDate) return 1;
+                if (!a.date && !b.date) return 0;
+                if (!a.date) return -1;
+                if (!b.date) return 1;
                 
                 // 日付あり項目は新しい順（降順）
-                const dateA = new Date(a.pubDate);
-                const dateB = new Date(b.pubDate);
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
                 return dateB - dateA;
             })
             .slice(0, singleMaxLength);
-        
-        console.log(`Filtered data for ${key}:`, filteredData.length, 'items');
         
         filteredData.forEach(item => {
             if (!item.title) return;
@@ -872,8 +884,8 @@ function loadSingleFeeds(singleData, keys) {
             articleElement.style.fontSize = '0.9rem';
             
             let dateSpan = '';
-            if (item.pubDate) {
-                const date = new Date(item.pubDate);
+            if (item.date) {
+                const date = new Date(item.date);
                 const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
                 
                 const today = new Date();
@@ -931,7 +943,7 @@ function generateContributionGraph(contributionData) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-        return `${year}/${month}/${day}`;
+        return `${year}-${month}-${day}`;
     }
     
     const weeks = [];
@@ -1069,38 +1081,11 @@ function generateContributionGraph(contributionData) {
     
     // ツールチップを表示する関数
     function showTooltip(dayElement, day, clientX, clientY, pinned = false) {
-        // 既存のホバーツールチップを削除（固定表示は維持）
-        if (activeTooltip && !isTooltipPinned) {
-            activeTooltip.remove();
-            activeTooltip = null;
-        }
-        
-        // 固定表示の場合のみ、前のセルの選択状態を解除
-        if (pinned && activeTooltipElement) {
-            activeTooltipElement.classList.remove('selected');
-        }
-        
-        // 曜日を取得
-        const date = new Date(day.dateStr);
-        const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
-        const tooltipText = `${day.dateStr}(${dayOfWeek}) - ${day.count}件`;
-        
-        // 固定表示（クリック/タップ）の場合：下部の固定エリアに表示
+        // 固定表示（クリック/タップ）の場合：データテーブルを更新
         if (pinned) {
-            const fixedTooltipArea = document.getElementById('contribution-fixed-tooltip');
-            if (fixedTooltipArea) {
-                fixedTooltipArea.textContent = tooltipText;
-                // 位置を再計算（テキスト変更で幅が変わる可能性があるため）
-                setTimeout(() => {
-                    const graphWrapper = document.querySelector('.contribution-graph-wrapper');
-                    if (graphWrapper) {
-                        const scrollLeft = graphWrapper.scrollLeft;
-                        const visibleWidth = graphWrapper.clientWidth;
-                        const tooltipWidth = fixedTooltipArea.offsetWidth;
-                        const centerPosition = scrollLeft + (visibleWidth / 2) - (tooltipWidth / 2);
-                        fixedTooltipArea.style.left = `${centerPosition}px`;
-                    }
-                }, 0);
+            // 前のセルの選択状態を解除
+            if (activeTooltipElement) {
+                activeTooltipElement.classList.remove('selected');
             }
             
             // セルに選択状態を追加
@@ -1109,8 +1094,25 @@ function generateContributionGraph(contributionData) {
             activeTooltipElement = dayElement;
             isTooltipPinned = true;
             activeDayData = day;
+            
+            // データテーブルを更新（関数が存在する場合のみ）
+            if (typeof updateDataTable === 'function') {
+                updateDataTable(day.dateStr);
+            }
         } else {
-            // ホバー時：従来通りマウス追従のツールチップ（選択状態は維持）
+            // ホバー時：既存のホバーツールチップを削除（固定表示は維持）
+            if (activeTooltip && !isTooltipPinned) {
+                activeTooltip.remove();
+                activeTooltip = null;
+            }
+            
+            // 曜日を取得
+            const date = new Date(day.dateStr);
+            const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+            const formattedDate = day.dateStr.replace(/-/g, '/');
+            const tooltipText = `${formattedDate}(${dayOfWeek}) - ${day.count}件`;
+            
+            // ホバー時：マウス追従のツールチップ（選択状態は維持）
             const tooltip = document.createElement('div');
             tooltip.className = 'contribution-tooltip';
             tooltip.textContent = tooltipText;
@@ -1162,24 +1164,13 @@ function generateContributionGraph(contributionData) {
             activeTooltipElement.classList.remove('selected');
             activeTooltipElement = null;
         }
-        // 固定表示エリアを初期テキストに戻す
-        const fixedTooltipArea = document.getElementById('contribution-fixed-tooltip');
-        if (fixedTooltipArea) {
-            fixedTooltipArea.textContent = 'セルを選択すると件数が確認できます';
-            // 位置を再計算
-            setTimeout(() => {
-                const graphWrapper = document.querySelector('.contribution-graph-wrapper');
-                if (graphWrapper) {
-                    const scrollLeft = graphWrapper.scrollLeft;
-                    const visibleWidth = graphWrapper.clientWidth;
-                    const tooltipWidth = fixedTooltipArea.offsetWidth;
-                    const centerPosition = scrollLeft + (visibleWidth / 2) - (tooltipWidth / 2);
-                    fixedTooltipArea.style.left = `${centerPosition}px`;
-                }
-            }, 0);
-        }
         isTooltipPinned = false;
         activeDayData = null;
+        
+        // データテーブルをクリア（関数が存在する場合のみ）
+        if (typeof clearDataTable === 'function') {
+            clearDataTable();
+        }
     }
     
     weeks.forEach(week => {
@@ -1284,48 +1275,165 @@ function generateContributionGraph(contributionData) {
     
     container.appendChild(graphContainer);
     
-    // 横スクロールに追従させる処理
+    // 横スクロールを右端に初期設定
     const graphWrapper = document.querySelector('.contribution-graph-wrapper');
-    
-    // ヒートマップ下の固定ツールチップ表示エリア（横スクロールに追従）
-    const fixedTooltipArea = document.createElement('div');
-    fixedTooltipArea.className = 'contribution-tooltip-fixed';
-    fixedTooltipArea.id = 'contribution-fixed-tooltip';
-    fixedTooltipArea.textContent = 'セルを選択すると件数が確認できます'; // 初期テキスト
-    fixedTooltipArea.style.display = 'block'; // 明示的に表示
-    
     if (graphWrapper) {
-        // graphWrapperの末尾に追加（overflow-y: hiddenの影響を受けないように）
-        graphWrapper.appendChild(fixedTooltipArea);
-        
-        // 初期位置を設定
-        updateTooltipPosition();
-        
-        // スクロールイベントで位置を更新
-        graphWrapper.addEventListener('scroll', updateTooltipPosition);
-        
-        // リサイズイベントでも位置を更新
-        window.addEventListener('resize', updateTooltipPosition);
-        
-        // 初期スクロール位置を右端に設定
         setTimeout(() => {
             graphWrapper.scrollLeft = graphWrapper.scrollWidth;
-            updateTooltipPosition();
         }, 100);
     }
     
-    // ツールチップ位置を更新する関数
-    function updateTooltipPosition() {
-        if (!graphWrapper || !fixedTooltipArea) return;
+    // データテーブル表示エリアを追加（.contribution-graph-wrapperの外、兄弟要素として）
+    if (graphWrapper && graphWrapper.parentElement) {
+        const dataTableContainer = document.createElement('div');
+        dataTableContainer.className = 'contribution-data-table-container';
+        dataTableContainer.id = 'contribution-data-table';
         
-        const scrollLeft = graphWrapper.scrollLeft;
-        const visibleWidth = graphWrapper.clientWidth;
-        const tooltipWidth = fixedTooltipArea.offsetWidth || 200; // デフォルト200px
+        // 初期状態のHTML
+        dataTableContainer.innerHTML = `
+            <div class="data-table-header">
+                <strong>選択日付:</strong> <span id="selected-date-display">日付を選択してください</span>
+            </div>
+            <div class="data-table-content" id="data-table-content">
+                <p class="text-muted text-center">セルを選択すると投稿内容が表示されます</p>
+            </div>
+        `;
         
-        // 画面中央に配置する計算
-        const centerPosition = scrollLeft + (visibleWidth / 2) - (tooltipWidth / 2);
+        // graphWrapperの次の兄弟要素として挿入
+        graphWrapper.parentElement.insertBefore(dataTableContainer, graphWrapper.nextSibling);
+    }
+}
+
+// データテーブルを更新する関数
+function updateDataTable(dateStr) {
+    const dateDisplay = document.getElementById('selected-date-display');
+    const tableContent = document.getElementById('data-table-content');
+    
+    if (!dateDisplay || !tableContent) {
+        console.warn('Data table elements not found');
+        return;
+    }
+    
+    // 日付を表示（yyyy/mm/dd(aaa)形式）
+    const date = new Date(dateStr);
+    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+    const formattedDate = dateStr.replace(/-/g, '/') + '(' + dayOfWeek + ')';
+    dateDisplay.textContent = formattedDate;
+    
+    // 必要なデータが揃っているかチェック
+    if (!multiDataGlobal || !Array.isArray(multiDataGlobal) || multiDataGlobal.length === 0) {
+        tableContent.innerHTML = '<p class="text-muted text-center">データがありません</p>';
+        return;
+    }
+    
+    if (!basicInfoData || !Array.isArray(basicInfoData) || basicInfoData.length === 0) {
+        console.warn('basicInfoData is not available');
+        tableContent.innerHTML = '<p class="text-muted text-center">データがありません</p>';
+        return;
+    }
+    
+    const matchingData = multiDataGlobal.filter(item => item.date === dateStr);
+    
+    if (matchingData.length === 0) {
+        tableContent.innerHTML = '<p class="text-muted text-center">データがありません</p>';
+        return;
+    }
+    
+    // データを組み合わせて表示用配列を作成
+    const displayData = matchingData.map(multiItem => {
+        // basicInfoのkeyがmultiItemのkeyで始まるものを取得
+        const basicInfo = basicInfoData.find(basic => basic.key.startsWith(multiItem.key));
         
-        fixedTooltipArea.style.left = `${centerPosition}px`;
+        if (!basicInfo) {
+            console.warn(`No matching basicInfo found for key: ${multiItem.key}`);
+            return null;
+        }
+        
+        return {
+            summary: basicInfo.summary || '',
+            tabId: basicInfo.tabId || '',
+            siteTitle: basicInfo.siteTitle || '',
+            siteUrl: basicInfo.siteUrl || '',
+            title: multiItem.title || '',
+            link: multiItem.link || ''
+        };
+    }).filter(item => item !== null);
+    
+    if (displayData.length === 0) {
+        tableContent.innerHTML = '<p class="text-muted text-center">データがありません</p>';
+        return;
+    }
+    
+    // PC版: テーブル形式
+    const tableHTML = `
+        <div class="data-table-desktop">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Tab</th>
+                        <th style="width: 25%;">Site</th>
+                        <th style="width: 55%;">Title（投稿内容）</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${displayData.map(item => `
+                        <tr>
+                            <td>
+                                <a href="javascript:void(0);" onclick="switchTab('${item.tabId}'); return false;" class="text-decoration-none">
+                                    ${item.summary}
+                                </a>
+                            </td>
+                            <td>
+                                ${item.siteUrl ? `<a href="${item.siteUrl}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">${item.siteTitle}</a>` : item.siteTitle}
+                            </td>
+                            <td>
+                                <strong>
+                                    ${item.link ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">${item.title}</a>` : item.title}
+                                </strong>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    // モバイル版: カード形式
+    const cardsHTML = `
+        <div class="data-table-mobile">
+            ${displayData.map(item => `
+                <div class="data-card">
+                    <div class="data-card-title">
+                        ${item.link ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">${item.title}</a>` : item.title}
+                    </div>
+                    <div class="data-card-meta">
+                        <span class="data-card-label">Tab:</span>
+                        <a href="javascript:void(0);" onclick="switchTab('${item.tabId}'); return false;" class="text-decoration-none">
+                            ${item.summary}
+                        </a>
+                        <span class="data-card-separator">|</span>
+                        <span class="data-card-label">Site:</span>
+                        ${item.siteUrl ? `<a href="${item.siteUrl}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">${item.siteTitle}</a>` : item.siteTitle}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    tableContent.innerHTML = tableHTML + cardsHTML;
+}
+
+// データテーブルをクリアする関数
+function clearDataTable() {
+    const dateDisplay = document.getElementById('selected-date-display');
+    const tableContent = document.getElementById('data-table-content');
+    
+    if (dateDisplay) {
+        dateDisplay.textContent = '日付を選択してください';
+    }
+    
+    if (tableContent) {
+        tableContent.innerHTML = '<p class="text-muted text-center">セルを選択すると投稿内容が表示されます</p>';
     }
 }
 
@@ -1597,13 +1705,13 @@ function generateTabLinksSection() {
         // 該当する記事を検索（keyプレフィックスで一致するもの）
         const keyPrefix = tabKeyPrefixMap[tabInfo.tabId] || tabInfo.tabId;
         const articles = singleDataGlobal.filter(article => 
-            article.key.startsWith(keyPrefix) && article.pubDate // pubDateがある記事のみ
+            article.key.startsWith(keyPrefix) && article.date // pubDateがある記事のみ
         );
         
         // 最新10件を取得
         const sortedArticles = articles.sort((a, b) => {
-            const dateA = new Date(a.pubDate);
-            const dateB = new Date(b.pubDate);
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
             // Invalid Dateの場合は後ろに配置
             if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
             if (isNaN(dateA.getTime())) return 1;
@@ -1615,8 +1723,8 @@ function generateTabLinksSection() {
         
         // NEW!!バッジの表示判定
         let showNewBadge = false;
-        if (latestArticle && latestArticle.pubDate) {
-            const articleDate = new Date(latestArticle.pubDate);
+        if (latestArticle && latestArticle.date) {
+            const articleDate = new Date(latestArticle.date);
             const today = new Date();
             const diffTime = today - articleDate;
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -1626,8 +1734,8 @@ function generateTabLinksSection() {
         // RSSフィード形式のHTML生成（日付とNew!!バッジ付き）
         const feedItemsHTML = sortedArticles.map(article => {
             let dateSpan = '';
-            if (article.pubDate) {
-                const date = new Date(article.pubDate);
+            if (article.date) {
+                const date = new Date(article.date);
                 const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
                 
                 const today = new Date();

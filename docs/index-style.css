@@ -487,30 +487,6 @@
     background-color: white;
     border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    position: relative; /* 固定表示エリアの基準点 */
-    padding-bottom: 60px; /* 固定表示エリア用のスペースを確保 */
-}
-
-/* ヒートマップ下の固定ツールチップ表示エリア */
-.contribution-tooltip-fixed {
-    position: absolute;
-    bottom: 10px; /* wrapperの下部から10px */
-    text-align: center;
-    padding: 10px 20px;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    border-radius: 6px;
-    font-size: 12px;
-    min-height: 20px;
-    min-width: 200px; /* 最小幅を確保 */
-    display: block; /* 常に表示 */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    white-space: nowrap; /* 改行を防ぐ */
-}
-
-/* contribution-graph-containerに相対位置指定を追加 */
-.contribution-graph-container {
-    position: relative;
 }
 
 /* セルのホバー時のスタイル */
@@ -560,12 +536,179 @@
         max-width: 900px;
         margin: 0 auto;
         padding: 20px 10px; /* 拡大による余白を確保 */
-        padding-bottom: 80px; /* 固定表示エリア用のスペースを確保（拡大を考慮） */
     }
     
     /* グラフ全体を1.2倍に拡大 */
     .contribution-graph-container {
         transform: scale(1.2);
         transform-origin: center center;
+    }
+}
+
+/* =================================
+   データテーブル表示エリアのスタイル
+   ================================= */
+
+.contribution-data-table-container {
+    max-width: 960px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.data-table-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 1rem;
+}
+
+.data-table-header strong {
+    color: #495057;
+}
+
+#selected-date-display {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.data-table-content {
+    min-height: 100px;
+    max-height: 210px !important; /* 約3件分の高さに制限（ヘッダー含む） */
+    overflow-y: auto !important; /* 4件以上で縦スクロール */
+    overflow-x: hidden;
+}
+
+/* データテーブルのスクロールバーのスタイル（Webkit系ブラウザ） */
+.data-table-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.data-table-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.data-table-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.data-table-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* PC版: テーブル形式 */
+.data-table-desktop {
+    display: block;
+}
+
+.data-table-desktop .table {
+    margin-bottom: 0;
+}
+
+.data-table-desktop .table th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.data-table-desktop .table td {
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+.data-table-desktop .table td a {
+    color: #dc3545 !important;
+    transition: color 0.2s;
+}
+
+.data-table-desktop .table td a:hover {
+    color: #b02a37 !important;
+    text-decoration: underline;
+}
+
+/* モバイル版: カード形式（初期状態は非表示） */
+.data-table-mobile {
+    display: none;
+}
+
+/* モバイル用のレスポンシブ対応 */
+@media (max-width: 767px) {
+    .contribution-data-table-container {
+        margin: 1rem;
+        padding: 1rem;
+    }
+    
+    /* データテーブルの高さ制限 */
+    .data-table-content {
+        max-height: 260px !important; /* モバイルでは約3件分の高さ（カード形式） */
+    }
+    
+    /* PC版を非表示 */
+    .data-table-desktop {
+        display: none;
+    }
+    
+    /* モバイル版を表示 */
+    .data-table-mobile {
+        display: block;
+    }
+    
+    .data-card {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .data-card:last-child {
+        margin-bottom: 0;
+    }
+    
+    .data-card-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+    }
+    
+    .data-card-title a {
+        color: #dc3545 !important;
+        text-decoration: none;
+    }
+    
+    .data-card-title a:hover {
+        text-decoration: underline;
+    }
+    
+    .data-card-meta {
+        font-size: 0.9rem;
+        color: #6c757d;
+        line-height: 1.6;
+    }
+    
+    .data-card-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .data-card-separator {
+        margin: 0 0.25rem;
+    }
+    
+    .data-card-meta a {
+        color: #dc3545 !important;
+        text-decoration: none;
+    }
+    
+    .data-card-meta a:hover {
+        text-decoration: underline;
     }
 }
