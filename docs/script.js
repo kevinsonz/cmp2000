@@ -23,8 +23,11 @@ const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_C
 // MULTI_CSVからコントリビューションデータを生成する関数
 function generateContributionDataFromMulti(multiData) {
     if (!multiData || !Array.isArray(multiData) || multiData.length === 0) {
+        console.warn('generateContributionDataFromMulti: multiDataが空です');
         return [];
     }
+    
+    console.log('generateContributionDataFromMulti: multiData件数:', multiData.length);
     
     // dateごとにグループ化してカウント
     const dateCounts = {};
@@ -34,11 +37,18 @@ function generateContributionDataFromMulti(multiData) {
         }
     });
     
+    console.log('generateContributionDataFromMulti: ユニークな日付数:', Object.keys(dateCounts).length);
+    console.log('generateContributionDataFromMulti: サンプルデータ:', Object.keys(dateCounts).slice(0, 5));
+    
     // {date: '2024-12-09', count: 3} の形式に変換
-    return Object.keys(dateCounts).map(date => ({
+    const result = Object.keys(dateCounts).map(date => ({
         date: date,
         count: dateCounts[date]
     }));
+    
+    console.log('generateContributionDataFromMulti: 生成されたデータ件数:', result.length);
+    
+    return result;
 }
 
 if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined') {
@@ -261,13 +271,19 @@ function parseMultiCSV(csvText) {
         return [];
     }
     
+    console.log('parseMultiCSV: 行数:', lines.length);
+    
     const headers = lines[0].split(',').map(h => h.trim());
+    console.log('parseMultiCSV: ヘッダー:', headers);
+    
     const items = [];
     
     const keyIndex = headers.indexOf('key');
     const titleIndex = headers.indexOf('title');
     const linkIndex = headers.indexOf('link');
     const dateIndex = headers.indexOf('date');
+    
+    console.log('parseMultiCSV: dateインデックス:', dateIndex);
     
     if (keyIndex === -1 || titleIndex === -1) {
         console.warn('parseMultiCSV: 必要なカラム（key, title）が見つかりません');
@@ -297,13 +313,24 @@ function parseMultiCSV(csvText) {
         values.push(currentValue.trim());
         
         if (values[keyIndex] && values[titleIndex]) {
+            // 日付形式を統一（yyyy/mm/dd → yyyy-mm-dd）
+            let dateValue = values[dateIndex] || '';
+            if (dateValue && dateValue.includes('/')) {
+                dateValue = dateValue.replace(/\//g, '-');
+            }
+            
             items.push({
                 key: values[keyIndex],
                 title: values[titleIndex],
                 link: values[linkIndex] || '',
-                date: values[dateIndex] || '' // dateフィールドとして使用
+                date: dateValue
             });
         }
+    }
+    
+    console.log('parseMultiCSV: パース完了。アイテム数:', items.length);
+    if (items.length > 0) {
+        console.log('parseMultiCSV: 最初の3件:', items.slice(0, 3));
     }
     
     return items;
@@ -357,11 +384,17 @@ function parseSingleCSV(csvText) {
         };
         
         if (values[keyIndex] && values[titleIndex]) {
+            // 日付形式を統一（yyyy/mm/dd → yyyy-mm-dd）
+            let dateValue = removeQuotes(values[dateIndex] || '');
+            if (dateValue && dateValue.includes('/')) {
+                dateValue = dateValue.replace(/\//g, '-');
+            }
+            
             items.push({
                 key: removeQuotes(values[keyIndex]),
                 title: removeQuotes(values[titleIndex]),
                 link: removeQuotes(values[linkIndex] || ''),
-                date: removeQuotes(values[dateIndex] || '')
+                date: dateValue
             });
         }
     }
