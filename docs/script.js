@@ -142,12 +142,37 @@ function applyHashTagFilter(tag) {
     currentFilterTag = tag;
     generateCards(basicInfoData, singleDataGlobal, tag);
     showFilterUI(tag);
-    updateJumpMenuForCurrentTab();
     
-    // フィルタUI表示位置にスムーズスクロール
+    // DOMの更新を待ってからジャンプメニューを更新
     setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
+        updateJumpMenuForCurrentTab();
+        
+        // フィルタタブの先頭（"フィルタ: " の位置）にスクロール
+        const filterTab = document.getElementById('tab-filter');
+        if (filterTab) {
+            const header = document.getElementById('main-header');
+            const headerHeight = header ? header.offsetHeight : 0;
+            const filterTabTop = filterTab.offsetTop;
+            const scrollPosition = Math.max(0, filterTabTop - headerHeight - 20);
+            
+            console.log('Scrolling to filter tab:', {
+                filterTab: filterTab.id,
+                filterTabTop,
+                headerHeight,
+                scrollPosition
+            });
+            
+            window.scrollTo({
+                top: scrollPosition,
+                behavior: 'smooth'
+            });
+        } else {
+            console.error('Filter tab not found (tab-filter)');
+        }
+    }, 50);
+    
+    // 注: フィルタUI表示位置への自動スクロールは削除
+    // ユーザーがジャンプメニューで自由にナビゲートできるようにするため
 }
 
 // フィルタをクリア
@@ -1831,25 +1856,29 @@ function updateJumpMenuForCurrentTab() {
     const jumpMenuList = document.getElementById('jumpMenuList');
     if (!jumpMenuList) return;
     
+    console.log('updateJumpMenuForCurrentTab - currentFilterTag:', currentFilterTag, 'currentTab:', currentTab);
+    
     if (currentFilterTag) {
-        // フィルタモード - 各フィルタ結果カードへのジャンプメニューを生成
-        let menuItems = '<li><a class="dropdown-item" href="#" onclick="smoothScrollToTop(); return false;">ヘッダー</a></li>';
-        menuItems += '<li><hr class="dropdown-divider"></li>';
+        // フィルタモード - ヘッダー・中央・フッターの3項目
         
-        // フィルタ結果のカードを取得
+        // フィルタ結果のカードを取得（ログ用）
         const filteredItems = basicInfoData.filter(item => {
             if (!item.hashTag) return false;
             const itemTags = extractHashTags(item.hashTag);
             return itemTags.includes(currentFilterTag);
         });
         
-        // 各カードへのジャンプリンクを生成
+        console.log('フィルタモード: filteredItems数:', filteredItems.length);
         filteredItems.forEach(item => {
-            menuItems += `<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('${item.key}'); return false;">${item.siteTitle}</a></li>`;
+            console.log('  - カード:', item.key, item.siteTitle);
         });
         
+        // フィルタモード時のジャンプメニュー
+        let menuItems = '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'filter-top\'); return false;">ヘッダー</a></li>';
         menuItems += '<li><hr class="dropdown-divider"></li>';
-        menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'footer\'); return false;">フッター</a></li>';
+        menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'filter-center\'); return false;">中央</a></li>';
+        menuItems += '<li><hr class="dropdown-divider"></li>';
+        menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'filter-bottom\'); return false;">フッター</a></li>';
         
         jumpMenuList.innerHTML = menuItems;
     } else {
@@ -1900,17 +1929,66 @@ function smoothScrollToTop() {
 }
 
 function smoothScrollToElement(elementId) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
+    console.log('smoothScrollToElement called with:', elementId);
     
-    // 固定ヘッダーの高さを取得（スクロール後はコンパクトヘッダーになるため、その高さを想定）
+    // フィルタモード用の特殊ID処理
+    if (elementId === 'filter-top' || elementId === 'filter-center' || elementId === 'filter-bottom') {
+        const filterTab = document.getElementById('tab-filter');
+        if (!filterTab) {
+            console.log('Filter tab not found');
+            return;
+        }
+        
+        const header = document.getElementById('main-header');
+        const headerHeight = header ? header.offsetHeight : 0;
+        
+        let scrollPosition;
+        
+        if (elementId === 'filter-top') {
+            // フィルタタブの先頭
+            scrollPosition = filterTab.offsetTop - headerHeight - 20;
+        } else if (elementId === 'filter-bottom') {
+            // フィルタタブの最後
+            const filterTabHeight = filterTab.offsetHeight;
+            scrollPosition = filterTab.offsetTop + filterTabHeight - window.innerHeight + 50;
+        } else {
+            // 中央
+            const filterTabHeight = filterTab.offsetHeight;
+            const filterTabMiddle = filterTab.offsetTop + (filterTabHeight / 2);
+            scrollPosition = filterTabMiddle - (window.innerHeight / 2);
+        }
+        
+        scrollPosition = Math.max(0, scrollPosition);
+        
+        console.log('=== Filter position scroll ===');
+        console.log('Target:', elementId);
+        console.log('Scroll position:', scrollPosition);
+        console.log('==============================');
+        
+        window.scrollTo({
+            top: scrollPosition,
+            behavior: 'smooth'
+        });
+        
+        return;
+    }
+    
+    const element = document.getElementById(elementId);
+    if (!element) {
+        console.error('Element not found:', elementId);
+        return;
+    }
+    
+    console.log('Element found:', element);
+    
+    // 通常モードの処理（以下は変更なし）
+    const isMobile = window.innerWidth <= 768;
+    
     const header = document.getElementById('main-header');
     const compactHeader = header ? header.querySelector('.header-compact') : null;
     
-    // コンパクトヘッダーの高さを取得（存在しない場合は現在のヘッダー高さ）
     let targetHeaderHeight = 0;
     if (compactHeader) {
-        // 一時的にコンパクトヘッダーを表示して高さを測定
         const originalDisplay = compactHeader.style.display;
         const originalPosition = compactHeader.style.position;
         const originalOpacity = compactHeader.style.opacity;
@@ -1923,7 +2001,6 @@ function smoothScrollToElement(elementId) {
         
         targetHeaderHeight = compactHeader.offsetHeight;
         
-        // 元に戻す
         compactHeader.style.display = originalDisplay;
         compactHeader.style.position = originalPosition;
         compactHeader.style.opacity = originalOpacity;
@@ -1932,47 +2009,54 @@ function smoothScrollToElement(elementId) {
         targetHeaderHeight = header.offsetHeight;
     }
     
-    // 追加の余白（カード画像が見やすいように）
-    const additionalOffset = 20;
+    const additionalOffset = isMobile ? 60 : 20;
     
-    // 要素の位置を取得
-    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+    const elementRect = element.getBoundingClientRect();
+    const elementPosition = elementRect.top + window.pageYOffset;
     
-    // スクロール先の位置を計算（コンパクトヘッダーの高さ + 余白分を引く）
-    const scrollToPosition = elementPosition - targetHeaderHeight - additionalOffset;
+    console.log('Element position details:', {
+        'rect.top': elementRect.top,
+        'pageYOffset': window.pageYOffset,
+        'elementPosition (absolute)': elementPosition,
+        'targetHeaderHeight': targetHeaderHeight,
+        'additionalOffset': additionalOffset
+    });
     
-    // スムーズスクロール
+    let scrollToPosition = elementPosition - targetHeaderHeight - additionalOffset;
+    scrollToPosition = Math.max(0, scrollToPosition);
+    
+    console.log('Final scroll to position:', scrollToPosition);
+    
     window.scrollTo({
         top: scrollToPosition,
         behavior: 'smooth'
     });
     
-    // スクロール完了後に位置を微調整（ヘッダーの切り替えによるズレを補正）
     setTimeout(() => {
         const currentHeader = document.getElementById('main-header');
         const currentHeaderHeight = currentHeader ? currentHeader.offsetHeight : 0;
-        const currentElementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-        const adjustedPosition = currentElementPosition - currentHeaderHeight - additionalOffset;
+        const currentElementRect = element.getBoundingClientRect();
+        const currentElementPosition = currentElementRect.top + window.pageYOffset;
+        const currentAdditionalOffset = window.innerWidth <= 768 ? 60 : 20;
+        let adjustedPosition = currentElementPosition - currentHeaderHeight - currentAdditionalOffset;
+        adjustedPosition = Math.max(0, adjustedPosition);
         
-        // 現在位置と理想位置のズレが大きい場合のみ再調整
         if (Math.abs(window.pageYOffset - adjustedPosition) > 5) {
+            console.log('Adjusting position to:', adjustedPosition);
             window.scrollTo({
                 top: adjustedPosition,
                 behavior: 'smooth'
             });
         }
-    }, 600); // スクロールアニメーションの完了を待つ
+    }, 600);
     
-    // ヒートマップ(コントリビューショングラフ)の場合、横スクロールを右端に移動
     if (elementId === 'contribution-graph') {
-        // scrollが完了するまで待つ
         setTimeout(() => {
             const graphWrapper = document.querySelector('.contribution-graph-wrapper');
             if (graphWrapper) {
-                // 横スクロールを最大値(右端)に設定
                 graphWrapper.scrollLeft = graphWrapper.scrollWidth - graphWrapper.clientWidth;
             }
-        }, 700); // 位置調整の後に実行
+        }, 700);
     }
 }
 
