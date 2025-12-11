@@ -2050,7 +2050,7 @@ function generateTabLinksSection() {
             let siteTitleSpan = '';
             if (siteTitle) {
                 if (siteUrl) {
-                    siteTitleSpan = ` <a href="${siteUrl}" target="_blank" rel="noopener noreferrer" style="color: #6c757d; font-size: 0.85rem; text-decoration: none;">(${siteTitle})</a>`;
+                    siteTitleSpan = ` <span style="color: #6c757d; font-size: 0.85rem;">(</span><a href="${siteUrl}" target="_blank" rel="noopener noreferrer" style="color: #dc3545; font-size: 0.85rem; text-decoration: none;">${siteTitle}</a><span style="color: #6c757d; font-size: 0.85rem;">)</span>`;
                 } else {
                     siteTitleSpan = ` <span style="color: #6c757d; font-size: 0.85rem;">(${siteTitle})</span>`;
                 }

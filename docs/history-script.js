@@ -35,10 +35,12 @@ const MAX_YEAR = new Date().getFullYear();
 const DEFAULT_YEAR_RANGE = 10; // デフォルトで直近10年
 
 // 公開スプレッドシートのCSV URL
+const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
 const PUBLIC_HISTORY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=2103644132&single=true&output=csv';
 
 // グローバル変数
 let historyData = [];
+let basicInfoData = [];
 let currentStartYear = MAX_YEAR - DEFAULT_YEAR_RANGE;
 let currentEndYear = MAX_YEAR;
 let currentCategoryFilters = [...CATEGORIES]; // すべて選択された状態で初期化
@@ -59,6 +61,10 @@ const isLocalMode = window.location.protocol === 'file:' || (typeof HISTORY_DATA
 if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
     console.log('ローカルモードで実行中（History）');
     historyData = parseHistoryCSV(HISTORY_DATA.HISTORY_CSV);
+    // 基本情報も読み込む
+    if (typeof BASIC_INFO_CSV !== 'undefined') {
+        basicInfoData = parseBasicInfoCSV(BASIC_INFO_CSV);
+    }
     // DOMContentLoadedイベントを待つ
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializePage);
@@ -68,10 +74,13 @@ if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
 } else {
     console.log('オンラインモードで実行中（History）');
     
-    fetch(PUBLIC_HISTORY_CSV_URL)
-        .then(response => response.text())
-        .then(csvText => {
-            historyData = parseHistoryCSV(csvText);
+    Promise.all([
+        fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
+        fetch(PUBLIC_HISTORY_CSV_URL).then(response => response.text())
+    ])
+        .then(([basicCsvText, historyCsvText]) => {
+            basicInfoData = parseBasicInfoCSV(basicCsvText);
+            historyData = parseHistoryCSV(historyCsvText);
             // DOMContentLoadedイベントを待つ
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', initializePage);
@@ -130,6 +139,7 @@ function parseHistoryCSV(csvText) {
     const categoryIndex = headers.indexOf('Category');
     const contentsIndex = headers.indexOf('Contents');
     const linkIndex = headers.indexOf('Link');
+    const keyIndex = headers.indexOf('key');
     
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
@@ -157,7 +167,70 @@ function parseHistoryCSV(csvText) {
                 date: dateIndex >= 0 ? (values[dateIndex] || '') : '',
                 category: values[categoryIndex],
                 contents: values[contentsIndex],
-                link: values[linkIndex] || ''
+                link: values[linkIndex] || '',
+                key: keyIndex >= 0 ? (values[keyIndex] || '') : ''
+            });
+        }
+    }
+    
+    return items;
+}
+
+// CSV解析関数（基本情報用）
+function parseBasicInfoCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const items = [];
+    
+    const keyIndex = headers.indexOf('key');
+    const tabIdIndex = headers.indexOf('tabId');
+    const tabIndex = headers.indexOf('tab');
+    const categoryIndex = headers.indexOf('category');
+    const summaryIndex = headers.indexOf('summary');
+    const siteTitleIndex = headers.indexOf('siteTitle');
+    const hashTagIndex = headers.indexOf('hashTag');
+    const siteUrlIndex = headers.indexOf('siteUrl');
+    const imageIndex = headers.indexOf('image');
+    const subImageIndex = headers.indexOf('sub-image');
+    const logoIndex = headers.indexOf('logo');
+    const commentIndex = headers.indexOf('comment');
+    const cardDateIndex = headers.indexOf('cardDate');
+    
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const values = [];
+        let currentValue = '';
+        let insideQuotes = false;
+        
+        // カンマ区切りの解析（コメント内のカンマを考慮）
+        for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                values.push(currentValue.trim());
+                currentValue = '';
+            } else {
+                currentValue += char;
+            }
+        }
+        values.push(currentValue.trim());
+        
+        if (values[keyIndex] && values[categoryIndex]) {
+            items.push({
+                key: values[keyIndex],
+                tabId: values[tabIdIndex] || '',
+                tab: values[tabIndex] || '',
+                category: values[categoryIndex],
+                summary: values[summaryIndex] || '',
+                siteTitle: values[siteTitleIndex] || '',
+                hashTag: values[hashTagIndex] || '',
+                siteUrl: values[siteUrlIndex] || '',
+                image: values[imageIndex] || '',
+                subImage: values[subImageIndex] || '',
+                logo: values[logoIndex] || '',
+                comment: commentIndex >= 0 ? (values[commentIndex] || '') : '',
+                cardDate: cardDateIndex >= 0 ? (values[cardDateIndex] || '') : ''
             });
         }
     }
@@ -884,6 +957,11 @@ function generateHistoryTable() {
                 });
                 itemDiv.appendChild(abbrBtn);
                 
+                // 基本情報からsiteTitleとsiteUrlを取得
+                const basicInfo = basicInfoData.find(info => info.key === item.key);
+                const siteTitle = basicInfo ? basicInfo.siteTitle : '';
+                const siteUrl = basicInfo ? basicInfo.siteUrl : '';
+                
                 // 記事内容
                 if (item.link) {
                     const link = document.createElement('a');
@@ -895,6 +973,38 @@ function generateHistoryTable() {
                 } else {
                     const text = document.createTextNode(item.contents);
                     itemDiv.appendChild(text);
+                }
+                
+                // siteTitleをカッコ書きで追加
+                if (siteTitle) {
+                    const siteTitleSpan = document.createElement('span');
+                    siteTitleSpan.textContent = ' (';
+                    siteTitleSpan.style.color = '#6c757d';
+                    siteTitleSpan.style.fontSize = '0.85rem';
+                    itemDiv.appendChild(siteTitleSpan);
+                    
+                    if (siteUrl) {
+                        const siteTitleLink = document.createElement('a');
+                        siteTitleLink.href = siteUrl;
+                        siteTitleLink.target = '_blank';
+                        siteTitleLink.textContent = siteTitle;
+                        siteTitleLink.style.color = '#dc3545';
+                        siteTitleLink.style.fontSize = '0.85rem';
+                        siteTitleLink.style.textDecoration = 'none';
+                        itemDiv.appendChild(siteTitleLink);
+                    } else {
+                        const siteTitleText = document.createElement('span');
+                        siteTitleText.textContent = siteTitle;
+                        siteTitleText.style.color = '#6c757d';
+                        siteTitleText.style.fontSize = '0.85rem';
+                        itemDiv.appendChild(siteTitleText);
+                    }
+                    
+                    const closeParen = document.createElement('span');
+                    closeParen.textContent = ')';
+                    closeParen.style.color = '#6c757d';
+                    closeParen.style.fontSize = '0.85rem';
+                    itemDiv.appendChild(closeParen);
                 }
                 
                 articleCell.appendChild(itemDiv);
