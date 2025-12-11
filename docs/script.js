@@ -1,4 +1,3 @@
-const multiMaxLength = 20;
 const singleMaxLength = 10;
 
 // NEW!!バッジを表示する日数（変更可能なパラメータ）
@@ -818,7 +817,7 @@ function loadFeeds(singleData) {
         
         let currentYear = null;
         
-        singleData.slice(0, multiMaxLength).forEach(item => {
+        singleData.slice(0, singleMaxLength).forEach(item => {
             const date = item.date ? new Date(item.date) : null;
             const year = date ? date.getFullYear() : null;
             const month = date ? String(date.getMonth() + 1).padStart(2, '0') : null;
@@ -2039,12 +2038,28 @@ function generateTabLinksSection() {
                 dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
             }
             
+            // 基本情報からsiteTitleとsiteUrlを取得
+            const basicInfo = basicInfoData.find(item => item.key === article.key);
+            const siteTitle = basicInfo ? basicInfo.siteTitle : '';
+            const siteUrl = basicInfo ? basicInfo.siteUrl : '';
+            
             // リンクの有無で表示を分岐
             let titleSpan = '';
+            
+            // siteTitleリンクを生成
+            let siteTitleSpan = '';
+            if (siteTitle) {
+                if (siteUrl) {
+                    siteTitleSpan = ` <a href="${siteUrl}" target="_blank" rel="noopener noreferrer" style="color: #6c757d; font-size: 0.85rem; text-decoration: none;">(${siteTitle})</a>`;
+                } else {
+                    siteTitleSpan = ` <span style="color: #6c757d; font-size: 0.85rem;">(${siteTitle})</span>`;
+                }
+            }
+            
             if (article.link) {
-                titleSpan = `<a href="${article.link}" target="_blank" rel="noopener noreferrer" style="color: #0d6efd; font-size: 0.9rem;">${article.title}</a>`;
+                titleSpan = `<a href="${article.link}" target="_blank" rel="noopener noreferrer" style="color: #0d6efd; font-size: 0.9rem;">${article.title}</a>${siteTitleSpan}`;
             } else {
-                titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${article.title}</span>`;
+                titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${article.title}</span>${siteTitleSpan}`;
             }
             
             return `
@@ -2090,7 +2105,7 @@ function updateJumpMenuForCurrentTab() {
     console.log('updateJumpMenuForCurrentTab - currentFilterTag:', currentFilterTag, 'currentTab:', currentTab);
     
     if (currentFilterTag) {
-        // フィルタモード - ヘッダー・中央・フッターの3項目
+        // フィルタモード - ヘッダー・フッターの2項目
         
         // フィルタ結果のカードを取得（ログ用）
         const filteredItems = basicInfoData.filter(item => {
@@ -2106,8 +2121,6 @@ function updateJumpMenuForCurrentTab() {
         
         // フィルタモード時のジャンプメニュー
         let menuItems = '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'filter-top\'); return false;">ヘッダー</a></li>';
-        menuItems += '<li><hr class="dropdown-divider"></li>';
-        menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'filter-center\'); return false;">中央</a></li>';
         menuItems += '<li><hr class="dropdown-divider"></li>';
         menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'filter-bottom\'); return false;">フッター</a></li>';
         
@@ -2163,7 +2176,7 @@ function smoothScrollToElement(elementId) {
     console.log('smoothScrollToElement called with:', elementId);
     
     // フィルタモード用の特殊ID処理
-    if (elementId === 'filter-top' || elementId === 'filter-center' || elementId === 'filter-bottom') {
+    if (elementId === 'filter-top' || elementId === 'filter-bottom') {
         const filterTab = document.getElementById('tab-filter');
         if (!filterTab) {
             console.log('Filter tab not found');
@@ -2182,11 +2195,6 @@ function smoothScrollToElement(elementId) {
             // フィルタタブの最後
             const filterTabHeight = filterTab.offsetHeight;
             scrollPosition = filterTab.offsetTop + filterTabHeight - window.innerHeight + 50;
-        } else {
-            // 中央
-            const filterTabHeight = filterTab.offsetHeight;
-            const filterTabMiddle = filterTab.offsetTop + (filterTabHeight / 2);
-            scrollPosition = filterTabMiddle - (window.innerHeight / 2);
         }
         
         scrollPosition = Math.max(0, scrollPosition);
