@@ -17,6 +17,15 @@ let multiDataGlobal = null;
 let singleDataGlobal = null;
 let currentTab = 'general'; // 現在のタブを追跡
 
+// 日付ナビゲーション用のグローバル変数
+let availableDates = []; // コンテンツが存在する日付の配列（ソート済み）
+let currentDateIndex = -1; // 現在選択中の日付のインデックス
+let currentSelectedDate = null; // 現在選択中の日付文字列（記事のない日付も含む）
+
+// ヒートマップ選択状態管理用のグローバル変数
+let activeTooltipElement = null; // 選択中のセル要素
+let isTooltipPinned = false; // セルが選択固定されているかどうか
+
 // 環境判定
 const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined');
 
@@ -982,6 +991,14 @@ function generateContributionGraph(contributionData) {
         dataMap[item.date] = item.count;
     });
     
+    // コンテンツが存在する日付のリストを初期化（ソート済み）
+    availableDates = contributionData
+        .filter(item => item.count > 0)
+        .map(item => item.date)
+        .sort(); // 昇順にソート
+    
+    console.log('Available dates initialized:', availableDates.length, 'dates');
+    
     const today = new Date();
     const oneYearAgo = new Date(today);
     oneYearAgo.setFullYear(today.getFullYear() - 1);
@@ -1131,20 +1148,20 @@ function generateContributionGraph(contributionData) {
     // モバイル判定（iOS・Android）
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    // アクティブなツールチップを管理する変数
+    // アクティブなツールチップを管理する変数（ローカル）
     let activeTooltip = null;
-    let activeTooltipElement = null;
-    let isTooltipPinned = false; // ツールチップが固定されているかどうか
     let activeDayData = null; // 固定表示中のdayデータ
+    // activeTooltipElementとisTooltipPinnedはグローバル変数として定義済み
     
     // ツールチップを表示する関数
     function showTooltip(dayElement, day, clientX, clientY, pinned = false) {
         // 固定表示（クリック/タップ）の場合：データテーブルを更新
         if (pinned) {
-            // 前のセルの選択状態を解除
-            if (activeTooltipElement) {
-                activeTooltipElement.classList.remove('selected');
-            }
+            // すべての選択状態を解除（確実にクリア）
+            const selectedCells = document.querySelectorAll('.contribution-day.selected');
+            selectedCells.forEach(cell => {
+                cell.classList.remove('selected');
+            });
             
             // セルに選択状態を追加
             dayElement.classList.add('selected');
@@ -1310,7 +1327,16 @@ function generateContributionGraph(contributionData) {
     
     // 画面の他の場所をクリック/タップした時に固定表示を閉じる
     document.addEventListener('click', (e) => {
-        if (isTooltipPinned && !e.target.classList.contains('contribution-day')) {
+        // ナビゲーションボタンやデータテーブル領域のクリックは無視
+        const isNavButton = e.target.classList.contains('date-nav-btn') || 
+                           e.target.id === 'date-prev-btn' || 
+                           e.target.id === 'date-next-btn';
+        const isDataTable = e.target.closest('.contribution-data-table-container');
+        
+        if (isTooltipPinned && 
+            !e.target.classList.contains('contribution-day') && 
+            !isNavButton && 
+            !isDataTable) {
             hideTooltip();
         }
     });
@@ -1350,7 +1376,14 @@ function generateContributionGraph(contributionData) {
         // 初期状態のHTML
         dataTableContainer.innerHTML = `
             <div class="data-table-header">
-                <strong>選択日付:</strong> <span id="selected-date-display">日付を選択してください</span>
+                <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; gap: 1rem;">
+                    <button id="date-prev-btn" class="date-nav-btn" onclick="navigateDate(-1)" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #dc3545; padding: 0.25rem 0.5rem;" disabled>◀︎</button>
+                    <div style="text-align: center;">
+                        <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.25rem;">選択日付</div>
+                        <div id="selected-date-display" style="font-weight: bold;">日付を選択してください</div>
+                    </div>
+                    <button id="date-next-btn" class="date-nav-btn" onclick="navigateDate(1)" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #dc3545; padding: 0.25rem 0.5rem;" disabled>▶︎</button>
+                </div>
             </div>
             <div class="data-table-content" id="data-table-content">
                 <p class="text-muted text-center">セルを選択すると投稿内容が表示されます</p>
@@ -1359,6 +1392,20 @@ function generateContributionGraph(contributionData) {
         
         // graphWrapperの次の兄弟要素として挿入
         graphWrapper.parentElement.insertBefore(dataTableContainer, graphWrapper.nextSibling);
+        
+        // 最新日付を自動選択（データテーブルがDOMに追加された後）
+        setTimeout(() => {
+            if (availableDates && availableDates.length > 0) {
+                const latestDate = availableDates[availableDates.length - 1];
+                console.log('Auto-selecting latest date:', latestDate);
+                
+                // データテーブルを更新
+                updateDataTable(latestDate);
+                
+                // ヒートマップのセルも選択状態にする
+                selectDateOnHeatmap(latestDate);
+            }
+        }, 100);
     }
 }
 
@@ -1371,12 +1418,6 @@ function updateDataTable(dateStr) {
         console.warn('Data table elements not found');
         return;
     }
-    
-    // 日付を表示（yyyy/mm/dd(aaa)形式）
-    const date = new Date(dateStr);
-    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
-    const formattedDate = dateStr.replace(/-/g, '/') + '(' + dayOfWeek + ')';
-    dateDisplay.textContent = formattedDate;
     
     // 必要なデータが揃っているかチェック
     if (!multiDataGlobal || !Array.isArray(multiDataGlobal) || multiDataGlobal.length === 0) {
@@ -1392,8 +1433,16 @@ function updateDataTable(dateStr) {
     
     const matchingData = multiDataGlobal.filter(item => item.date === dateStr);
     
+    // 日付を表示（yyyy/mm/dd(aaa) - n件 形式）
+    const date = new Date(dateStr);
+    const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+    const formattedDate = dateStr.replace(/-/g, '/') + '(' + dayOfWeek + ') - ' + matchingData.length + '件';
+    dateDisplay.textContent = formattedDate;
+    
     if (matchingData.length === 0) {
         tableContent.innerHTML = '<p class="text-muted text-center">データがありません</p>';
+        // 記事がない場合でもナビゲーションボタンの状態を更新
+        updateNavigationButtons(dateStr);
         return;
     }
     
@@ -1479,6 +1528,9 @@ function updateDataTable(dateStr) {
     `;
     
     tableContent.innerHTML = tableHTML + cardsHTML;
+    
+    // ナビゲーションボタンの状態を更新
+    updateNavigationButtons(dateStr);
 }
 
 // データテーブルをクリアする関数
@@ -1492,6 +1544,185 @@ function clearDataTable() {
     
     if (tableContent) {
         tableContent.innerHTML = '<p class="text-muted text-center">セルを選択すると投稿内容が表示されます</p>';
+    }
+    
+    // ナビゲーションボタンを無効化
+    const prevBtn = document.getElementById('date-prev-btn');
+    const nextBtn = document.getElementById('date-next-btn');
+    if (prevBtn) {
+        prevBtn.disabled = true;
+        prevBtn.style.color = '#6c757d';
+        prevBtn.style.cursor = 'not-allowed';
+    }
+    if (nextBtn) {
+        nextBtn.disabled = true;
+        nextBtn.style.color = '#6c757d';
+        nextBtn.style.cursor = 'not-allowed';
+    }
+    
+    currentDateIndex = -1;
+    currentSelectedDate = null;
+    activeTooltipElement = null;
+    isTooltipPinned = false;
+}
+
+// ナビゲーションボタンの状態を更新する関数
+function updateNavigationButtons(dateStr) {
+    const prevBtn = document.getElementById('date-prev-btn');
+    const nextBtn = document.getElementById('date-next-btn');
+    
+    if (!prevBtn || !nextBtn || !availableDates || availableDates.length === 0) {
+        return;
+    }
+    
+    // 現在選択中の日付を保存
+    currentSelectedDate = dateStr;
+    
+    // 現在の日付のインデックスを取得
+    currentDateIndex = availableDates.indexOf(dateStr);
+    
+    if (currentDateIndex === -1) {
+        // 記事のない日付の場合：挿入位置を計算
+        // この日付が availableDates のどこに入るかを見つける
+        let insertIndex = 0;
+        for (let i = 0; i < availableDates.length; i++) {
+            if (dateStr < availableDates[i]) {
+                insertIndex = i;
+                break;
+            }
+            insertIndex = i + 1;
+        }
+        
+        // 前へボタンの状態：前に記事のある日付があるか
+        if (insertIndex === 0) {
+            // 選択日付より前に記事がない
+            prevBtn.disabled = true;
+            prevBtn.style.color = '#6c757d';
+            prevBtn.style.cursor = 'not-allowed';
+        } else {
+            // 選択日付より前に記事がある
+            prevBtn.disabled = false;
+            prevBtn.style.color = '#dc3545';
+            prevBtn.style.cursor = 'pointer';
+        }
+        
+        // 次へボタンの状態：後に記事のある日付があるか
+        if (insertIndex >= availableDates.length) {
+            // 選択日付より後に記事がない
+            nextBtn.disabled = true;
+            nextBtn.style.color = '#6c757d';
+            nextBtn.style.cursor = 'not-allowed';
+        } else {
+            // 選択日付より後に記事がある
+            nextBtn.disabled = false;
+            nextBtn.style.color = '#dc3545';
+            nextBtn.style.cursor = 'pointer';
+        }
+        return;
+    }
+    
+    // 記事のある日付の場合：通常の処理
+    // 前へボタンの状態
+    if (currentDateIndex === 0) {
+        // 最初の日付
+        prevBtn.disabled = true;
+        prevBtn.style.color = '#6c757d';
+        prevBtn.style.cursor = 'not-allowed';
+    } else {
+        prevBtn.disabled = false;
+        prevBtn.style.color = '#dc3545';
+        prevBtn.style.cursor = 'pointer';
+    }
+    
+    // 次へボタンの状態
+    if (currentDateIndex === availableDates.length - 1) {
+        // 最後の日付
+        nextBtn.disabled = true;
+        nextBtn.style.color = '#6c757d';
+        nextBtn.style.cursor = 'not-allowed';
+    } else {
+        nextBtn.disabled = false;
+        nextBtn.style.color = '#dc3545';
+        nextBtn.style.cursor = 'pointer';
+    }
+}
+
+// 日付をナビゲートする関数
+function navigateDate(direction) {
+    if (!availableDates || availableDates.length === 0 || !currentSelectedDate) {
+        return;
+    }
+    
+    let newDateStr = null;
+    
+    if (currentDateIndex === -1) {
+        // 記事のない日付の場合：前後で最も近い記事のある日付を探す
+        if (direction === -1) {
+            // 前へ：選択日付より前で最も近い記事のある日付
+            for (let i = availableDates.length - 1; i >= 0; i--) {
+                if (availableDates[i] < currentSelectedDate) {
+                    newDateStr = availableDates[i];
+                    break;
+                }
+            }
+        } else if (direction === 1) {
+            // 次へ：選択日付より後で最も近い記事のある日付
+            for (let i = 0; i < availableDates.length; i++) {
+                if (availableDates[i] > currentSelectedDate) {
+                    newDateStr = availableDates[i];
+                    break;
+                }
+            }
+        }
+        
+        if (!newDateStr) {
+            return; // 見つからない場合は何もしない
+        }
+    } else {
+        // 記事のある日付の場合：通常の処理
+        const newIndex = currentDateIndex + direction;
+        
+        // 範囲チェック
+        if (newIndex < 0 || newIndex >= availableDates.length) {
+            return;
+        }
+        
+        newDateStr = availableDates[newIndex];
+    }
+    
+    // データテーブルを更新
+    updateDataTable(newDateStr);
+    
+    // ヒートマップのセルも選択状態にする
+    selectDateOnHeatmap(newDateStr);
+}
+
+// グローバルスコープに明示的に登録
+window.navigateDate = navigateDate;
+
+// ヒートマップのセルを選択状態にする関数
+function selectDateOnHeatmap(dateStr) {
+    console.log('selectDateOnHeatmap called with:', dateStr);
+    
+    // 既存の選択状態を解除
+    const selectedCells = document.querySelectorAll('.contribution-day.selected');
+    console.log('Removing selection from', selectedCells.length, 'cells');
+    selectedCells.forEach(cell => {
+        cell.classList.remove('selected');
+    });
+    
+    // 新しいセルを選択状態にする
+    const targetCell = document.querySelector(`.contribution-day[data-date="${dateStr}"]`);
+    console.log('Target cell found:', !!targetCell, 'for date:', dateStr);
+    
+    if (targetCell) {
+        targetCell.classList.add('selected');
+        // グローバル変数を更新
+        activeTooltipElement = targetCell;
+        isTooltipPinned = true;
+        console.log('Cell selected successfully, classList:', targetCell.classList.toString());
+    } else {
+        console.warn('Cell not found for date:', dateStr);
     }
 }
 
