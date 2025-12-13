@@ -1545,18 +1545,18 @@ function clearDataTable() {
         tableContent.innerHTML = '<p class="text-muted text-center">セルを選択すると投稿内容が表示されます</p>';
     }
     
-    // ナビゲーションボタンを無効化
+    // ナビゲーションボタンを有効化（未選択時に最古/最新に飛べるように）
     const prevBtn = document.getElementById('date-prev-btn');
     const nextBtn = document.getElementById('date-next-btn');
-    if (prevBtn) {
-        prevBtn.disabled = true;
-        prevBtn.style.color = '#6c757d';
-        prevBtn.style.cursor = 'not-allowed';
+    if (prevBtn && availableDates && availableDates.length > 0) {
+        prevBtn.disabled = false;
+        prevBtn.style.color = '#dc3545';
+        prevBtn.style.cursor = 'pointer';
     }
-    if (nextBtn) {
-        nextBtn.disabled = true;
-        nextBtn.style.color = '#6c757d';
-        nextBtn.style.cursor = 'not-allowed';
+    if (nextBtn && availableDates && availableDates.length > 0) {
+        nextBtn.disabled = false;
+        nextBtn.style.color = '#dc3545';
+        nextBtn.style.cursor = 'pointer';
     }
     
     currentDateIndex = -1;
@@ -1648,11 +1648,31 @@ function updateNavigationButtons(dateStr) {
 
 // 日付をナビゲートする関数
 function navigateDate(direction) {
-    if (!availableDates || availableDates.length === 0 || !currentSelectedDate) {
+    if (!availableDates || availableDates.length === 0) {
         return;
     }
     
     let newDateStr = null;
+    
+    // 日付が選択されていない場合：◀︎で最古、▶︎で最新に飛ぶ
+    if (!currentSelectedDate || currentSelectedDate === null) {
+        if (direction === -1) {
+            // 前へ：最古の日付
+            newDateStr = availableDates[0];
+        } else if (direction === 1) {
+            // 次へ：最新の日付
+            newDateStr = availableDates[availableDates.length - 1];
+        }
+        
+        if (newDateStr) {
+            // データテーブルを更新
+            updateDataTable(newDateStr);
+            
+            // ヒートマップのセルも選択状態にする
+            selectDateOnHeatmap(newDateStr);
+        }
+        return;
+    }
     
     if (currentDateIndex === -1) {
         // 記事のない日付の場合：前後で最も近い記事のある日付を探す
