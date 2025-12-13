@@ -1937,6 +1937,22 @@ function switchTab(tabName) {
         // ジャンプメニューを更新
         updateJumpMenuForCurrentTab();
         
+        // 総合タブの場合、最新日付を自動選択
+        if (tabName === 'general') {
+            setTimeout(() => {
+                if (availableDates && availableDates.length > 0) {
+                    const latestDate = availableDates[availableDates.length - 1];
+                    console.log('Auto-selecting latest date on general tab:', latestDate);
+                    
+                    // データテーブルを更新
+                    updateDataTable(latestDate);
+                    
+                    // ヒートマップのセルも選択状態にする
+                    selectDateOnHeatmap(latestDate);
+                }
+            }, 100);
+        }
+        
         // ページトップにスクロール
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
