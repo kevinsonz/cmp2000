@@ -267,6 +267,7 @@ function parseBasicInfoCSV(csvText) {
             const char = line[j];
             if (char === '"') {
                 insideQuotes = !insideQuotes;
+                // 引用符は値に含めない
             } else if (char === ',' && !insideQuotes) {
                 values.push(currentValue.trim());
                 currentValue = '';
@@ -584,12 +585,19 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         // Xタイムライン用のHTMLを生成
         let xTimelineHtml = '';
         
+        console.log('[Carousel] Generating X timeline for:', site.key);
+        console.log('[Carousel] site.comment:', site.comment);
+        
         // ローカルモードの場合はテストデータを使用
         if (isLocalMode && typeof X_TIMELINE_TEST_DATA !== 'undefined' && X_TIMELINE_TEST_DATA[site.key]) {
             xTimelineHtml = X_TIMELINE_TEST_DATA[site.key];
+            console.log('[Carousel] Using test data');
         } else if (site.comment && site.comment.includes('twitter-timeline')) {
             // オンラインモードの場合はcommentフィールドのHTMLを使用
             xTimelineHtml = site.comment;
+            console.log('[Carousel] Using comment field:', xTimelineHtml);
+        } else {
+            console.warn('[Carousel] No timeline HTML found for:', site.key);
         }
         
         return `
@@ -815,13 +823,23 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             // Xタイムライン用のHTMLを生成
             let xTimelineHtml = '';
             
+            console.log('Generating X timeline for:', site.key);
+            console.log('isLocalMode:', isLocalMode);
+            console.log('site.comment:', site.comment);
+            
             // ローカルモードの場合はテストデータを使用
             if (isLocalMode && typeof X_TIMELINE_TEST_DATA !== 'undefined' && X_TIMELINE_TEST_DATA[site.key]) {
                 xTimelineHtml = X_TIMELINE_TEST_DATA[site.key];
+                console.log('Using test data for timeline');
             } else if (site.comment && site.comment.includes('twitter-timeline')) {
                 // オンラインモードの場合はcommentフィールドのHTMLを使用
                 xTimelineHtml = site.comment;
+                console.log('Using comment field for timeline:', xTimelineHtml);
+            } else {
+                console.warn('No timeline HTML found for:', site.key);
             }
+            
+            console.log('Final xTimelineHtml:', xTimelineHtml);
             
             // カルーセル内と同じクラス名を使用して仕様を統一
             feedContentHtml = `<div class="x-timeline-container">${xTimelineHtml}</div>`;
@@ -2909,6 +2927,10 @@ function initCarouselControls() {
 
 // Xウィジェットを再初期化
 function refreshTwitterWidgets() {
+    console.log('=== refreshTwitterWidgets called ===');
+    console.log('typeof twttr:', typeof twttr);
+    console.log('twttr object:', window.twttr);
+    
     // Twitterウィジェットスクリプトが読み込まれるまで待つ
     if (typeof twttr === 'undefined' || !twttr.widgets) {
         console.log('Twitter widgets script not loaded yet, waiting...');
@@ -2916,27 +2938,42 @@ function refreshTwitterWidgets() {
         return;
     }
     
-    console.log('Refreshing Twitter widgets...');
+    console.log('Twitter widgets available, proceeding...');
     
     // すべてのタイムラインコンテナを取得
     const containers = document.querySelectorAll('.x-timeline-container');
+    console.log('Found', containers.length, 'timeline containers');
     
-    containers.forEach(container => {
+    containers.forEach((container, index) => {
+        console.log(`Processing container ${index}:`, container);
+        console.log('Container innerHTML:', container.innerHTML);
+        
         // コンテナ内のタイムラインリンクを探す
         const timelineLink = container.querySelector('a.twitter-timeline');
         if (timelineLink) {
             console.log('Found timeline link:', timelineLink);
+            console.log('Timeline link href:', timelineLink.href);
             
             // 既存のiframeがあれば削除（再生成のため）
             const existingIframe = container.querySelector('iframe');
             if (existingIframe) {
+                console.log('Removing existing iframe');
                 existingIframe.remove();
             }
             
             // 該当要素だけをロード
-            twttr.widgets.load(container);
+            console.log('Calling twttr.widgets.load on container');
+            twttr.widgets.load(container).then(() => {
+                console.log('Widget loaded successfully for container', index);
+            }).catch(err => {
+                console.error('Error loading widget:', err);
+            });
+        } else {
+            console.log('No timeline link found in container', index);
         }
     });
+    
+    console.log('=== refreshTwitterWidgets completed ===');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
