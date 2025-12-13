@@ -2926,17 +2926,31 @@ function initCarouselControls() {
 }
 
 // Xウィジェットを再初期化
+let twitterWidgetRetryCount = 0;
+const MAX_TWITTER_WIDGET_RETRIES = 50; // 最大5秒（100ms × 50回）
+
 function refreshTwitterWidgets() {
     console.log('=== refreshTwitterWidgets called ===');
+    console.log('Retry count:', twitterWidgetRetryCount);
     console.log('typeof twttr:', typeof twttr);
     console.log('twttr object:', window.twttr);
     
     // Twitterウィジェットスクリプトが読み込まれるまで待つ
     if (typeof twttr === 'undefined' || !twttr.widgets) {
-        console.log('Twitter widgets script not loaded yet, waiting...');
-        setTimeout(refreshTwitterWidgets, 100);
-        return;
+        if (twitterWidgetRetryCount < MAX_TWITTER_WIDGET_RETRIES) {
+            console.log('Twitter widgets script not loaded yet, waiting... (retry', twitterWidgetRetryCount + 1, '/', MAX_TWITTER_WIDGET_RETRIES + ')');
+            twitterWidgetRetryCount++;
+            setTimeout(refreshTwitterWidgets, 100);
+            return;
+        } else {
+            console.error('Twitter widgets script failed to load after', MAX_TWITTER_WIDGET_RETRIES, 'retries');
+            console.error('Please check if https://platform.twitter.com/widgets.js is accessible');
+            return;
+        }
     }
+    
+    // リトライカウントをリセット
+    twitterWidgetRetryCount = 0;
     
     console.log('Twitter widgets available, proceeding...');
     
@@ -2977,31 +2991,31 @@ function refreshTwitterWidgets() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('=== DOMContentLoaded ===');
+    
     initHeaderScroll();
     initHeaderTitleClick();
     updateCurrentYear();
     initTabs();
     
-    // Twitterウィジェットスクリプトの読み込みを待つ
-    const waitForTwitter = setInterval(() => {
-        if (typeof twttr !== 'undefined' && twttr.widgets) {
-            clearInterval(waitForTwitter);
-            console.log('Twitter widgets script loaded');
-            
-            // カルーセルが生成された後に制御機能を初期化
-            setTimeout(() => {
-                initCarouselControls();
-                resetCarouselPlayPauseButtons();
-                refreshTwitterWidgets();
-            }, 500);
-        }
-    }, 100);
+    // Twitterウィジェットスクリプトが読み込まれているか確認
+    console.log('Checking Twitter widgets script...');
+    console.log('typeof twttr at DOMContentLoaded:', typeof twttr);
+    console.log('window.twttr:', window.twttr);
     
-    // タイムアウト処理（10秒待っても読み込まれない場合）
+    // scriptタグが存在するか確認
+    const twitterScript = document.querySelector('script[src*="platform.twitter.com"]');
+    console.log('Twitter script tag found:', twitterScript);
+    if (twitterScript) {
+        console.log('Twitter script src:', twitterScript.src);
+    } else {
+        console.error('Twitter script tag NOT FOUND in HTML!');
+    }
+    
+    // カルーセルが生成された後に制御機能を初期化
     setTimeout(() => {
-        clearInterval(waitForTwitter);
-        if (typeof twttr === 'undefined' || !twttr.widgets) {
-            console.error('Twitter widgets script failed to load');
-        }
-    }, 10000);
+        initCarouselControls();
+        resetCarouselPlayPauseButtons();
+        refreshTwitterWidgets();
+    }, 500);
 });
