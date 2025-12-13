@@ -159,6 +159,9 @@ function applyHashTagFilter(tag) {
     setTimeout(() => {
         updateJumpMenuForCurrentTab();
         
+        // Xタイムラインウィジェットを再読み込み
+        refreshTwitterWidgets();
+        
         // フィルタタブの先頭（"フィルタ: " の位置）にスクロール
         const filterTab = document.getElementById('tab-filter');
         if (filterTab) {
@@ -1060,6 +1063,11 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             loadSingleFeeds(singleData, filteredInfo.map(item => item.key));
         }, 50);
     }
+    
+    // Xタイムラインウィジェットを再読み込み
+    setTimeout(() => {
+        refreshTwitterWidgets();
+    }, 100);
 }
 function loadFeeds(singleData) {
     const multiContainer = document.getElementById('multi-rss-feed-container');
@@ -2361,6 +2369,11 @@ function switchTab(tabName) {
         
         // ページトップにスクロール
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Xタイムラインウィジェットを再読み込み
+        setTimeout(() => {
+            refreshTwitterWidgets();
+        }, 200);
     }
 }
 
