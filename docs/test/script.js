@@ -2909,9 +2909,34 @@ function initCarouselControls() {
 
 // Xウィジェットを再初期化
 function refreshTwitterWidgets() {
-    if (window.twttr && window.twttr.widgets) {
-        window.twttr.widgets.load();
+    // Twitterウィジェットスクリプトが読み込まれるまで待つ
+    if (typeof twttr === 'undefined' || !twttr.widgets) {
+        console.log('Twitter widgets script not loaded yet, waiting...');
+        setTimeout(refreshTwitterWidgets, 100);
+        return;
     }
+    
+    console.log('Refreshing Twitter widgets...');
+    
+    // すべてのタイムラインコンテナを取得
+    const containers = document.querySelectorAll('.x-timeline-container');
+    
+    containers.forEach(container => {
+        // コンテナ内のタイムラインリンクを探す
+        const timelineLink = container.querySelector('a.twitter-timeline');
+        if (timelineLink) {
+            console.log('Found timeline link:', timelineLink);
+            
+            // 既存のiframeがあれば削除（再生成のため）
+            const existingIframe = container.querySelector('iframe');
+            if (existingIframe) {
+                existingIframe.remove();
+            }
+            
+            // 該当要素だけをロード
+            twttr.widgets.load(container);
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2920,15 +2945,26 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCurrentYear();
     initTabs();
     
-    // カルーセルが生成された後に制御機能を初期化
-    setTimeout(() => {
-        initCarouselControls();
-        resetCarouselPlayPauseButtons(); // 初期状態を設定
-        refreshTwitterWidgets();
-    }, 500);
+    // Twitterウィジェットスクリプトの読み込みを待つ
+    const waitForTwitter = setInterval(() => {
+        if (typeof twttr !== 'undefined' && twttr.widgets) {
+            clearInterval(waitForTwitter);
+            console.log('Twitter widgets script loaded');
+            
+            // カルーセルが生成された後に制御機能を初期化
+            setTimeout(() => {
+                initCarouselControls();
+                resetCarouselPlayPauseButtons();
+                refreshTwitterWidgets();
+            }, 500);
+        }
+    }, 100);
     
-    // Xウィジェットスクリプトの読み込みを確実にする
+    // タイムアウト処理（10秒待っても読み込まれない場合）
     setTimeout(() => {
-        refreshTwitterWidgets();
-    }, 2000);
+        clearInterval(waitForTwitter);
+        if (typeof twttr === 'undefined' || !twttr.widgets) {
+            console.error('Twitter widgets script failed to load');
+        }
+    }, 10000);
 });
