@@ -25,6 +25,10 @@ let currentSelectedDate = null; // 現在選択中の日付文字列（記事の
 let activeTooltipElement = null; // 選択中のセル要素
 let isTooltipPinned = false; // セルが選択固定されているかどうか
 
+// 集計期間用のグローバル変数
+let statsPeriodStart = null; // 集計開始日
+let statsPeriodEnd = null; // 集計終了日
+
 // 環境判定
 const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined');
 
@@ -1002,6 +1006,10 @@ function generateContributionGraph(contributionData) {
     const oneYearAgo = new Date(today);
     oneYearAgo.setFullYear(today.getFullYear() - 1);
     
+    // 集計期間をグローバル変数に保存
+    statsPeriodStart = new Date(oneYearAgo);
+    statsPeriodEnd = new Date(today);
+    
     const startDate = new Date(oneYearAgo);
     startDate.setDate(startDate.getDate() - startDate.getDay());
     
@@ -1532,19 +1540,129 @@ function updateDataTable(dateStr) {
     updateNavigationButtons(dateStr);
 }
 
+// タブごとの統計情報を計算してバーチャートを表示する関数
+function displayTabStatisticsChart() {
+    const tableContent = document.getElementById('data-table-content');
+    const dateDisplay = document.getElementById('selected-date-display');
+    
+    if (!tableContent || !dateDisplay) {
+        return;
+    }
+    
+    // 必要なデータがあるかチェック
+    if (!multiDataGlobal || !basicInfoData || !statsPeriodStart || !statsPeriodEnd) {
+        tableContent.innerHTML = '<p class="text-muted text-center">統計情報を表示できません</p>';
+        return;
+    }
+    
+    // 集計期間の文字列を作成（yyyy/mm形式）
+    const startYearMonth = `${statsPeriodStart.getFullYear()}/${String(statsPeriodStart.getMonth() + 1).padStart(2, '0')}`;
+    const endYearMonth = `${statsPeriodEnd.getFullYear()}/${String(statsPeriodEnd.getMonth() + 1).padStart(2, '0')}`;
+    const periodText = `${startYearMonth}〜${endYearMonth}`;
+    
+    // 日付表示を更新
+    dateDisplay.textContent = periodText;
+    
+    // 1年分のデータをフィルタ
+    const oneYearData = multiDataGlobal.filter(item => {
+        if (!item.date) return false;
+        const itemDate = new Date(item.date);
+        return itemDate >= statsPeriodStart && itemDate <= statsPeriodEnd;
+    });
+    
+    // タブ情報を取得（common, kevin, ryo）
+    const tabInfo = [
+        { tabId: 'common', keyPrefix: 'cmp' },
+        { tabId: 'kevin', keyPrefix: 'kevin' },
+        { tabId: 'ryo', keyPrefix: 'ryo' }
+    ];
+    
+    // 各タブの記事数を集計
+    const tabStats = tabInfo.map(tab => {
+        const count = oneYearData.filter(item => item.key.startsWith(tab.keyPrefix)).length;
+        
+        // basicInfoからtabを取得
+        const basicInfo = basicInfoData.find(item => item.tabId === tab.tabId);
+        const tabName = basicInfo ? basicInfo.tab : tab.tabId;
+        
+        return {
+            tabId: tab.tabId,
+            tabName: tabName,
+            count: count
+        };
+    });
+    
+    // 合計件数を計算
+    const totalCount = tabStats.reduce((sum, stat) => sum + stat.count, 0);
+    
+    // 割合を計算
+    tabStats.forEach(stat => {
+        stat.percentage = totalCount > 0 ? Math.round((stat.count / totalCount) * 100) : 0;
+    });
+    
+    // 件数が多い順にソート
+    tabStats.sort((a, b) => b.count - a.count);
+    
+    // PC版：テーブル形式
+    const tableHTML = `
+        <div class="tab-stats-table-view">
+            <table class="table table-bordered table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">タブ名</th>
+                        <th style="width: 20%;">件数</th>
+                        <th style="width: 20%;">割合</th>
+                        <th style="width: 35%;">グラフ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tabStats.map(stat => `
+                        <tr>
+                            <td>
+                                <a href="javascript:void(0);" onclick="switchTab('${stat.tabId}'); return false;" class="text-decoration-none" style="color: #dc3545; font-weight: 500;">
+                                    ${stat.tabName}
+                                </a>
+                            </td>
+                            <td>${stat.count}件</td>
+                            <td>${stat.percentage}%</td>
+                            <td>
+                                <div class="tab-stats-bar-wrapper-table">
+                                    <div class="tab-stats-bar" style="width: ${stat.percentage}%;"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    // モバイル版：バーチャート形式
+    const chartHTML = `
+        <div class="tab-stats-chart-view">
+            <div class="tab-stats-chart">
+                ${tabStats.map(stat => `
+                    <div class="tab-stats-item">
+                        <div class="tab-stats-label">
+                            <a href="javascript:void(0);" onclick="switchTab('${stat.tabId}'); return false;" class="text-decoration-none" style="color: #dc3545; font-weight: 500;">
+                                ${stat.tabName}
+                            </a>
+                            <span style="color: #495057;"> | 件数：${stat.count}件 | 割合：${stat.percentage}%</span>
+                        </div>
+                        <div class="tab-stats-bar-wrapper">
+                            <div class="tab-stats-bar" style="width: ${stat.percentage}%;"></div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    tableContent.innerHTML = tableHTML + chartHTML;
+}
+
 // データテーブルをクリアする関数
 function clearDataTable() {
-    const dateDisplay = document.getElementById('selected-date-display');
-    const tableContent = document.getElementById('data-table-content');
-    
-    if (dateDisplay) {
-        dateDisplay.textContent = '日付を選択してください';
-    }
-    
-    if (tableContent) {
-        tableContent.innerHTML = '<p class="text-muted text-center">セルを選択すると投稿内容が表示されます</p>';
-    }
-    
     // ナビゲーションボタンを有効化（未選択時に最古/最新に飛べるように）
     const prevBtn = document.getElementById('date-prev-btn');
     const nextBtn = document.getElementById('date-next-btn');
@@ -1563,6 +1681,9 @@ function clearDataTable() {
     currentSelectedDate = null;
     activeTooltipElement = null;
     isTooltipPinned = false;
+    
+    // バーチャートを表示
+    displayTabStatisticsChart();
 }
 
 // ナビゲーションボタンの状態を更新する関数
