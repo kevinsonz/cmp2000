@@ -91,9 +91,22 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
         fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text())
     ])
     .then(([basicCsvText, multiCsvText, singleCsvText]) => {
+        console.log('=== 公開CSV読み込み成功 ===');
+        console.log('BASIC_INFO_CSV文字数:', basicCsvText.length);
+        console.log('MULTI_CSV文字数:', multiCsvText.length);
+        console.log('SINGLE_CSV文字数:', singleCsvText.length);
+        
         const basicInfo = parseBasicInfoCSV(basicCsvText);
         const multiData = multiCsvText ? parseMultiCSV(multiCsvText) : [];
         const singleData = parseSingleCSV(singleCsvText);
+        
+        console.log('パース後のsingleData件数:', singleData.length);
+        const xData = singleData.filter(item => item.key && (item.key.includes('MainX') || item.key.includes('SubX')));
+        console.log('X関連データ件数:', xData.length);
+        xData.forEach(item => {
+            console.log(`  ${item.key}: ${item.title ? item.title.substring(0, 30) + '...' : '(タイトルなし)'}`);
+        });
+        
         const contributionData = generateContributionDataFromMulti(multiData);
         
         basicInfoData = basicInfo;
@@ -141,6 +154,34 @@ function convertHashTagsToLinks(hashTagString) {
     return tags.map(tag => {
         return `<a href="#" onclick="applyHashTagFilter('${tag}'); return false;" style="margin-right: 0.25rem; color: #dc3545; text-decoration: none;">${tag}</a>`;
     }).join(' ');
+}
+
+// X投稿用の日付フォーマット（mm月dd日 または yyyy年mm月dd日）
+function formatXPostDate(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const postYear = date.getFullYear();
+    
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
+    if (postYear === currentYear) {
+        return `${month}月${day}日`;
+    } else {
+        return `${postYear}年${month}月${day}日`;
+    }
+}
+
+// URLから@ユーザー名を抽出
+function extractXUsername(siteUrl) {
+    if (!siteUrl) return '';
+    
+    // https://x.com/username または https://twitter.com/username から username を抽出
+    const match = siteUrl.match(/(?:x\.com|twitter\.com)\/([^/?#]+)/);
+    return match ? `@${match[1]}` : '';
 }
 
 // ハッシュタグフィルタを適用
@@ -264,6 +305,7 @@ function parseBasicInfoCSV(csvText) {
             const char = line[j];
             if (char === '"') {
                 insideQuotes = !insideQuotes;
+                // 引用符は値に含めない
             } else if (char === ',' && !insideQuotes) {
                 values.push(currentValue.trim());
                 currentValue = '';
@@ -436,6 +478,14 @@ function parseSingleCSV(csvText) {
         }
     }
     
+    console.log('=== parseSingleCSV 完了 ===');
+    console.log('総行数:', items.length);
+    const xItems = items.filter(item => item.key && (item.key.includes('MainX') || item.key.includes('SubX')));
+    console.log('X関連行数:', xItems.length);
+    if (xItems.length > 0) {
+        console.log('最初の3件:', xItems.slice(0, 3));
+    }
+    
     return items;
 }
 
@@ -519,6 +569,15 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         singleDataByKey[item.key].push(item);
     });
     
+    // デバッグ: singleDataByKeyの内容を確認
+    console.log('=== singleDataByKey 構築完了 ===');
+    console.log('全キー:', Object.keys(singleDataByKey));
+    const xKeys = Object.keys(singleDataByKey).filter(k => k.includes('MainX') || k.includes('SubX'));
+    console.log('X関連のキー:', xKeys);
+    xKeys.forEach(key => {
+        console.log(`  ${key}: ${singleDataByKey[key].length}件`);
+    });
+    
     // 各キーのデータを日付順にソート
     Object.keys(singleDataByKey).forEach(key => {
         singleDataByKey[key].sort((a, b) => {
@@ -566,6 +625,219 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         return diffDays <= NEW_BADGE_DAYS;
     }
     
+    // カルーセル用のスライドHTMLを生成する関数
+    function generateCarouselSlideForX(site, isActive = false) {
+        const subImageHtml = site.subImage 
+            ? `<img src="${site.subImage}" alt="sub-image" class="card-sub-image">` 
+            : '';
+        
+        const logoHtml = (site.logo && site.logo.trim() !== '')
+            ? `<img src="${site.logo}" alt="logo" class="card-logo-img">`
+            : '';
+        
+        const hashTagHtml = site.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small></div>` : '';
+        
+        // SINGLE_CSVからX投稿データを取得
+        let xTimelineHtml = '';
+        if (singleDataByKey[site.key]) {
+            const posts = singleDataByKey[site.key].slice(0, singleMaxLength);
+            const username = extractXUsername(site.siteUrl);
+            
+            const postsHtml = posts.map(post => {
+                if (!post.title) return '';
+                
+                const dateDisplay = formatXPostDate(post.date);
+                const content = post.link 
+                    ? `<a href="${post.link}" target="_blank" style="color: #1da1f2; text-decoration: none;">${post.title}</a>`
+                    : post.title;
+                
+                return `
+                    <div style="padding: 1rem; border-bottom: 1px solid #e1e8ed;">
+                        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="font-size: 0.95rem;">${username}</strong>
+                            <span style="color: #657786; margin-left: 0.5rem; font-size: 0.85rem;">· ${dateDisplay}</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.4;">
+                            ${content}
+                        </p>
+                    </div>
+                `;
+            }).join('');
+            
+            xTimelineHtml = postsHtml;
+        }
+        
+        return `
+            <div class="carousel-item ${isActive ? 'active' : ''}">
+                <div class="card">
+                    <a href="${site.siteUrl}" target="_blank">
+                        <img src="${site.image}" class="card-img-top" alt="${site.siteTitle}">
+                        ${subImageHtml}
+                        ${logoHtml}
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">${site.siteTitle}</h5>
+                        <div class="card-text x-timeline-wrapper">
+                            <div class="x-timeline-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                                ${xTimelineHtml}
+                            </div>
+                        </div>
+                        <div class="card-action-area">
+                            <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
+                            ${hashTagHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // カルーセル用の全体カードスライドを生成する関数
+    function generateCarouselSlideForGeneral(tabItems, singleDataByKey, isActive = false) {
+        // 全体カード用の特定アイテムを取得
+        let generalCardItem = null;
+        const tabId = tabItems[0]?.tabId;
+        
+        if (tabId === 'common') {
+            generalCardItem = tabItems.find(item => item.key === 'cmp2000');
+        } else if (tabId === 'kevin') {
+            generalCardItem = tabItems.find(item => item.key === 'kevinKevinson');
+        } else if (tabId === 'ryo') {
+            generalCardItem = tabItems.find(item => item.key === 'ryoIida');
+        }
+        
+        if (!generalCardItem) {
+            return '';
+        }
+        
+        const subImageHtml = generalCardItem.subImage 
+            ? `<img src="${generalCardItem.subImage}" alt="sub-image" class="card-sub-image">` 
+            : '';
+        
+        const logoHtml = (generalCardItem.logo && generalCardItem.logo.trim() !== '')
+            ? `<img src="${generalCardItem.logo}" alt="logo" class="card-logo-img">`
+            : '';
+        
+        // 全体カード自身（cmp2000、kevinKevinson、ryoIida）のSINGLE_CSVデータを取得
+        const articles = singleDataByKey[generalCardItem.key] || [];
+        
+        // 上位10件のみ
+        const displayArticles = articles.slice(0, singleMaxLength);
+        
+        if (displayArticles.length === 0) {
+            return ''; // 記事がない場合はスライド自体を生成しない
+        }
+        
+        const feedContentHtml = displayArticles.map(item => {
+            if (!item.title) return '';
+            
+            let dateSpan = '';
+            if (item.date) {
+                const date = new Date(item.date);
+                const formattedDate = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+                
+                const today = new Date();
+                const diffTime = today - date;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                let newBadge = '';
+                if (diffDays <= NEW_BADGE_DAYS) {
+                    newBadge = '<span class="badge bg-danger" style="margin-right: 0.35rem; font-size: 0.65rem;">New!!</span>';
+                }
+                
+                dateSpan = `${newBadge}<span style="color: #6c757d; margin-right: 0.35rem; font-size: 0.85rem;">${formattedDate}</span>`;
+            }
+            
+            let titleSpan = '';
+            if (item.link) {
+                titleSpan = `<a href="${item.link}" target="_blank" style="color: #dc3545; font-size: 0.9rem;">${item.title}</a>`;
+            } else {
+                titleSpan = `<span style="color: #6c757d; font-size: 0.9rem;">${item.title}</span>`;
+            }
+            
+            return `<div style="margin-bottom: 0.4rem; font-size: 0.9rem;">${dateSpan}${titleSpan}</div>`;
+        }).join('');
+        
+        const hashTagHtml = generalCardItem.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(generalCardItem.hashTag)}</small></div>` : '';
+        
+        return `
+            <div class="carousel-item ${isActive ? 'active' : ''}">
+                <div class="card">
+                    <a href="${generalCardItem.siteUrl}" target="_blank">
+                        <img src="${generalCardItem.image}" class="card-img-top" alt="${generalCardItem.siteTitle}">
+                        ${subImageHtml}
+                        ${logoHtml}
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">${generalCardItem.siteTitle}</h5>
+                        <div class="card-text">
+                            <div class="rss-feed-container text-start carousel-feed-content">
+                                ${feedContentHtml}
+                            </div>
+                        </div>
+                        <div class="card-action-area">
+                            <a href="${generalCardItem.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
+                            ${hashTagHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // タブごとのカルーセルHTMLを生成する関数
+    function generateTabCarousel(tabId, tabItems, singleDataByKey) {
+        const mainXItem = tabItems.find(item => item.key.includes('MainX'));
+        const subXItem = tabItems.find(item => item.key.includes('SubX'));
+        
+        let slides = [];
+        
+        // スライド順序: MainX → SubX → 全体カード
+        if (mainXItem) {
+            slides.push(generateCarouselSlideForX(mainXItem, slides.length === 0));
+        }
+        
+        if (subXItem) {
+            slides.push(generateCarouselSlideForX(subXItem, slides.length === 0));
+        }
+        
+        const generalSlide = generateCarouselSlideForGeneral(tabItems, singleDataByKey, slides.length === 0);
+        if (generalSlide) {
+            slides.push(generalSlide);
+        }
+        
+        // スライドが0件の場合はカルーセルを生成しない
+        if (slides.length === 0) {
+            return '';
+        }
+        
+        const carouselId = `carousel-${tabId}`;
+        const indicatorsHtml = slides.map((_, index) => 
+            `<button type="button" class="carousel-indicator-btn ${index === 0 ? 'active' : ''}" data-carousel-id="${carouselId}" data-slide-index="${index}"></button>`
+        ).join('');
+        
+        return `
+            <div class="carousel-container">
+                <div id="${carouselId}" class="carousel slide" data-bs-ride="carousel" data-bs-interval="6000" data-bs-touch="true">
+                    <div class="carousel-inner">
+                        ${slides.join('')}
+                    </div>
+                </div>
+                <div class="carousel-external-controls">
+                    <button class="btn btn-sm btn-outline-secondary carousel-nav-btn" data-bs-target="#${carouselId}" data-bs-slide="prev">◀◀</button>
+                    <div class="carousel-indicators-external">
+                        ${indicatorsHtml}
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary carousel-pause-btn" data-carousel-id="${carouselId}">
+                        <span class="pause-icon">⏸</span>
+                        <span class="play-icon" style="display:none;">▶</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary carousel-nav-btn" data-bs-target="#${carouselId}" data-bs-slide="next">▶▶</button>
+                </div>
+            </div>
+        `;
+    }
+
     function generateCardHTML(site, showCategory = false, includeFeed = false) {
         const isNew = isNewArticle(site.key, site);
         const newBadgeHtml = isNew 
@@ -584,9 +856,55 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         
         const categoryBadgeHtml = showCategory ? `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">${site.category}</small>` : '';
         
-        // RSSフィードのHTMLを生成（includeFeedがtrueの場合）
+        // MainX/SubXの場合はX投稿を表示
         let feedContentHtml = '';
-        if (includeFeed) {
+        const isXTimeline = site.key.includes('MainX') || site.key.includes('SubX');
+        
+        if (isXTimeline) {
+            console.log('=== X投稿カード デバッグ ===');
+            console.log('site.key:', site.key);
+            console.log('singleDataByKey[site.key]:', singleDataByKey[site.key]);
+            console.log('データ件数:', singleDataByKey[site.key] ? singleDataByKey[site.key].length : 0);
+            
+            // SINGLE_CSVからX投稿データを取得
+            if (singleDataByKey[site.key]) {
+                const posts = singleDataByKey[site.key].slice(0, singleMaxLength);
+                const username = extractXUsername(site.siteUrl);
+                
+                console.log('表示する投稿数:', posts.length);
+                console.log('ユーザー名:', username);
+                
+                const postsHtml = posts.map(post => {
+                    if (!post.title) return '';
+                    
+                    const dateDisplay = formatXPostDate(post.date);
+                    const content = post.link 
+                        ? `<a href="${post.link}" target="_blank" style="color: #1da1f2; text-decoration: none;">${post.title}</a>`
+                        : post.title;
+                    
+                    return `
+                        <div style="padding: 1rem; border-bottom: 1px solid #e1e8ed;">
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <strong style="font-size: 0.95rem;">${username}</strong>
+                                <span style="color: #657786; margin-left: 0.5rem; font-size: 0.85rem;">· ${dateDisplay}</span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.9rem; line-height: 1.4;">
+                                ${content}
+                            </p>
+                        </div>
+                    `;
+                }).join('');
+                
+                feedContentHtml = `
+                    <div class="x-timeline-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                        ${postsHtml}
+                    </div>
+                `;
+            } else {
+                console.log('⚠️ singleDataByKey[site.key]が存在しません');
+            }
+            } else if (includeFeed) {
+            // 通常のRSSフィード表示
             if (singleDataByKey[site.key]) {
                     const articles = singleDataByKey[site.key].slice(0, singleMaxLength);
                 feedContentHtml = articles.map(item => {
@@ -632,8 +950,8 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                 <div class="card-body">
                     ${categoryBadgeHtml}
                     <h5 class="card-title">${site.siteTitle}</h5>
-                    <div class="card-text">
-                        <div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start">${feedContentHtml}</div>
+                    <div class="card-text${isXTimeline ? ' x-timeline-wrapper' : ''}">
+                        ${isXTimeline ? feedContentHtml : `<div id="single-rss-feed-container-${site.key}" class="rss-feed-container text-start">${feedContentHtml}</div>`}
                     </div>
                     <div class="card-action-area">
                         <a href="${site.siteUrl}" class="btn btn-primary card-action-button" target="_blank">Go to Site</a>
@@ -747,9 +1065,18 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             
             container.innerHTML = '';
             
+            // MainX/SubX/全体カード（cmp2000、kevinKevinson、ryoIida）を除外したアイテムのみ通常カードとして表示
+            const regularItems = tabItems.filter(item => 
+                !item.key.includes('MainX') && 
+                !item.key.includes('SubX') &&
+                item.key !== 'cmp2000' &&
+                item.key !== 'kevinKevinson' &&
+                item.key !== 'ryoIida'
+            );
+            
             // カテゴリごとにグループ化
             const groupedByCategory = {};
-            tabItems.forEach(item => {
+            regularItems.forEach(item => {
                 if (!groupedByCategory[item.category]) {
                     groupedByCategory[item.category] = [];
                 }
@@ -762,11 +1089,20 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                 
                 // categoryフィールドの値をタイトルとして使用
                 sectionTitle.textContent = category;
-                sectionTitle.id = items[0].key; // カテゴリの最初のアイテムのkeyをIDとする
+                sectionTitle.id = `archive-section-${tabName}`; // カルーセルからのリンク用ID
                 container.appendChild(sectionTitle);
                 
                 const cardContainer = document.createElement('div');
                 cardContainer.className = 'card-container';
+                
+                // カルーセルを最初のカードとして追加
+                const carouselHtml = generateTabCarousel(tabName, tabItems, singleDataByKey);
+                if (carouselHtml) {
+                    const carouselWrapper = document.createElement('div');
+                    carouselWrapper.className = 'card-wrapper';
+                    carouselWrapper.innerHTML = carouselHtml;
+                    cardContainer.appendChild(carouselWrapper);
+                }
                 
                 items.forEach(site => {
                     const cardWrapper = document.createElement('div');
@@ -800,6 +1136,11 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             loadSingleFeeds(singleData, filteredInfo.map(item => item.key));
         }, 50);
     }
+    
+    // カルーセルが生成された後、イベントリスナーを再設定
+    setTimeout(() => {
+        initCarouselControls();
+    }, 100);
 }
 function loadFeeds(singleData) {
     const multiContainer = document.getElementById('multi-rss-feed-container');
@@ -2078,6 +2419,11 @@ function switchTab(tabName) {
         // ジャンプメニューを更新
         updateJumpMenuForCurrentTab();
         
+        // カルーセルの再生・停止ボタンをリセット
+        setTimeout(() => {
+            resetCarouselPlayPauseButtons();
+        }, 100);
+        
         // 総合タブの場合、最新日付を自動選択
         if (tabName === 'general') {
             setTimeout(() => {
@@ -2476,9 +2822,174 @@ function getSectionsForTab(tabName) {
     return sections;
 }
 
+// カルーセルの再生・停止ボタンをデフォルト状態（再生中）にリセット
+function resetCarouselPlayPauseButtons() {
+    // すべてのカルーセルの再生・停止ボタンをリセット
+    document.querySelectorAll('.carousel-pause-btn').forEach(btn => {
+        const pauseIcon = btn.querySelector('.pause-icon');
+        const playIcon = btn.querySelector('.play-icon');
+        
+        if (pauseIcon && playIcon) {
+            // ⏸を表示（再生中の状態）
+            pauseIcon.style.display = 'inline';
+            playIcon.style.display = 'none';
+        }
+    });
+    
+    // すべてのカルーセルを再生状態にする
+    document.querySelectorAll('[id^="carousel-"]').forEach(carouselElement => {
+        let carousel = bootstrap.Carousel.getInstance(carouselElement);
+        if (!carousel) {
+            carousel = new bootstrap.Carousel(carouselElement, {
+                interval: 6000,
+                ride: 'carousel'
+            });
+        } else {
+            // 既存のインスタンスがある場合は再生開始
+            carousel.cycle();
+        }
+    });
+}
+
+// カルーセルの一時停止/再生機能を初期化
+function initCarouselControls() {
+    // 一時停止/再生ボタン
+    document.querySelectorAll('.carousel-pause-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const carouselId = this.getAttribute('data-carousel-id');
+            const carouselElement = document.getElementById(carouselId);
+            
+            if (!carouselElement) {
+                console.error('Carousel not found:', carouselId);
+                return;
+            }
+            
+            // Bootstrapカルーセルインスタンスを取得または作成
+            let carousel = bootstrap.Carousel.getInstance(carouselElement);
+            if (!carousel) {
+                carousel = new bootstrap.Carousel(carouselElement, {
+                    interval: 6000,
+                    ride: 'carousel',
+                    touch: true
+                });
+            }
+            
+            const pauseIcon = this.querySelector('.pause-icon');
+            const playIcon = this.querySelector('.play-icon');
+            
+            // 現在の状態を判定（pauseIconが表示されている = 再生中）
+            if (pauseIcon && pauseIcon.style.display !== 'none') {
+                // 再生中 → 一時停止
+                carousel.pause();
+                pauseIcon.style.display = 'none';
+                playIcon.style.display = 'inline';
+                console.log('Carousel paused:', carouselId);
+            } else {
+                // 停止中 → 再生
+                carousel.cycle();
+                pauseIcon.style.display = 'inline';
+                playIcon.style.display = 'none';
+                console.log('Carousel playing:', carouselId);
+            }
+        });
+    });
+    
+    // ナビゲーションボタン（◀◀と▶▶）
+    document.querySelectorAll('.carousel-nav-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const carouselId = this.getAttribute('data-bs-target').replace('#', '');
+            const slideDirection = this.getAttribute('data-bs-slide');
+            const carouselElement = document.getElementById(carouselId);
+            
+            if (!carouselElement) {
+                console.error('Carousel not found:', carouselId);
+                return;
+            }
+            
+            let carousel = bootstrap.Carousel.getInstance(carouselElement);
+            if (!carousel) {
+                carousel = new bootstrap.Carousel(carouselElement, {
+                    interval: 6000,
+                    ride: 'carousel',
+                    touch: true
+                });
+            }
+            
+            if (slideDirection === 'prev') {
+                carousel.prev();
+            } else if (slideDirection === 'next') {
+                carousel.next();
+            }
+        });
+    });
+    
+    // カスタムインジケータボタン
+    document.querySelectorAll('.carousel-indicator-btn').forEach(btn => {
+        // クリックとタッチの両方に対応
+        const handleInteraction = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const carouselId = this.getAttribute('data-carousel-id');
+            const slideIndex = parseInt(this.getAttribute('data-slide-index'));
+            const carouselElement = document.getElementById(carouselId);
+            
+            if (!carouselElement) {
+                console.error('Carousel not found:', carouselId);
+                return;
+            }
+            
+            let carousel = bootstrap.Carousel.getInstance(carouselElement);
+            if (!carousel) {
+                carousel = new bootstrap.Carousel(carouselElement, {
+                    interval: 6000,
+                    ride: 'carousel',
+                    touch: true
+                });
+            }
+            
+            carousel.to(slideIndex);
+        };
+        
+        btn.addEventListener('click', handleInteraction);
+        btn.addEventListener('touchend', handleInteraction);
+    });
+    
+    // カルーセルのスライド切り替え時の処理
+    document.querySelectorAll('[id^="carousel-"]').forEach(carouselElement => {
+        carouselElement.addEventListener('slid.bs.carousel', function(event) {
+            // インジケータの状態を更新
+            const carouselId = this.id;
+            const activeIndex = event.to;
+            
+            document.querySelectorAll(`.carousel-indicator-btn[data-carousel-id="${carouselId}"]`).forEach((indicator, index) => {
+                if (index === activeIndex) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('=== DOMContentLoaded ===');
+    
     initHeaderScroll();
     initHeaderTitleClick();
     updateCurrentYear();
     initTabs();
+    
+    // カルーセルコントロールを初期化
+    setTimeout(() => {
+        initCarouselControls();
+        resetCarouselPlayPauseButtons();
+    }, 500);
 });
