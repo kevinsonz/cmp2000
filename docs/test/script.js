@@ -91,9 +91,22 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
         fetch(PUBLIC_SINGLE_CSV_URL).then(response => response.text())
     ])
     .then(([basicCsvText, multiCsvText, singleCsvText]) => {
+        console.log('=== 公開CSV読み込み成功 ===');
+        console.log('BASIC_INFO_CSV文字数:', basicCsvText.length);
+        console.log('MULTI_CSV文字数:', multiCsvText.length);
+        console.log('SINGLE_CSV文字数:', singleCsvText.length);
+        
         const basicInfo = parseBasicInfoCSV(basicCsvText);
         const multiData = multiCsvText ? parseMultiCSV(multiCsvText) : [];
         const singleData = parseSingleCSV(singleCsvText);
+        
+        console.log('パース後のsingleData件数:', singleData.length);
+        const xData = singleData.filter(item => item.key && (item.key.includes('MainX') || item.key.includes('SubX')));
+        console.log('X関連データ件数:', xData.length);
+        xData.forEach(item => {
+            console.log(`  ${item.key}: ${item.title ? item.title.substring(0, 30) + '...' : '(タイトルなし)'}`);
+        });
+        
         const contributionData = generateContributionDataFromMulti(multiData);
         
         basicInfoData = basicInfo;
@@ -465,6 +478,14 @@ function parseSingleCSV(csvText) {
         }
     }
     
+    console.log('=== parseSingleCSV 完了 ===');
+    console.log('総行数:', items.length);
+    const xItems = items.filter(item => item.key && (item.key.includes('MainX') || item.key.includes('SubX')));
+    console.log('X関連行数:', xItems.length);
+    if (xItems.length > 0) {
+        console.log('最初の3件:', xItems.slice(0, 3));
+    }
+    
     return items;
 }
 
@@ -546,6 +567,15 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             singleDataByKey[item.key] = [];
         }
         singleDataByKey[item.key].push(item);
+    });
+    
+    // デバッグ: singleDataByKeyの内容を確認
+    console.log('=== singleDataByKey 構築完了 ===');
+    console.log('全キー:', Object.keys(singleDataByKey));
+    const xKeys = Object.keys(singleDataByKey).filter(k => k.includes('MainX') || k.includes('SubX'));
+    console.log('X関連のキー:', xKeys);
+    xKeys.forEach(key => {
+        console.log(`  ${key}: ${singleDataByKey[key].length}件`);
     });
     
     // 各キーのデータを日付順にソート
@@ -838,10 +868,18 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         const isXTimeline = site.key.includes('MainX') || site.key.includes('SubX');
         
         if (isXTimeline) {
+            console.log('=== X投稿カード デバッグ ===');
+            console.log('site.key:', site.key);
+            console.log('singleDataByKey[site.key]:', singleDataByKey[site.key]);
+            console.log('データ件数:', singleDataByKey[site.key] ? singleDataByKey[site.key].length : 0);
+            
             // SINGLE_CSVからX投稿データを取得
             if (singleDataByKey[site.key]) {
                 const posts = singleDataByKey[site.key].slice(0, singleMaxLength);
                 const username = extractXUsername(site.siteUrl);
+                
+                console.log('表示する投稿数:', posts.length);
+                console.log('ユーザー名:', username);
                 
                 const postsHtml = posts.map(post => {
                     if (!post.title) return '';
@@ -869,6 +907,8 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                         ${postsHtml}
                     </div>
                 `;
+            } else {
+                console.log('⚠️ singleDataByKey[site.key]が存在しません');
             }
             } else if (includeFeed) {
             // 通常のRSSフィード表示
