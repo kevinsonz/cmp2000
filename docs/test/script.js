@@ -718,37 +718,11 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             ? `<img src="${generalCardItem.logo}" alt="logo" class="card-logo-img">`
             : '';
         
-        // MainX/SubX/全体カード自身を除外したアイテムから記事を統合
-        const contentItems = tabItems.filter(item => 
-            !item.key.includes('MainX') && 
-            !item.key.includes('SubX') &&
-            item.key !== 'cmp2000' &&
-            item.key !== 'kevinKevinson' &&
-            item.key !== 'ryoIida'
-        );
-        
-        // 全アイテムの記事を統合
-        let allArticles = [];
-        contentItems.forEach(item => {
-            if (singleDataByKey[item.key]) {
-                const articles = singleDataByKey[item.key].map(article => ({
-                    ...article,
-                    sourceTitle: item.siteTitle
-                }));
-                allArticles = allArticles.concat(articles);
-            }
-        });
-        
-        // 日付順にソート
-        allArticles.sort((a, b) => {
-            if (!a.date && !b.date) return 0;
-            if (!a.date) return 1;
-            if (!b.date) return -1;
-            return new Date(b.date) - new Date(a.date);
-        });
+        // 全体カード自身（cmp2000、kevinKevinson、ryoIida）のSINGLE_CSVデータを取得
+        const articles = singleDataByKey[generalCardItem.key] || [];
         
         // 上位10件のみ
-        const displayArticles = allArticles.slice(0, singleMaxLength);
+        const displayArticles = articles.slice(0, singleMaxLength);
         
         if (displayArticles.length === 0) {
             return ''; // 記事がない場合はスライド自体を生成しない
@@ -844,7 +818,7 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         
         return `
             <div class="carousel-container">
-                <div id="${carouselId}" class="carousel slide" data-bs-ride="carousel" data-bs-interval="6000">
+                <div id="${carouselId}" class="carousel slide" data-bs-ride="carousel" data-bs-interval="6000" data-bs-touch="true">
                     <div class="carousel-inner">
                         ${slides.join('')}
                     </div>
@@ -1162,6 +1136,11 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             loadSingleFeeds(singleData, filteredInfo.map(item => item.key));
         }, 50);
     }
+    
+    // カルーセルが生成された後、イベントリスナーを再設定
+    setTimeout(() => {
+        initCarouselControls();
+    }, 100);
 }
 function loadFeeds(singleData) {
     const multiContainer = document.getElementById('multi-rss-feed-container');
@@ -2893,7 +2872,8 @@ function initCarouselControls() {
             if (!carousel) {
                 carousel = new bootstrap.Carousel(carouselElement, {
                     interval: 6000,
-                    ride: 'carousel'
+                    ride: 'carousel',
+                    touch: true
                 });
             }
             
@@ -2936,7 +2916,8 @@ function initCarouselControls() {
             if (!carousel) {
                 carousel = new bootstrap.Carousel(carouselElement, {
                     interval: 6000,
-                    ride: 'carousel'
+                    ride: 'carousel',
+                    touch: true
                 });
             }
             
@@ -2950,7 +2931,8 @@ function initCarouselControls() {
     
     // カスタムインジケータボタン
     document.querySelectorAll('.carousel-indicator-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        // クリックとタッチの両方に対応
+        const handleInteraction = function(e) {
             e.preventDefault();
             e.stopPropagation();
             
@@ -2967,12 +2949,16 @@ function initCarouselControls() {
             if (!carousel) {
                 carousel = new bootstrap.Carousel(carouselElement, {
                     interval: 6000,
-                    ride: 'carousel'
+                    ride: 'carousel',
+                    touch: true
                 });
             }
             
             carousel.to(slideIndex);
-        });
+        };
+        
+        btn.addEventListener('click', handleInteraction);
+        btn.addEventListener('touchend', handleInteraction);
     });
     
     // カルーセルのスライド切り替え時の処理
