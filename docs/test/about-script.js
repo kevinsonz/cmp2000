@@ -2,6 +2,31 @@
 // about.html用のスクリプト
 // ========================
 
+// ========================
+// Markdown変換関数
+// ========================
+// 基本的なMarkdown記法をHTMLに変換
+function convertMarkdownToHTML(text) {
+    if (!text) return '';
+    
+    let html = text;
+    
+    // 1. **太字** → <strong>太字</strong>
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    
+    // 2. *斜体* → <em>斜体</em>（太字の後に処理）
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    
+    // 3. [リンクテキスト](URL) → <a href="URL" target="_blank">リンクテキスト</a>
+    html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" style="color: #dc3545; text-decoration: none;">$1</a>');
+    
+    // 4. 行末の2スペース+改行 → <br>
+    html = html.replace(/  \n/g, '<br>');
+    html = html.replace(/  $/gm, '<br>');
+    
+    return html;
+}
+
 // 公開スプレッドシートのCSV URL
 const PUBLIC_BASIC_INFO_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=0&single=true&output=csv';
 const PUBLIC_ARCHIVE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=1835326531&single=true&output=csv';
@@ -359,13 +384,15 @@ function parseArchiveCSV(csvText) {
         values.push(currentValue.trim());
         
         if (values[categoryIndex] && values[siteTitleIndex]) {
+            const rawComment = values[commentIndex] || '';
+            
             items.push({
                 category: values[categoryIndex],
                 siteTitle: values[siteTitleIndex],
                 hashTag: values[hashTagIndex] || '',
                 siteUrl: values[siteUrlIndex] || '#',
                 logo: values[logoIndex] || '',
-                comment: values[commentIndex] || ''
+                comment: convertMarkdownToHTML(rawComment) // Markdown変換を適用
             });
         }
     }
@@ -409,10 +436,12 @@ function parseFamilyCSV(csvText) {
         values.push(currentValue.trim());
         
         if (values[categoryIndex] && values[nameIndex]) {
+            const rawComment = values[commentIndex] || '';
+            
             items.push({
                 category: values[categoryIndex],
                 name: values[nameIndex],
-                comment: values[commentIndex] || '',
+                comment: convertMarkdownToHTML(rawComment), // Markdown変換を適用
                 hashTag: values[hashTagIndex] || ''
             });
         }
@@ -1412,6 +1441,25 @@ function generateAboutPage(filterTag = null) {
     updateAccordionButtonStates();
 }
 
+// 理念セクションを更新する関数
+function updatePhilosophySection(basicInfo) {
+    const philosophyContent = document.getElementById('philosophy-content');
+    if (!philosophyContent) return; // philosophy-contentがない場合は何もしない
+    
+    // cmpOfficialPortalのデータを取得
+    const portalInfo = basicInfo.find(item => item.key === 'cmpOfficialPortal');
+    
+    if (portalInfo && portalInfo.comment) {
+        philosophyContent.innerHTML = portalInfo.comment;
+    } else {
+        // フォールバック（cmpOfficialPortalが見つからない場合）
+        philosophyContent.innerHTML = `
+            <strong>Creation Meets Peace</strong>＝『創造』と『平和』の出会い。<br>
+            争いの絶えない世の中において、平和は自然に生まれるモノではなく、ヒトの創造によって実現されるモノである、という理念。
+        `;
+    }
+}
+
 // データ読み込みと初期化
 function initializeAboutPage() {
     if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof ABOUT_DATA !== 'undefined') {
@@ -1421,6 +1469,7 @@ function initializeAboutPage() {
         allArchiveInfo = parseArchiveCSV(ABOUT_DATA.ARCHIVE_CSV);
         allFamilyInfo = parseFamilyCSV(ABOUT_DATA.FAMILY_CSV);
         
+        updatePhilosophySection(allBasicInfo); // 理念セクションを更新
         generateAboutPage();
         updateCurrentYear();
         initHeaderScroll();
@@ -1454,6 +1503,7 @@ function initializeAboutPage() {
             allArchiveInfo = parseArchiveCSV(archiveCsvText);
             allFamilyInfo = parseFamilyCSV(familyCsvText);
             
+            updatePhilosophySection(allBasicInfo); // 理念セクションを更新
             generateAboutPage();
             updateCurrentYear();
             initHeaderScroll();
