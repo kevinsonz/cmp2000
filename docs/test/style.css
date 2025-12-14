@@ -1397,3 +1397,105 @@ select option:disabled {
         height: 6px;
     }
 }
+
+/* ================================================
+   カルーセルアニメーション修正
+   モバイルでのスムーズなスライドアニメーション
+   ================================================ */
+
+/* カルーセル基本設定 */
+.carousel-inner {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* カルーセルアイテムのアニメーション設定 */
+.carousel-item {
+    position: relative;
+    display: none;
+    float: left;
+    width: 100%;
+    margin-right: -100%;
+    backface-visibility: hidden;
+    
+    /* スライドアニメーション */
+    transition: transform 0.6s ease-in-out;
+    -webkit-transition: -webkit-transform 0.6s ease-in-out;
+    -webkit-transition: transform 0.6s ease-in-out;
+    
+    /* ハードウェアアクセラレーション（重要！） */
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    will-change: transform;
+}
+
+/* アクティブなスライド */
+.carousel-item.active,
+.carousel-item-next,
+.carousel-item-prev {
+    display: block;
+}
+
+/* 左から右へのアニメーション */
+.carousel-item-next:not(.carousel-item-start),
+.active.carousel-item-end {
+    transform: translateX(100%);
+    -webkit-transform: translateX(100%);
+}
+
+.carousel-item-prev:not(.carousel-item-end),
+.active.carousel-item-start {
+    transform: translateX(-100%);
+    -webkit-transform: translateX(-100%);
+}
+
+/* アニメーション中の状態 */
+.carousel-item-next.carousel-item-start,
+.carousel-item-prev.carousel-item-end {
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+}
+
+/* スライド方向の設定 */
+.carousel-item-start.carousel-item-end {
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+}
+
+/* モバイル専用の最適化 */
+@media (max-width: 768px) {
+    .carousel-item {
+        /* モバイルでのスムーズなアニメーション */
+        transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        -webkit-transition: -webkit-transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        
+        /* より強力なハードウェアアクセラレーション */
+        transform: translate3d(0, 0, 0);
+        -webkit-transform: translate3d(0, 0, 0);
+        -webkit-backface-visibility: hidden;
+        -webkit-perspective: 1000;
+    }
+    
+    /* タッチ操作時のちらつき防止 */
+    .carousel-inner {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+/* タッチ操作の最適化 */
+.carousel {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* スライド中のちらつき防止 */
+.carousel-item-next,
+.carousel-item-prev,
+.carousel-item.active {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
