@@ -2431,6 +2431,30 @@ function generateTabLinksSection() {
             `;
         }).join('');
         
+        // Aboutボタンのリンク先を決定
+        const aboutHashMap = {
+            'common': 'common',
+            'kevin': 'kevin',
+            'ryo': 'ryo'
+        };
+        const aboutLink = `about.html#${aboutHashMap[tabInfo.tabId] || tabInfo.tabId}`;
+        
+        // SNSボタンを生成（MainX、SubXの順）
+        let snsButtonsHTML = '';
+        const tabItems = basicInfoData.filter(item => item.tabId === tabInfo.tabId);
+        
+        // MainXを探す
+        const mainXItem = tabItems.find(item => item.key.includes('MainX'));
+        if (mainXItem && mainXItem.siteUrl) {
+            snsButtonsHTML += `<a href="${mainXItem.siteUrl}" target="_blank" class="btn btn-outline-danger btn-sm">${mainXItem.siteTitle}</a> `;
+        }
+        
+        // SubXを探す
+        const subXItem = tabItems.find(item => item.key.includes('SubX'));
+        if (subXItem && subXItem.siteUrl) {
+            snsButtonsHTML += `<a href="${subXItem.siteUrl}" target="_blank" class="btn btn-outline-danger btn-sm">${subXItem.siteTitle}</a>`;
+        }
+        
         return `
             <div class="card-wrapper" id="${tabInfo.key}">
                 <div class="card">
@@ -2439,6 +2463,10 @@ function generateTabLinksSection() {
                         ${showNewBadge ? '<span class="new-badge">NEW!!</span>' : ''}
                         ${subImageSrc ? `<img src="${subImageSrc}" class="card-sub-image" alt="${tabInfo.name} Icon">` : ''}
                     </a>
+                    <div class="text-center" style="padding: 0.5rem 1rem; background-color: rgba(220, 53, 69, 0.08); border-top: 1px solid rgba(220, 53, 69, 0.15); border-bottom: 1px solid rgba(220, 53, 69, 0.15);">
+                        <a href="${aboutLink}" class="btn btn-outline-danger btn-sm">About</a>
+                        ${snsButtonsHTML}
+                    </div>
                     <div class="card-body">
                         <h5 class="card-title">${tabInfo.name}</h5>
                         <div class="card-text">
