@@ -637,15 +637,34 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         
         const hashTagHtml = site.hashTag ? `<div class="card-hashtag-area"><small class="text-muted">${convertHashTagsToLinks(site.hashTag)}</small></div>` : '';
         
-        // Xタイムライン用のHTMLを生成
+        // SINGLE_CSVからX投稿データを取得
         let xTimelineHtml = '';
-        
-        // ローカルモードの場合はテストデータを使用
-        if (isLocalMode && typeof X_TIMELINE_TEST_DATA !== 'undefined' && X_TIMELINE_TEST_DATA[site.key]) {
-            xTimelineHtml = X_TIMELINE_TEST_DATA[site.key];
-        } else if (site.comment && site.comment.includes('twitter-timeline')) {
-            // オンラインモードの場合はcommentフィールドのHTMLを使用
-            xTimelineHtml = site.comment;
+        if (singleDataByKey[site.key]) {
+            const posts = singleDataByKey[site.key].slice(0, singleMaxLength);
+            const username = extractXUsername(site.siteUrl);
+            
+            const postsHtml = posts.map(post => {
+                if (!post.title) return '';
+                
+                const dateDisplay = formatXPostDate(post.date);
+                const content = post.link 
+                    ? `<a href="${post.link}" target="_blank" style="color: #1da1f2; text-decoration: none;">${post.title}</a>`
+                    : post.title;
+                
+                return `
+                    <div style="padding: 1rem; border-bottom: 1px solid #e1e8ed;">
+                        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                            <strong style="font-size: 0.95rem;">${username}</strong>
+                            <span style="color: #657786; margin-left: 0.5rem; font-size: 0.85rem;">· ${dateDisplay}</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.9rem; line-height: 1.4;">
+                            ${content}
+                        </p>
+                    </div>
+                `;
+            }).join('');
+            
+            xTimelineHtml = postsHtml;
         }
         
         return `
@@ -658,8 +677,8 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                     </a>
                     <div class="card-body">
                         <h5 class="card-title">${site.siteTitle}</h5>
-                        <div class="card-text">
-                            <div class="x-timeline-container">
+                        <div class="card-text x-timeline-wrapper">
+                            <div class="x-timeline-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
                                 ${xTimelineHtml}
                             </div>
                         </div>
@@ -1030,11 +1049,6 @@ function generateCards(basicInfo, singleData, filterTag = null) {
             
             // ハッシュタグ一覧を更新
             renderHashTagListForTab('filter');
-            
-            // Xウィジェットを再読み込み
-            setTimeout(() => {
-                refreshTwitterWidgets();
-            }, 100);
         }
     } else {
         // 通常モード: タブごとにカードを生成
@@ -2963,10 +2977,7 @@ function initCarouselControls() {
     
     // カルーセルのスライド切り替え時の処理
     document.querySelectorAll('[id^="carousel-"]').forEach(carouselElement => {
-        // Xウィジェットを再読み込み
         carouselElement.addEventListener('slid.bs.carousel', function(event) {
-            refreshTwitterWidgets();
-            
             // インジケータの状態を更新
             const carouselId = this.id;
             const activeIndex = event.to;
@@ -2982,55 +2993,6 @@ function initCarouselControls() {
     });
 }
 
-// Xウィジェットを再初期化
-let twitterWidgetRetryCount = 0;
-const MAX_TWITTER_WIDGET_RETRIES = 50; // 最大5秒（100ms × 50回）
-
-function refreshTwitterWidgets() {
-    // Twitterウィジェットスクリプトが読み込まれるまで待つ
-    if (typeof twttr === 'undefined' || !twttr.widgets) {
-        if (twitterWidgetRetryCount < MAX_TWITTER_WIDGET_RETRIES) {
-            twitterWidgetRetryCount++;
-            setTimeout(refreshTwitterWidgets, 100);
-            return;
-        } else {
-            console.error('Twitter widgets script failed to load');
-            return;
-        }
-    }
-    
-    // リトライカウントをリセット
-    twitterWidgetRetryCount = 0;
-    
-    console.log('Initializing Twitter timelines...');
-    
-    // すべてのタイムラインコンテナを取得
-    const containers = document.querySelectorAll('.x-timeline-container');
-    console.log('Found', containers.length, 'timeline container(s)');
-    
-    containers.forEach((container, index) => {
-        // 既にiframeが存在し、正常に表示されている場合はスキップ
-        const existingIframe = container.querySelector('iframe');
-        if (existingIframe && existingIframe.style.visibility !== 'hidden') {
-            console.log('Container', index, 'already loaded, skipping');
-            return;
-        }
-        
-        // コンテナ内のタイムラインリンクを探す
-        const timelineLink = container.querySelector('a.twitter-timeline');
-        if (timelineLink) {
-            console.log('Loading timeline', index, ':', timelineLink.href);
-            
-            // 該当要素だけをロード
-            twttr.widgets.load(container).then(() => {
-                console.log('Timeline', index, 'loaded successfully');
-            }).catch(err => {
-                console.error('Failed to load timeline', index, ':', err);
-            });
-        }
-    });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     console.log('=== DOMContentLoaded ===');
     
@@ -3039,18 +3001,9 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCurrentYear();
     initTabs();
     
-    // Twitterウィジェットスクリプトが読み込まれているか確認
-    console.log('Checking Twitter widgets script...');
-    console.log('typeof twttr at DOMContentLoaded:', typeof twttr);
-    
-    // カルーセルとタイムラインが生成された後に一度だけウィジェットを初期化
+    // カルーセルコントロールを初期化
     setTimeout(() => {
         initCarouselControls();
         resetCarouselPlayPauseButtons();
-        
-        // タイムラインが完全に生成されるのを待ってから一度だけrefreshを呼ぶ
-        setTimeout(() => {
-            refreshTwitterWidgets();
-        }, 1000);
     }, 500);
 });
