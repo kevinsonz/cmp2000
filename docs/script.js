@@ -859,16 +859,40 @@ function generateCards(basicInfo, singleData, filterTag = null) {
                 return categoryOrder.indexOf(a) - categoryOrder.indexOf(b);
             });
             
+            // keyPrefixごとのインデックスをカウント
+            const keyPrefixIndexMap = {};
+            
+            console.log('=== フィルタモード: カードID生成デバッグ ===');
+            
             sortedCategories.forEach(category => {
                 const items = groupedByCategory[category];
                 items.forEach(site => {
+                    // site.keyからプレフィックスを抽出（例：cmpMainBlog → cmp）
+                    const keyPrefix = site.key.match(/^[a-z]+/i)?.[0] || site.key;
+                    
+                    // このプレフィックスのインデックスを取得または初期化
+                    if (!keyPrefixIndexMap[keyPrefix]) {
+                        keyPrefixIndexMap[keyPrefix] = 0;
+                    }
+                    
+                    // card-{keyPrefix}-{index} 形式のIDを生成
+                    const cardId = `card-${keyPrefix}-${keyPrefixIndexMap[keyPrefix]}`;
+                    keyPrefixIndexMap[keyPrefix]++;
+                    
+                    console.log(`カードID生成: ${cardId} (key: ${site.key}, siteTitle: ${site.siteTitle}, summary: ${site.summary})`);
+                    
                     const cardWrapper = document.createElement('div');
                     cardWrapper.className = 'card-wrapper';
-                    cardWrapper.id = site.key; // 各カードにIDを設定
+                    cardWrapper.id = cardId; // 一意のIDを設定
+                    cardWrapper.setAttribute('data-site-key', site.key); // 元のkeyも保存（デバッグ用）
+                    cardWrapper.setAttribute('data-site-title', site.siteTitle); // siteTitleを保存
+                    cardWrapper.setAttribute('data-summary', site.summary); // summaryを保存
                     cardWrapper.innerHTML = generateCardHTML(site, true, true); // includeFeed=trueを追加
                     cardContainer.appendChild(cardWrapper);
                 });
             });
+            
+            console.log('=== カードID生成完了 ===');
             
             container.appendChild(cardContainer);
             
@@ -2495,24 +2519,40 @@ function updateJumpMenuForCurrentTab() {
     console.log('updateJumpMenuForCurrentTab - currentFilterTag:', currentFilterTag, 'currentTab:', currentTab);
     
     if (currentFilterTag) {
-        // フィルタモード - ヘッダー・フッターの2項目
+        // フィルタモード - 各カードへのジャンプメニューを生成
         
-        // フィルタ結果のカードを取得（ログ用）
-        const filteredItems = basicInfoData.filter(item => {
-            if (!item.hashTag) return false;
-            const itemTags = extractHashTags(item.hashTag);
-            return itemTags.includes(currentFilterTag);
-        });
+        console.log('=== フィルタモード: ジャンプメニュー生成デバッグ ===');
+        console.log('currentFilterTag:', currentFilterTag);
         
-        console.log('フィルタモード: filteredItems数:', filteredItems.length);
-        filteredItems.forEach(item => {
-            console.log('  - カード:', item.key, item.siteTitle);
-        });
-        
-        // フィルタモード時のジャンプメニュー
-        let menuItems = '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'filter-top\'); return false;">ヘッダー</a></li>';
+        let menuItems = '<li><a class="dropdown-item" href="#" onclick="smoothScrollToTop(); return false;">ヘッダー</a></li>';
         menuItems += '<li><hr class="dropdown-divider"></li>';
-        menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'filter-bottom\'); return false;">フッター</a></li>';
+        
+        // DOMからフィルタされたカード要素を取得
+        const filterContainer = document.getElementById('card-content-container-filter');
+        if (filterContainer) {
+            const cardWrappers = filterContainer.querySelectorAll('.card-wrapper');
+            console.log('カード数:', cardWrappers.length);
+            
+            cardWrappers.forEach((cardWrapper, index) => {
+                const cardId = cardWrapper.id;
+                const siteTitle = cardWrapper.getAttribute('data-site-title') || '(タイトルなし)';
+                const summary = cardWrapper.getAttribute('data-summary') || '';
+                
+                // メニュー表示テキスト: siteTitle (summary)
+                const displayText = summary ? `${siteTitle} (${summary})` : siteTitle;
+                
+                console.log(`メニュー項目 ${index + 1}: ${displayText} (ID: ${cardId})`);
+                
+                menuItems += `<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('${cardId}'); return false;">${displayText}</a></li>`;
+            });
+        } else {
+            console.warn('filterContainer が見つかりません');
+        }
+        
+        menuItems += '<li><hr class="dropdown-divider"></li>';
+        menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'footer\'); return false;">フッター</a></li>';
+        
+        console.log('=== ジャンプメニュー生成完了 ===');
         
         jumpMenuList.innerHTML = menuItems;
     } else {
@@ -2521,7 +2561,7 @@ function updateJumpMenuForCurrentTab() {
         menuItems += '<li><hr class="dropdown-divider"></li>';
         
         if (currentTab === 'general') {
-            // 各タブのカードへのリンクを生成
+            // 総合タブ：各プレフィックスの有効なアイテムへのリンクを生成
             const tabNames = ['common', 'kevin', 'ryo'];
             const tabKeyPrefixMap = {
                 'common': 'cmp',
@@ -2529,14 +2569,53 @@ function updateJumpMenuForCurrentTab() {
                 'ryo': 'ryo'
             };
             
+            console.log('=== 総合タブ: ジャンプメニュー生成 ===');
+            
+            // まず「ユニット活動」を追加
+            const unitActivityItem = basicInfoData.find(item => 
+                item.summary === 'ユニット活動' && item.key.startsWith('cmp')
+            );
+            if (unitActivityItem) {
+                console.log('ユニット活動アイテム発見:', unitActivityItem.key, unitActivityItem.siteTitle);
+                menuItems += `<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('${unitActivityItem.key}'); return false;">ユニット活動</a></li>`;
+            } else {
+                console.warn('ユニット活動アイテムが見つかりません');
+            }
+            
+            // 各タブの代表アイテムを追加（「-」を除外、summaryが「ユニット活動」も除外）
             tabNames.forEach(tabName => {
                 const keyPrefix = tabKeyPrefixMap[tabName] || tabName;
                 const tabItems = basicInfoData.filter(item => item.key.startsWith(keyPrefix));
+                
+                console.log(`${tabName}タブのアイテム数:`, tabItems.length);
+                
                 if (tabItems.length > 0) {
-                    const firstItem = tabItems[0];
-                    menuItems += `<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('${firstItem.key}'); return false;">${firstItem.summary || firstItem.category}</a></li>`;
+                    // 「-」でない有効なsummaryまたはcategoryを持つアイテムを探す
+                    // ただし、summaryが「ユニット活動」のものは除外（重複防止）
+                    const validItem = tabItems.find(item => {
+                        const displayText = item.summary || item.category;
+                        
+                        // summaryが「ユニット活動」の場合は除外（重複防止）
+                        if (item.summary === 'ユニット活動') {
+                            console.log(`除外（ユニット活動）: ${item.key} - ${displayText}`);
+                            return false;
+                        }
+                        
+                        return displayText && displayText.trim() !== '' && displayText !== '-';
+                    });
+                    
+                    if (validItem) {
+                        const displayText = validItem.summary || validItem.category;
+                        console.log(`有効なアイテム発見: ${validItem.key} - ${displayText}`);
+                        menuItems += `<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement('${validItem.key}'); return false;">${displayText}</a></li>`;
+                    } else {
+                        console.warn(`${tabName}タブで有効なアイテムが見つかりません`);
+                    }
                 }
             });
+            
+            console.log('=== 総合タブ: ジャンプメニュー生成完了 ===');
+            
             menuItems += '<li><hr class="dropdown-divider"></li>';
             menuItems += '<li><a class="dropdown-item" href="#" onclick="smoothScrollToElement(\'contribution-graph\'); return false;">ヒートマップ</a></li>';
         } else {
@@ -2563,7 +2642,10 @@ function smoothScrollToTop() {
 }
 
 function smoothScrollToElement(elementId) {
-    console.log('smoothScrollToElement called with:', elementId);
+    console.log('=== smoothScrollToElement 開始 ===');
+    console.log('elementId:', elementId);
+    console.log('currentTab:', currentTab);
+    console.log('currentFilterTag:', currentFilterTag);
     
     // フィルタモード用の特殊ID処理
     if (elementId === 'filter-top' || elementId === 'filter-bottom') {
@@ -2609,6 +2691,12 @@ function smoothScrollToElement(elementId) {
     }
     
     console.log('Element found:', element);
+    console.log('Element tagName:', element.tagName);
+    console.log('Element className:', element.className);
+    
+    // フィルタモードのカードかチェック
+    const isFilterCard = currentFilterTag && elementId.startsWith('card-');
+    console.log('isFilterCard:', isFilterCard);
     
     // 通常モードの処理（以下は変更なし）
     const isMobile = window.innerWidth <= 768;
@@ -2638,7 +2726,14 @@ function smoothScrollToElement(elementId) {
         targetHeaderHeight = header.offsetHeight;
     }
     
-    const additionalOffset = isMobile ? 60 : 20;
+    // フィルタモードのカードの場合、カード画像が見える位置にスクロール
+    // 通常のカードより少し多めにオフセットを取る
+    const additionalOffset = isFilterCard 
+        ? (isMobile ? 80 : 40)  // フィルタカードの場合は多めのオフセット
+        : (isMobile ? 60 : 20); // 通常のカードの場合
+    
+    console.log('targetHeaderHeight:', targetHeaderHeight);
+    console.log('additionalOffset:', additionalOffset);
     
     const elementRect = element.getBoundingClientRect();
     const elementPosition = elementRect.top + window.pageYOffset;
@@ -2655,6 +2750,7 @@ function smoothScrollToElement(elementId) {
     scrollToPosition = Math.max(0, scrollToPosition);
     
     console.log('Final scroll to position:', scrollToPosition);
+    console.log('=== smoothScrollToElement 終了 ===');
     
     window.scrollTo({
         top: scrollToPosition,
@@ -2666,7 +2762,9 @@ function smoothScrollToElement(elementId) {
         const currentHeaderHeight = currentHeader ? currentHeader.offsetHeight : 0;
         const currentElementRect = element.getBoundingClientRect();
         const currentElementPosition = currentElementRect.top + window.pageYOffset;
-        const currentAdditionalOffset = window.innerWidth <= 768 ? 60 : 20;
+        const currentAdditionalOffset = isFilterCard 
+            ? (window.innerWidth <= 768 ? 80 : 40)
+            : (window.innerWidth <= 768 ? 60 : 20);
         let adjustedPosition = currentElementPosition - currentHeaderHeight - currentAdditionalOffset;
         adjustedPosition = Math.max(0, adjustedPosition);
         
@@ -2698,13 +2796,36 @@ function getSectionsForTab(tabName) {
     else if (tabName === 'kevin') keyPrefix = 'kevin';
     else if (tabName === 'ryo') keyPrefix = 'ryo';
     
+    console.log(`=== getSectionsForTab: ${tabName} (prefix: ${keyPrefix}) ===`);
+    
     // 該当するタブのアイテムをフィルタして、各カードの情報を返す
     const sections = basicInfoData
-        .filter(item => item.key.startsWith(keyPrefix))
-        .map(item => ({
-            id: item.key, // 各カードのkeyをIDとする
-            name: item.siteTitle // カードのタイトルを表示名とする
-        }));
+        .filter(item => {
+            if (!item.key.startsWith(keyPrefix)) return false;
+            
+            // keyに「MainX」または「SubX」が含まれる場合は除外（X/Twitter関連）
+            if (item.key.includes('MainX') || item.key.includes('SubX')) {
+                console.log(`除外: ${item.key} (X/Twitter関連)`);
+                return false;
+            }
+            
+            // siteTitleが「-」または空文字列の場合は除外
+            if (!item.siteTitle || item.siteTitle.trim() === '' || item.siteTitle === '-') {
+                console.log(`除外: ${item.key} (siteTitle: "${item.siteTitle}")`);
+                return false;
+            }
+            
+            return true;
+        })
+        .map(item => {
+            console.log(`追加: ${item.key} - ${item.siteTitle}`);
+            return {
+                id: item.key, // 各カードのkeyをIDとする
+                name: item.siteTitle // カードのタイトルを表示名とする
+            };
+        });
+    
+    console.log(`=== getSectionsForTab 完了: ${sections.length}件 ===`);
     
     return sections;
 }
