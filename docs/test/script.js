@@ -143,6 +143,34 @@ function convertHashTagsToLinks(hashTagString) {
     }).join(' ');
 }
 
+// X投稿用の日付フォーマット（mm月dd日 または yyyy年mm月dd日）
+function formatXPostDate(dateString) {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const postYear = date.getFullYear();
+    
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
+    if (postYear === currentYear) {
+        return `${month}月${day}日`;
+    } else {
+        return `${postYear}年${month}月${day}日`;
+    }
+}
+
+// URLから@ユーザー名を抽出
+function extractXUsername(siteUrl) {
+    if (!siteUrl) return '';
+    
+    // https://x.com/username または https://twitter.com/username から username を抽出
+    const match = siteUrl.match(/(?:x\.com|twitter\.com)\/([^/?#]+)/);
+    return match ? `@${match[1]}` : '';
+}
+
 // ハッシュタグフィルタを適用
 function applyHashTagFilter(tag) {
     // 現在のタブを保存（フィルタモードでない場合のみ）
@@ -805,26 +833,44 @@ function generateCards(basicInfo, singleData, filterTag = null) {
         
         const categoryBadgeHtml = showCategory ? `<small class="text-muted" style="font-size: 0.75rem; display: block; margin-bottom: 0.25rem;">${site.category}</small>` : '';
         
-        // MainX/SubXの場合はXタイムラインを表示
+        // MainX/SubXの場合はX投稿を表示
         let feedContentHtml = '';
         const isXTimeline = site.key.includes('MainX') || site.key.includes('SubX');
         
         if (isXTimeline) {
-            // Xタイムライン用のHTMLを生成
-            let xTimelineHtml = '';
-            
-            // ローカルモードの場合はテストデータを使用
-            if (isLocalMode && typeof X_TIMELINE_TEST_DATA !== 'undefined' && X_TIMELINE_TEST_DATA[site.key]) {
-                xTimelineHtml = X_TIMELINE_TEST_DATA[site.key];
-            } else if (site.comment && site.comment.includes('twitter-timeline')) {
-                // オンラインモードの場合はcommentフィールドのHTMLを使用
-                xTimelineHtml = site.comment;
+            // SINGLE_CSVからX投稿データを取得
+            if (singleDataByKey[site.key]) {
+                const posts = singleDataByKey[site.key].slice(0, singleMaxLength);
+                const username = extractXUsername(site.siteUrl);
+                
+                const postsHtml = posts.map(post => {
+                    if (!post.title) return '';
+                    
+                    const dateDisplay = formatXPostDate(post.date);
+                    const content = post.link 
+                        ? `<a href="${post.link}" target="_blank" style="color: #1da1f2; text-decoration: none;">${post.title}</a>`
+                        : post.title;
+                    
+                    return `
+                        <div style="padding: 1rem; border-bottom: 1px solid #e1e8ed;">
+                            <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                                <strong style="font-size: 0.95rem;">${username}</strong>
+                                <span style="color: #657786; margin-left: 0.5rem; font-size: 0.85rem;">· ${dateDisplay}</span>
+                            </div>
+                            <p style="margin: 0; font-size: 0.9rem; line-height: 1.4;">
+                                ${content}
+                            </p>
+                        </div>
+                    `;
+                }).join('');
+                
+                feedContentHtml = `
+                    <div class="x-timeline-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                        ${postsHtml}
+                    </div>
+                `;
             }
-            
-            
-            // カルーセル内と同じクラス名を使用して仕様を統一
-            feedContentHtml = `<div class="x-timeline-container">${xTimelineHtml}</div>`;
-        } else if (includeFeed) {
+            } else if (includeFeed) {
             // 通常のRSSフィード表示
             if (singleDataByKey[site.key]) {
                     const articles = singleDataByKey[site.key].slice(0, singleMaxLength);

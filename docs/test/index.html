@@ -21,10 +21,6 @@
     <!-- ローカル開発用データ（GitHub Pagesでは404になるが問題なし） -->
     <script src="./data/basic-info.js" onerror="console.log('ローカルデータなし: オンラインモードで動作します')"></script>
     <script src="./data/test-data.js" onerror="console.log('テストデータなし: オンラインモードで動作します')"></script>
-    <script src="./data/x-timeline-data.js" onerror="console.log('Xタイムラインテストデータなし: オンラインモードで動作します')"></script>
-
-    <!-- Xタイムライン表示用スクリプト（async削除で確実に読み込み） -->
-    <script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
     <!-- カスタムスクリプト（defer属性でHTML解析後に実行） -->
     <script src="./script.js" defer></script>
@@ -186,8 +182,5 @@
             <small>&copy; 2000-<span id="current-year"></span> CMP2000</small>
         </p>
     </footer>
-    
-    <!-- Xタイムライン表示用スクリプト（bodyの最後でも読み込み） -->
-    <script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </body>
 </html>
