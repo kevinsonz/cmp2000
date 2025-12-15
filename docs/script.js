@@ -2783,6 +2783,18 @@ function smoothScrollToElement(elementId) {
             if (graphWrapper) {
                 graphWrapper.scrollLeft = graphWrapper.scrollWidth - graphWrapper.clientWidth;
             }
+            
+            // 最新記事を自動選択
+            if (availableDates && availableDates.length > 0) {
+                const latestDate = availableDates[availableDates.length - 1];
+                console.log('Heatmap jump menu: Auto-selecting latest date:', latestDate);
+                
+                // データテーブルを更新
+                updateDataTable(latestDate);
+                
+                // ヒートマップのセルも選択状態にする
+                selectDateOnHeatmap(latestDate);
+            }
         }, 700);
     }
 }
