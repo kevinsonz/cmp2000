@@ -54,8 +54,6 @@ function convertMarkdownToHTML(text) {
     return html;
 }
 
-// 環境判定
-const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined');
 
 // MULTI_CSVからコントリビューションデータを生成する関数
 function generateContributionDataFromMulti(multiData) {
@@ -107,26 +105,6 @@ function updatePhilosophySection(basicInfo) {
     }
 }
 
-if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !== 'undefined') {
-    console.log('ローカルモードで実行中');
-    const basicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
-    const multiData = TEST_DATA.MULTI_CSV ? parseMultiCSV(TEST_DATA.MULTI_CSV) : [];
-    const singleData = parseSingleCSV(TEST_DATA.SINGLE_CSV);
-    const contributionData = generateContributionDataFromMulti(multiData);
-    
-    basicInfoData = basicInfo;
-    multiDataGlobal = multiData;
-    singleDataGlobal = singleData;
-    allHashTags = collectAllHashTags(basicInfo);
-    
-    updatePhilosophySection(basicInfo); // 理念セクションを更新
-    generateCards(basicInfo, singleData);
-    loadFeeds(singleData);
-    generateContributionGraph(contributionData);
-    updateJumpMenuForCurrentTab();
-} else {
-    console.log('オンラインモードで実行中');
-    
     Promise.all([
         fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_MULTI_CSV_URL).then(response => response.text()).catch(err => {
@@ -168,7 +146,6 @@ if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof TEST_DATA !==
     .catch(error => {
         console.error('公開CSVの読み込みに失敗しました:', error);
     });
-}
 
 // ハッシュタグ抽出（半角・全角スペース対応）
 function extractHashTags(hashTagString) {

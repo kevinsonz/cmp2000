@@ -80,25 +80,8 @@ let tempShowEmptyYears = currentShowEmptyYears;
 let tempSortNewestFirst = currentSortNewestFirst;
 
 // 環境判定
-const isLocalMode = window.location.protocol === 'file:' || (typeof HISTORY_DATA !== 'undefined');
 
 // 初期化処理
-if (isLocalMode && typeof HISTORY_DATA !== 'undefined') {
-    console.log('ローカルモードで実行中（History）');
-    historyData = parseHistoryCSV(HISTORY_DATA.HISTORY_CSV);
-    // 基本情報も読み込む
-    if (typeof BASIC_INFO_CSV !== 'undefined') {
-        basicInfoData = parseBasicInfoCSV(BASIC_INFO_CSV);
-    }
-    // DOMContentLoadedイベントを待つ
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializePage);
-    } else {
-        initializePage();
-    }
-} else {
-    console.log('オンラインモードで実行中（History）');
-    
     Promise.all([
         fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
         fetch(PUBLIC_HISTORY_CSV_URL).then(response => response.text())

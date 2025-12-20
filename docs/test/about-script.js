@@ -33,7 +33,6 @@ const PUBLIC_ARCHIVE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1
 const PUBLIC_FAMILY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTqAyEBuht7Li1CN7ifhsp9TB4KZXTdaK9LJbfmHV7BQ76TRgZcaFlo17OlRn0sb1NGSAOuYhrAQ0T9/pub?gid=1836880976&single=true&output=csv';
 
 // 環境判定
-const isLocalMode = window.location.protocol === 'file:' || (typeof BASIC_INFO_CSV !== 'undefined' && typeof ABOUT_DATA !== 'undefined');
 
 // ハッシュタグフィルタリング用のグローバル変数
 let currentFilterTag = null;
@@ -1462,36 +1461,6 @@ function updatePhilosophySection(basicInfo) {
 
 // データ読み込みと初期化
 function initializeAboutPage() {
-    if (isLocalMode && typeof BASIC_INFO_CSV !== 'undefined' && typeof ABOUT_DATA !== 'undefined') {
-        console.log('ローカルモードで実行中（About）');
-        basicInfoCsvText = BASIC_INFO_CSV;
-        allBasicInfo = parseBasicInfoCSV(BASIC_INFO_CSV);
-        allArchiveInfo = parseArchiveCSV(ABOUT_DATA.ARCHIVE_CSV);
-        allFamilyInfo = parseFamilyCSV(ABOUT_DATA.FAMILY_CSV);
-        
-        updatePhilosophySection(allBasicInfo); // 理念セクションを更新
-        generateAboutPage();
-        updateCurrentYear();
-        initHeaderScroll();
-        updateJumpMenu(null);
-        
-        // 全開/全閉ボタンのイベント（通常時）
-        const openAllBtn = document.getElementById('openAllBtn');
-        const closeAllBtn = document.getElementById('closeAllBtn');
-        if (openAllBtn) openAllBtn.addEventListener('click', openAllAccordions);
-        if (closeAllBtn) closeAllBtn.addEventListener('click', closeAllAccordions);
-        
-        // 全開/全閉ボタンのイベント（コンパクト版）
-        const openAllBtnCompact = document.getElementById('openAllBtnCompact');
-        const closeAllBtnCompact = document.getElementById('closeAllBtnCompact');
-        if (openAllBtnCompact) openAllBtnCompact.addEventListener('click', openAllAccordions);
-        if (closeAllBtnCompact) closeAllBtnCompact.addEventListener('click', closeAllAccordions);
-        
-        // URLハッシュをチェックして該当セクションに移動
-        handleInitialHash();
-    } else {
-        console.log('オンラインモードで実行中（About）');
-        
         Promise.all([
             fetch(PUBLIC_BASIC_INFO_CSV_URL).then(response => response.text()),
             fetch(PUBLIC_ARCHIVE_CSV_URL).then(response => response.text()),
