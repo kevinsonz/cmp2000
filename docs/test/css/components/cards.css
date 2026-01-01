@@ -1,0 +1,418 @@
+/* カードコンテンツコンテナ（親要素）のスタイル */
+#card-content-container,
+#card-content-container-common,
+#card-content-container-kevin,
+#card-content-container-ryo,
+#card-content-container-filter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 24px;
+    width: 100%;
+}
+
+/* カードコンテナ用のスタイル */
+.card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    justify-items: center;
+    gap: 2rem;
+    margin-top: 1.5rem;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 68rem; /* カード3列分: 20rem × 3 + gap 2rem × 2 + 余白 = 68rem */
+    width: 100%; /* レスポンシブ対応: 親要素の全幅を使用 */
+    padding: 0 1rem; /* 左右に余白を追加 */
+}
+
+/* カードラッパー：レスポンシブな幅設定 */
+.card-wrapper {
+    width: 20rem;
+    max-width: 100%;
+    scroll-margin-top: 120px; /* ジャンプ時のオフセット */
+}
+
+/* カードの高さを固定し、flexboxレイアウトを使用 */
+.card-wrapper .card {
+    height: 30rem;
+    display: flex;
+    flex-direction: column;
+    overflow: visible !important; /* Bootstrapのoverflowを上書き */
+    border: 1px solid rgba(0,0,0,.125); /* Bootstrapのデフォルトボーダー */
+}
+
+/* カード画像部分（高さを150pxに調整） */
+.card-wrapper .card > a {
+    flex-shrink: 0;
+    height: 150px !important;
+    position: relative !important;
+    display: block !important;
+    overflow: visible !important; /* バッジやアイコンが切れないように */
+    text-decoration: none !important;
+}
+
+.card-wrapper .card > a img.card-img-top {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 0; /* カード上部の角丸を削除（Bootstrapデフォルトを上書き） */
+}
+
+/* カードボディ部分をflexboxで構造化 */
+.card-wrapper .card .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 1rem;
+    justify-content: flex-start; /* 上から配置 */
+}
+
+/* カードタイトル */
+.card-wrapper .card .card-title {
+    flex-shrink: 0; /* タイトルは縮まない */
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+}
+
+/* カードタイトル（画像中央オーバーレイ） */
+.card-wrapper .card > a .card-title-overlay,
+#tab-general .card-wrapper .card > a .card-title-overlay,
+#tab-common .card-wrapper .card > a .card-title-overlay,
+#tab-kevin .card-wrapper .card > a .card-title-overlay,
+#tab-ryo .card-wrapper .card > a .card-title-overlay,
+#tab-filter .card-wrapper .card > a .card-title-overlay {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 9 !important; /* アイコン・ロゴより下、画像より上 */
+    
+    /* テキストスタイル */
+    color: white !important;
+    font-size: 1.35rem !important;
+    font-weight: 700 !important; /* 太字 */
+    text-align: center !important;
+    margin: 0 !important;
+    padding: 0.5rem 1rem !important;
+    max-width: 100% !important; /* 横幅を広げる */
+    width: calc(100% - 2rem) !important; /* 左右1remずつの余白 */
+    
+    /* 赤系のモヤ（光彩効果） */
+    text-shadow: 
+        0 0 8px rgba(220, 53, 69, 0.9),
+        0 0 16px rgba(220, 53, 69, 0.7),
+        0 0 24px rgba(220, 53, 69, 0.5),
+        0 0 32px rgba(220, 53, 69, 0.3),
+        /* 文字の輪郭を強調 */
+        2px 2px 4px rgba(0, 0, 0, 0.8),
+        -2px -2px 4px rgba(0, 0, 0, 0.8),
+        2px -2px 4px rgba(0, 0, 0, 0.8),
+        -2px 2px 4px rgba(0, 0, 0, 0.8) !important;
+    
+    /* 長いテキストの場合の処理 */
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    line-height: 1.3 !important;
+}
+
+/* カードテキスト（コンテンツエリア）をスクロール可能に */
+.card-wrapper .card .card-text {
+    flex: 1 1 auto; /* 伸縮可能 */
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-top: 0; /* 上のmarginを削除 */
+    margin-bottom: 0.75rem;
+    min-height: 0; /* flexboxでのスクロール有効化に必要 */
+    padding-right: 0.25rem; /* スクロールバー用の余白 */
+}
+
+/* カードテキスト内のリンクを赤系に統一（ボタンは除外） */
+.card-wrapper .card .card-text a:not(.btn) {
+    color: #dc3545 !important;
+}
+
+.card-wrapper .card .card-text a:not(.btn):hover {
+    color: #b02a37 !important;
+}
+
+/* カード内のRSSフィードコンテナ */
+.card-wrapper .card .card-text .rss-feed-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+/* スクロールバーのスタイル（Webkit系ブラウザ） */
+.card-wrapper .card .card-text::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-wrapper .card .card-text::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.card-wrapper .card .card-text::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.card-wrapper .card .card-text::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* カードアクションエリアを常に下部に固定 */
+.card-wrapper .card .card-action-area {
+    flex-shrink: 0; /* アクションエリアは縮まない */
+    margin-top: auto;
+}
+
+/* NEW!!リボン（折り返しタイプ・立体的） */
+.card-wrapper .card > a .new-ribbon,
+#tab-general .card-wrapper .card > a .new-ribbon,
+#tab-common .card-wrapper .card > a .new-ribbon,
+#tab-kevin .card-wrapper .card > a .new-ribbon,
+#tab-ryo .card-wrapper .card > a .new-ribbon,
+#tab-filter .card-wrapper .card > a .new-ribbon {
+    position: absolute !important;
+    top: -5px !important; /* 上にはみ出す */
+    left: 8px !important;
+    z-index: 10 !important;
+    background-color: #dc3545 !important;
+    color: white !important;
+    font-size: 0.75rem !important;
+    font-weight: bold !important;
+    padding: 0.4rem 0.6rem !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3) !important; /* くっきりした影 */
+    border-bottom-left-radius: 4px !important;
+    border-bottom-right-radius: 4px !important;
+}
+
+/* リボンの折り返し部分（疑似要素で表現・立体的な影） */
+.card-wrapper .card > a .new-ribbon::after,
+#tab-general .card-wrapper .card > a .new-ribbon::after,
+#tab-common .card-wrapper .card > a .new-ribbon::after,
+#tab-kevin .card-wrapper .card > a .new-ribbon::after,
+#tab-ryo .card-wrapper .card > a .new-ribbon::after,
+#tab-filter .card-wrapper .card > a .new-ribbon::after {
+    content: '' !important;
+    position: absolute !important;
+    bottom: -6px !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 6px !important;
+    background: linear-gradient(to bottom, rgba(180, 30, 40, 0.8), rgba(0, 0, 0, 0.3)) !important; /* くっきりした影 */
+    border-bottom-left-radius: 2px !important;
+    border-bottom-right-radius: 2px !important;
+}
+
+/* sub-imageのスタイル（X/Twitter風の円形アイコン・左下に配置） */
+.card-wrapper .card > a .card-sub-image,
+#tab-general .card-wrapper .card > a .card-sub-image,
+#tab-common .card-wrapper .card > a .card-sub-image,
+#tab-kevin .card-wrapper .card > a .card-sub-image,
+#tab-ryo .card-wrapper .card > a .card-sub-image,
+#tab-filter .card-wrapper .card > a .card-sub-image {
+    position: absolute !important;
+    bottom: 8px !important;
+    left: 8px !important; /* 左下に配置 */
+    right: auto !important; /* 右を解除 */
+    top: auto !important; /* 上を解除 */
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 3px solid white !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    z-index: 10 !important;
+}
+
+/* カード内のロゴ（右下配置） */
+.card-wrapper .card > a .card-logo-img,
+#tab-general .card-wrapper .card > a .card-logo-img,
+#tab-common .card-wrapper .card > a .card-logo-img,
+#tab-kevin .card-wrapper .card > a .card-logo-img,
+#tab-ryo .card-wrapper .card > a .card-logo-img,
+#tab-filter .card-wrapper .card > a .card-logo-img {
+    position: absolute !important;
+    bottom: 8px !important; /* 右下に移動 */
+    right: 8px !important; /* 右下に移動 */
+    top: auto !important; /* 上を解除 */
+    left: auto !important; /* 左を解除 */
+    height: 40px !important;
+    width: auto !important;
+    max-width: 80px !important;
+    object-fit: contain !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    padding: 4px !important;
+    border-radius: 4px !important;
+    z-index: 10 !important;
+}
+
+/* カード内のロゴ文字（右下配置） */
+.card-wrapper .card > a .card-logo-text,
+#tab-general .card-wrapper .card > a .card-logo-text,
+#tab-common .card-wrapper .card > a .card-logo-text,
+#tab-kevin .card-wrapper .card > a .card-logo-text,
+#tab-ryo .card-wrapper .card > a .card-logo-text,
+#tab-filter .card-wrapper .card > a .card-logo-text {
+    position: absolute !important;
+    bottom: 8px !important; /* 右下に移動 */
+    right: 8px !important; /* 右下に移動 */
+    top: auto !important; /* 上を解除 */
+    left: auto !important; /* 左を解除 */
+    height: 40px !important;
+    max-width: 80px !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    z-index: 10 !important;
+    
+    /* 文字スタイル */
+    color: #dc3545 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
+}
+
+/* カード内のアクションエリア（ボタン＋ハッシュタグ）のスタイル */
+.card-action-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* ボタンとハッシュタグの間隔 */
+}
+
+.card-action-button {
+    flex-shrink: 0;
+}
+
+.card-hashtag-area {
+    flex-grow: 1;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.card-hashtag-area small {
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.card-hashtag-area a {
+    color: #dc3545 !important;
+    text-decoration: none;
+    margin-right: 0.25rem;
+    display: inline;
+}
+
+.card-hashtag-area a:hover {
+    text-decoration: underline;
+    color: #b02a37 !important;
+}
+
+/* RSSフィードコンテナのスタイル（index専用） */
+#cmp .rss-feed-container {
+    background-color: white;
+}
+
+#cmp .rss-feed-container a {
+    font-size: 1rem;
+    color: #dc3545;
+}
+
+#cmp .rss-feed-container h3 {
+    margin-bottom: .25rem;
+}
+
+/* ユニット・けびん・リョウタブ内の全てのリンクを赤系に（ボタンは除外） */
+#tab-common a:not(.btn),
+#tab-kevin a:not(.btn),
+#tab-ryo a:not(.btn),
+#card-content-container-common a:not(.btn),
+#card-content-container-kevin a:not(.btn),
+#card-content-container-ryo a:not(.btn),
+#hashtag-list-container-common a:not(.btn),
+#hashtag-list-container-kevin a:not(.btn),
+#hashtag-list-container-ryo a:not(.btn) {
+    color: #dc3545 !important;
+}
+
+#tab-common a:not(.btn):hover,
+#tab-kevin a:not(.btn):hover,
+#tab-ryo a:not(.btn):hover,
+#card-content-container-common a:not(.btn):hover,
+#card-content-container-kevin a:not(.btn):hover,
+#card-content-container-ryo a:not(.btn):hover,
+#hashtag-list-container-common a:not(.btn):hover,
+#hashtag-list-container-kevin a:not(.btn):hover,
+#hashtag-list-container-ryo a:not(.btn):hover {
+    color: #b02a37 !important;
+}
+
+/* セクションタイトルのスタイル */
+.section-title {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0;
+    scroll-margin-top: 120px; /* ヘッダー分のオフセット（余裕を持たせる） */
+}
+
+/* スマホサイズでのスクロールマージン調整 */
+@media (max-width: 576px) {
+    .section-title {
+        scroll-margin-top: 140px; /* スマホではヘッダーが縦に並ぶため多めに */
+    }
+}
+
+/* スマホサイズでカード幅とスクロールマージンを調整 */
+@media (max-width: 576px) {
+    .card-wrapper {
+        width: 100%;
+        max-width: 20rem;
+        scroll-margin-top: 140px; /* スマホでは多めに */
+    }
+}
+
+/* コントリビューショングラフのスタイル */
+.contribution-graph-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.contribution-graph-container {
+    display: inline-block;
+    min-width: 100%;
+    padding-right: 20px; /* スマホで右端の余白を追加 */
+}
+
+.contribution-year,
+.contribution-month {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap; /* 改行を防ぐ */
+}
+
+.contribution-main {
+    display: flex;
+    gap: 3px;
+}
+
+.contribution-weekdays {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-right: 5px;
+}

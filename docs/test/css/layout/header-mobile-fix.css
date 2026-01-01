@@ -1,0 +1,160 @@
+/**
+ * ヘッダーのスマホサイズ対応
+ * スマホサイズでも下スクロール時にコンパクトヘッダーが表示されるようにする
+ */
+
+/* ヘッダーを固定位置に配置（全画面サイズ） */
+#main-header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 1000 !important;
+    transition: height 0.3s ease;
+}
+
+/* Bootstrap の sticky-top クラスを上書き */
+#main-header.sticky-top {
+    position: fixed !important;
+    top: 0 !important;
+}
+
+/* コンパクトヘッダー表示時 */
+#main-header.scrolled {
+    height: 50px !important;
+}
+
+/* 通常ヘッダー表示時 */
+#main-header:not(.scrolled) {
+    height: 80px !important;
+}
+
+/* ヘッダーの高さ分だけbodyの上にパディングを追加 */
+body {
+    padding-top: 80px; /* 通常ヘッダーの高さ */
+}
+
+/* スクロール時はコンパクトヘッダーの高さに調整 */
+body.header-scrolled {
+    padding-top: 50px;
+}
+
+/* スマホサイズ（768px以下）でも同じ動作を保証 */
+@media (max-width: 768px) {
+    #main-header {
+        position: fixed !important;
+        top: 0 !important;
+        z-index: 1000 !important;
+    }
+    
+    /* スマホサイズでは通常ヘッダーもコンパクトに */
+    #main-header:not(.scrolled) {
+        height: 60px !important;
+    }
+    
+    #main-header.scrolled {
+        height: 50px !important;
+    }
+    
+    body {
+        padding-top: 60px;
+    }
+    
+    body.header-scrolled {
+        padding-top: 50px;
+    }
+}
+
+/* さらに小さい画面（576px以下） */
+@media (max-width: 576px) {
+    #main-header {
+        position: fixed !important;
+        top: 0 !important;
+        z-index: 1000 !important;
+    }
+    
+    #main-header:not(.scrolled) {
+        height: 50px !important;
+    }
+    
+    #main-header.scrolled {
+        height: 45px !important;
+    }
+    
+    body {
+        padding-top: 50px;
+    }
+    
+    body.header-scrolled {
+        padding-top: 45px;
+    }
+    
+    /* スマホサイズではヘッダー内の要素を小さく */
+    .header-title-normal {
+        font-size: 1.2rem !important;
+        padding: 0.5rem 0 !important;
+    }
+    
+    .header-compact h2 {
+        font-size: 1rem !important;
+    }
+}
+
+/* ヘッダー内の要素が確実に表示されるようにする */
+.header-title-normal,
+.header-compact {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* 通常ヘッダーの初期状態 */
+.header-title-normal {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* コンパクトヘッダーの初期状態 */
+.header-compact {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* スクロール時：通常ヘッダーを非表示 */
+#main-header.scrolled .header-title-normal {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+/* スクロール時：コンパクトヘッダーを表示 */
+#main-header.scrolled .header-compact {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+/* z-indexの確実な設定 */
+#main-header {
+    z-index: 1000 !important;
+}
+
+.header-compact {
+    z-index: 1001 !important;
+}
+
+.abbreviation-menu-wrapper {
+    z-index: 999 !important;
+}
+
+/* デバッグ用（問題が解決したら削除可） */
+#main-header.scrolled {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}

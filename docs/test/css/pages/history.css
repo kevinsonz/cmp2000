@@ -1,0 +1,253 @@
+/* =================================
+   History.html専用のスタイル
+   ================================= */
+
+/* フィルタ設定のグループカードスタイル */
+.card.border-primary {
+    border-width: 2px;
+    border-color: #dc3545 !important;
+}
+
+.card.border-success {
+    border-width: 2px;
+    border-color: #dc3545 !important;
+}
+
+.card-header.bg-primary.bg-opacity-10 {
+    font-weight: bold;
+    color: #dc3545;
+}
+
+.card-header.bg-success.bg-opacity-10 {
+    font-weight: bold;
+    color: #dc3545;
+}
+
+/* 年スライダーのバッジスタイル */
+.year-badge {
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.4rem 0.6rem;
+    min-width: 30px;
+    text-align: center;
+    user-select: none;
+}
+
+/* 年の増減ボタンスタイル */
+.year-btn {
+    cursor: pointer;
+    border: none;
+    transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.year-btn:hover {
+    transform: scale(1.1);
+}
+
+.year-btn:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
+.year-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* 年表テーブルのスタイル */
+.history-table {
+    background-color: white;
+    width: 100%;
+    table-layout: auto;
+}
+
+.history-table thead th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Articleヘッダーセルのスタイル */
+.article-header-cell {
+    padding: 0.5rem !important;
+}
+
+.article-header-cell .d-flex {
+    gap: 0.5rem;
+}
+
+.article-header-cell span {
+    flex-shrink: 0;
+}
+
+.article-header-cell button {
+    flex-shrink: 0;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    white-space: nowrap;
+}
+
+/* カテゴリ列の設定 */
+.history-table thead th:not(.year-column) {
+    width: auto;
+}
+
+.history-table tbody td {
+    vertical-align: top;
+    padding: 0.75rem;
+}
+
+/* Article列のスタイル */
+.article-column {
+    line-height: 1.8;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+/* 改行スタイル用の記事アイテム */
+.article-item {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.article-item:last-child {
+    border-bottom: none;
+}
+
+/* カテゴリ略称ボタンのスタイル */
+.category-abbr-btn {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* 記事がない年のセルのスタイル */
+.empty-year-cell {
+    background-color: #f0f0f0 !important;
+}
+
+/* Tableのホバースタイルは削除 */
+
+/* ゼブラストライプ（奇数行に薄い背景色） */
+.history-table tbody tr:nth-child(odd) {
+    background-color: #f8f9fa;
+}
+
+/* 空のセルのスタイル（ゼブラストライプより優先） */
+.history-table tbody td:empty,
+.history-table tbody td.empty-cell {
+    background-color: #f0f0f0 !important;
+}
+
+/* 年の列のスタイル */
+.year-column {
+    background-color: #e9ecef;
+    width: 100px;
+    min-width: 100px;
+}
+
+/* 年表リンクのスタイル */
+.history-link {
+    text-decoration: none;
+    color: #dc3545;
+    word-break: break-word;
+}
+
+.history-link:hover {
+    text-decoration: underline;
+}
+
+/* テーブルレスポンシブラッパー */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* レスポンシブ対応（History） */
+@media (max-width: 768px) {
+    .history-table {
+        font-size: 0.9rem;
+    }
+    
+    .history-table tbody td {
+        padding: 0.5rem;
+    }
+    
+    .year-column {
+        width: 70px;
+        min-width: 70px;
+        font-size: 0.85rem;
+    }
+    
+    /* スマホでのヘッダーボタン調整 */
+    .article-header-cell button {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    /* スマホでの表の横スクロール対応 */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    /* カテゴリアイコンエリアのスクロール対応 */
+    .article-header-cell .d-flex {
+        overflow: visible;
+    }
+    
+    #selectedCategoryIcons {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* 年選択セレクトボックスの無効化オプションスタイル */
+select option:disabled {
+    color: #ccc;
+}
+
+/* すべて表示ボタンのスタイル */
+#showAllBtn {
+    white-space: nowrap;
+}
+
+#showAllBtn:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* 選択中アイコンの表示 */
+#selectedCategoryIcons {
+    font-size: 1rem;
+    white-space: nowrap;
+}
+
+/* 省略行(...)のスタイル */
+.ellipsis-row {
+    background-color: #f0f0f0 !important;
+    border-top: 2px dashed #dee2e6 !important;
+    border-bottom: 2px dashed #dee2e6 !important;
+}
+
+.ellipsis-row td {
+    background-color: #f0f0f0 !important;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+/* ハッシュタグリストセクション */
+.hashtag-list-section {
+    padding: 2rem 1rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.hashtag-list-section .container {
+    max-width: 960px;
+}
+
+.hashtag-list-section h4 {
+    color: #495057;
+}
+

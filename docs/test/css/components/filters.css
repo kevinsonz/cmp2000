@@ -1,0 +1,110 @@
+}
+
+#selected-date-display {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.data-table-content {
+    min-height: 100px;
+    max-height: 210px !important; /* 約3件分の高さに制限（ヘッダー含む） */
+    overflow-y: auto !important; /* 4件以上で縦スクロール */
+    overflow-x: hidden;
+}
+
+/* データテーブルのスクロールバーのスタイル（Webkit系ブラウザ） */
+.data-table-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.data-table-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.data-table-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.data-table-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* PC版: テーブル形式 */
+.data-table-desktop {
+    display: block;
+}
+
+.data-table-desktop .table {
+    margin-bottom: 0;
+}
+
+.data-table-desktop .table th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.data-table-desktop .table td {
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+.data-table-desktop .table td a {
+    color: #dc3545 !important;
+    transition: color 0.2s;
+}
+
+.data-table-desktop .table td a:hover {
+    color: #b02a37 !important;
+    text-decoration: underline;
+}
+
+/* モバイル版: カード形式（初期状態は非表示） */
+.data-table-mobile {
+    display: none;
+}
+
+/* モバイル用のレスポンシブ対応 */
+@media (max-width: 767px) {
+    .contribution-data-table-container {
+        margin: 1rem;
+        padding: 1rem;
+    }
+    
+    /* データテーブルの高さ制限 */
+    .data-table-content {
+        max-height: 260px !important; /* モバイルでは約3件分の高さ（カード形式） */
+    }
+    
+    /* PC版を非表示 */
+    .data-table-desktop {
+        display: none;
+    }
+    
+    /* モバイル版を表示 */
+    .data-table-mobile {
+        display: block;
+    }
+    
+    .data-card {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .data-card:last-child {
+        margin-bottom: 0;
+    }
+    
+    .data-card-title {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+    }

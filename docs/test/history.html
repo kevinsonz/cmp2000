@@ -9,24 +9,50 @@
     <link rel="icon" type="image/png" href="./images/cmp2000-favicon.png">
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Bootstrap JavaScript Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- カスタムスタイルシート -->
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./css/base/variables.css">
+    <link rel="stylesheet" href="./css/base/reset.css">
+    <link rel="stylesheet" href="./css/base/typography.css">
+    <link rel="stylesheet" href="./css/layout/header.css">
+    <link rel="stylesheet" href="./css/layout/footer.css">
+    <link rel="stylesheet" href="./css/layout/navigation.css">
+    <link rel="stylesheet" href="./css/components/buttons.css">
+    <link rel="stylesheet" href="./css/components/filters.css">
+    <link rel="stylesheet" href="./css/components/cards-x-timeline.css">
+    <link rel="stylesheet" href="./css/pages/history.css">
 
-    <!-- ローカル開発用データ（GitHub Pagesでは404になるが問題なし） -->
-
-    <!-- カスタムスクリプト（deferで後から実行） -->
-    <script src="./history-script.js" defer></script>
+    <!-- Historyページ用スクリプト（モジュール化版） -->
+    <script type="module" src="./js/history/main.js"></script>
+    
+    <style>
+        /* フィルタ設定のヘッダー - クリック可能だが色は変わらない */
+        .filter-settings-header {
+            cursor: pointer;
+            user-select: none;
+            font-size: 1rem; /* 通常サイズに */
+            font-weight: normal; /* 太字を解除 */
+        }
+        /* クリック時やホバー時も背景色を変えない */
+        .filter-settings-header:hover,
+        .filter-settings-header:active,
+        .filter-settings-header:focus {
+            background-color: #fff !important;
+            color: inherit !important;
+        }
+        /* Bootstrapのデフォルトスタイルを上書き */
+        .card-header.filter-settings-header {
+            padding: 0.75rem 1.25rem;
+        }
+    </style>
 </head>
 
 <body class="bg-light" id="history">
-    <!-- ページヘッダー（固定） -->
     <header id="main-header" class="sticky-top bg-light border-bottom">
-        <!-- 通常時のタイトル -->
         <h1 class="text-center py-3 mb-0 header-title-normal">
             <a href="./" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
                 <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon">
@@ -35,9 +61,7 @@
             </a>
         </h1>
         
-        <!-- スクロール時のコンパクトヘッダー（2段レイアウト） -->
         <div class="header-compact">
-            <!-- 1段目：ロゴ + ページメニュー -->
             <div class="header-compact-row1">
                 <div class="header-compact-logo">
                     <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon-compact">
@@ -50,7 +74,6 @@
                     <a href="history.html" class="page-menu-link active">History</a>
                 </div>
             </div>
-            <!-- 2段目：フィルタ設定ボタン -->
             <div class="header-compact-row2">
                 <div class="filter-controls-compact">
                     <button class="btn btn-sm btn-outline-primary" onclick="scrollToFilterSettings(); return false;">⚙️ フィルタ設定</button>
@@ -59,7 +82,6 @@
         </div>
     </header>
 
-    <!-- ページメニュー（通常時） -->
     <div class="page-menu-wrapper">
         <div class="page-menu">
             <a href="index.html" class="page-menu-item">Home</a>
@@ -70,7 +92,6 @@
         </div>
     </div>
 
-    <!-- フィルタ設定ボタンエリア（通常時） -->
     <div id="filter-nav-wrapper" class="filter-nav-wrapper">
         <div class="filter-nav-container">
             <div class="filter-controls">
@@ -79,36 +100,24 @@
         </div>
     </div>
 
-    <!-- メインコンテンツ -->
     <div class="page-container">
-        <div class="mb-3 text-center">
-            <a href="index.html" class="btn btn-outline-primary">← 🏠 ポータルページへ戻る</a>
-        </div>
         
-        <h2 class="text-center mb-3">History since 1998</h2>
-        
-        <!-- フィルタ設定UI（アコーディオン） -->
         <div class="mb-3">
             <div class="card">
-                <div class="card-header bg-white">
-                    <button class="btn btn-link w-100 text-start text-decoration-none p-0" 
-                            type="button" 
-                            data-bs-toggle="collapse" 
-                            data-bs-target="#filterSettings" 
-                            aria-expanded="false" 
-                            aria-controls="filterSettings">
-                        <strong>⚙️ フィルタ設定</strong>
-                    </button>
+                <div class="card-header bg-white filter-settings-header" 
+                     data-bs-toggle="collapse" 
+                     data-bs-target="#filterSettings" 
+                     aria-expanded="false" 
+                     aria-controls="filterSettings">
+                    <strong>⚙️ フィルタ設定</strong>
                 </div>
                 <div class="collapse" id="filterSettings">
                     <div class="card-body">
-                        <!-- 表示期間＋表示オプション（グループ1） -->
                         <div class="card mb-3 border-primary">
                             <div class="card-header bg-primary bg-opacity-10 border-primary">
                                 <strong>📅 表示設定</strong>
                             </div>
                             <div class="card-body">
-                                <!-- 年の範囲設定 -->
                                 <div class="mb-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h6 class="mb-0"><strong>表示期間</strong></h6>
@@ -116,12 +125,9 @@
                                     </div>
                                     
                                     <div class="row g-3">
-                                        <!-- 開始年 -->
                                         <div class="col-md-6">
                                             <label for="startYearSelect" class="form-label">開始年</label>
-                                            <select class="form-select mb-2" id="startYearSelect">
-                                                <!-- JavaScriptで動的に生成 -->
-                                            </select>
+                                            <select class="form-select mb-2" id="startYearSelect"></select>
                                             <div class="d-flex align-items-center gap-2">
                                                 <button class="badge bg-secondary year-badge year-btn" id="startYearMinus" type="button">−</button>
                                                 <input type="range" class="form-range" id="startYearSlider" min="1998" max="2024" value="2014">
@@ -129,12 +135,9 @@
                                             </div>
                                         </div>
                                         
-                                        <!-- 終了年 -->
                                         <div class="col-md-6">
                                             <label for="endYearSelect" class="form-label">終了年</label>
-                                            <select class="form-select mb-2" id="endYearSelect">
-                                                <!-- JavaScriptで動的に生成 -->
-                                            </select>
+                                            <select class="form-select mb-2" id="endYearSelect"></select>
                                             <div class="d-flex align-items-center gap-2">
                                                 <button class="badge bg-secondary year-badge year-btn" id="endYearMinus" type="button">−</button>
                                                 <input type="range" class="form-range" id="endYearSlider" min="1998" max="2024" value="2024">
@@ -144,42 +147,31 @@
                                     </div>
                                 </div>
 
-                                <!-- 表示オプション -->
                                 <div>
                                     <h6 class="mb-3"><strong>表示オプション</strong></h6>
                                     
                                     <div class="row g-3">
-                                        <!-- 空白年の表示 -->
                                         <div class="col-md-6">
                                             <label class="form-label d-block">空白年の表示：</label>
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="showEmptyYears" id="showEmptyYearsOn" value="on" checked>
-                                                <label class="form-check-label" for="showEmptyYearsOn">
-                                                    [+] On
-                                                </label>
+                                                <label class="form-check-label" for="showEmptyYearsOn">[+] On</label>
                                             </div>
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="showEmptyYears" id="showEmptyYearsOff" value="off">
-                                                <label class="form-check-label" for="showEmptyYearsOff">
-                                                    [-] Off
-                                                </label>
+                                                <label class="form-check-label" for="showEmptyYearsOff">[-] Off</label>
                                             </div>
                                         </div>
                                         
-                                        <!-- 記事順 -->
                                         <div class="col-md-6">
                                             <label class="form-label d-block">記事順：</label>
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="sortOrder" id="sortNewestFirst" value="desc" checked>
-                                                <label class="form-check-label" for="sortNewestFirst">
-                                                    ▼ 降順
-                                                </label>
+                                                <label class="form-check-label" for="sortNewestFirst">▼ 降順</label>
                                             </div>
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="sortOrder" id="sortOldestFirst" value="asc">
-                                                <label class="form-check-label" for="sortOldestFirst">
-                                                    ▲ 昇順
-                                                </label>
+                                                <label class="form-check-label" for="sortOldestFirst">▲ 昇順</label>
                                             </div>
                                         </div>
                                     </div>
@@ -187,7 +179,6 @@
                             </div>
                         </div>
 
-                        <!-- カテゴリフィルタ（グループ2） -->
                         <div class="card mb-3 border-success">
                             <div class="card-header bg-success bg-opacity-10 border-success">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -199,13 +190,10 @@
                                 </div>
                             </div>
                             <div class="card-body">
-                                <div id="categoryFilterList">
-                                    <!-- JavaScriptで動的に生成 -->
-                                </div>
+                                <div id="categoryFilterList"></div>
                             </div>
                         </div>
 
-                        <!-- 適用・キャンセルボタン（全体に影響） -->
                         <div class="d-flex justify-content-end gap-2 pt-2 border-top">
                             <button class="btn btn-secondary" id="filterCancelBtn">キャンセル</button>
                             <button class="btn btn-primary" id="filterApplyBtn">適用</button>
@@ -215,12 +203,10 @@
             </div>
         </div>
 
-        <!-- 年表の範囲表示 -->
         <div class="mb-2 text-center">
             <span id="year-range-display" class="text-muted small"></span>
         </div>
 
-        <!-- 年表テーブル -->
         <div class="table-responsive">
             <table class="table table-bordered history-table" id="historyTable">
                 <thead class="table-light">
@@ -245,24 +231,18 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody id="historyTableBody">
-                    <!-- JavaScriptで動的に生成 -->
-                </tbody>
+                <tbody id="historyTableBody"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- ジャンプメニュー（Bootstrap dropdown使用） -->
     <div class="dropup position-fixed bottom-0 end-0 m-3" style="z-index: 1000;">
         <button class="btn btn-primary rounded-circle shadow" type="button" id="jumpMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="width: 60px; height: 60px;">
             ☰
         </button>
-        <ul class="dropdown-menu dropdown-menu-end" id="jumpMenuList" aria-labelledby="jumpMenuButton">
-            <!-- JavaScriptで動的に生成 -->
-        </ul>
+        <ul class="dropdown-menu dropdown-menu-end" id="jumpMenuList" aria-labelledby="jumpMenuButton"></ul>
     </div>
 
-    <!-- フッター -->
     <footer id="footer" class="text-center py-4 mt-5 border-top bg-light">
         <p class="mb-0 text-muted">
             <small>&copy; 2000-<span id="current-year"></span> CMP2000</small>

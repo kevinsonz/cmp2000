@@ -1,0 +1,79 @@
+/* タブナビゲーションのスタイル */
+.tab-navigation-wrapper {
+    background-color: #ffffff;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0.75rem 0;
+}
+
+/* body.header-scrolledの時は非表示にする（CSSセレクタではできないのでstyle.cssで制御） */
+
+.tab-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tab-button {
+    flex: 1 1 0;
+    min-width: 120px;
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #495057;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    background-color: #e9ecef;
+}
+
+.tab-button.active {
+    background-color: white;
+    border-bottom-color: #dc3545;
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* タブリンクセクションのスタイル */
+#tab-links-section {
+    margin: 1.5rem auto;
+    scroll-margin-top: 120px; /* ジャンプ時のオフセット */
+    max-width: none; /* page-containerのmax-widthを上書き */
+    padding: 0; /* page-containerのpaddingも上書き */
+}
+
+/* その他のジャンプ先要素にもscroll-margin-topを追加 */
+#multi-rss-feed-container,
+#contribution-graph,
+#filter-ui-container {
+    scroll-margin-top: 120px;
+}
+
+@media (max-width: 576px) {
+    #tab-links-section,
+    #multi-rss-feed-container,
+    #contribution-graph,
+    #filter-ui-container {
+        scroll-margin-top: 140px;
+    }
+}
+/* スマホでのタブナビゲーション調整 */
+@media (max-width: 576px) {
+    .tab-button {
+        min-width: 100px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+}
