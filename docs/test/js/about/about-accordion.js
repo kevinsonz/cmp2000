@@ -233,13 +233,19 @@ export function initAccordionButtons(openCallback, closeCallback) {
  * @param {HTMLElement} container - コンテナ要素
  */
 export function generateSectionJumpButtons(container) {
-    if (!container) return;
+    console.log('generateSectionJumpButtons called, container:', container);
+    if (!container) {
+        console.log('generateSectionJumpButtons: container is null');
+        return;
+    }
     
     // 既存のセクションジャンプボタンを削除
     const existingButtons = container.querySelectorAll('.section-jump-btn');
+    console.log('既存のセクションジャンプボタン数:', existingButtons.length);
     existingButtons.forEach(btn => btn.remove());
     
     // セクションジャンプボタンを生成してコンテナに追加
+    console.log('SECTION_INFO:', SECTION_INFO);
     SECTION_INFO.forEach(section => {
         const btn = document.createElement('button');
         btn.className = 'abbreviation-menu-button section-jump-btn';
@@ -247,7 +253,9 @@ export function generateSectionJumpButtons(container) {
         btn.setAttribute('data-section', section.id);
         
         btn.addEventListener('click', () => {
-            const targetElement = document.getElementById(`accordion-${section.id}`);
+            console.log('セクションジャンプボタンクリック:', section.name, section.id);
+            const targetElement = document.getElementById(section.id);
+            console.log('ターゲット要素:', targetElement);
             if (targetElement) {
                 const header = document.getElementById('main-header');
                 const headerHeight = header ? header.offsetHeight : 0;
@@ -255,31 +263,50 @@ export function generateSectionJumpButtons(container) {
                 const menuHeight = menuWrapper ? menuWrapper.offsetHeight : 0;
                 const offset = headerHeight + menuHeight + 10;
                 
+                console.log('スクロール情報:', {
+                    headerHeight,
+                    menuHeight,
+                    offset,
+                    targetTop: targetElement.getBoundingClientRect().top,
+                    pageYOffset: window.pageYOffset
+                });
+                
                 const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                console.log('スクロール先:', targetPosition);
                 window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+            } else {
+                console.log('ターゲット要素が見つかりません:', section.id);
             }
         });
         
         container.appendChild(btn);
+        console.log('セクションジャンプボタンを追加:', section.name);
     });
+    console.log('generateSectionJumpButtons 完了');
 }
 
 /**
  * セクションメニューの初期化
  */
 export function initSectionMenu() {
+    console.log('=== initSectionMenu 開始 ===');
+    
     // アイコンクリックイベント（通常モード）
     const icon = document.getElementById('aboutIcon');
+    console.log('通常モードのアイコン:', icon);
     if (icon) {
         icon.addEventListener('click', () => {
+            console.log('通常モードのアイコンがクリックされました');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
     
     // アイコンクリックイベント（コンパクトモード）
     const iconCompact = document.getElementById('aboutIconCompact');
+    console.log('コンパクトモードのアイコン:', iconCompact);
     if (iconCompact) {
         iconCompact.addEventListener('click', () => {
+            console.log('コンパクトモードのアイコンがクリックされました');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
@@ -288,13 +315,20 @@ export function initSectionMenu() {
     const containerNormal = document.getElementById('sectionNavContainer');
     const containerCompact = document.getElementById('sectionNavContainerCompact');
     
+    console.log('通常メニューのコンテナ:', containerNormal);
+    console.log('コンパクトメニューのコンテナ:', containerCompact);
+    
     if (containerNormal) {
+        console.log('通常メニューのセクションジャンプボタンを生成します');
         generateSectionJumpButtons(containerNormal);
     }
     
     if (containerCompact) {
+        console.log('コンパクトメニューのセクションジャンプボタンを生成します');
         generateSectionJumpButtons(containerCompact);
     }
+    
+    console.log('=== initSectionMenu 完了 ===');
 }
 
 /**

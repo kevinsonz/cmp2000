@@ -156,9 +156,6 @@ async function initializeAboutPage() {
     // アコーディオンボタンの初期化
     initAccordionButtons(handleOpenAllClick, handleCloseAllClick);
     
-    // セクションメニューの初期化
-    initSectionMenu();
-    
     try {
         // CSVデータを読み込み
         console.log('=== CSV読み込み開始 ===');
@@ -192,6 +189,9 @@ async function initializeAboutPage() {
         // UIを更新
         updatePhilosophySection(basicInfo);
         generateAboutPageWrapper(null);
+        
+        // セクションメニューの初期化（generateAboutPageWrapperの後に移動）
+        initSectionMenu();
         
         // スクロール矢印を初期化
         console.log('>>> initScrollArrows を呼び出します');
