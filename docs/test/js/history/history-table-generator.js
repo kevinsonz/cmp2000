@@ -3,7 +3,7 @@
  * メインのテーブル生成ロジックと表示制御
  */
 
-import { MIN_YEAR, MAX_YEAR, getJapaneseEra, CATEGORY_ICONS, CATEGORY_ABBREVIATIONS } from './constants.js';
+import { MIN_YEAR, MAX_YEAR, getJapaneseEra, CATEGORY_ICONS, CATEGORY_ABBREVIATIONS } from './history-constants.js';
 
 /**
  * HTMLタグとmarkdown記法を除去

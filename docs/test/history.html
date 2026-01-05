@@ -23,11 +23,12 @@
     <link rel="stylesheet" href="./css/layout/navigation.css">
     <link rel="stylesheet" href="./css/components/buttons.css">
     <link rel="stylesheet" href="./css/components/filters.css">
+    <link rel="stylesheet" href="./css/components/abbreviation-menu.css">
     <link rel="stylesheet" href="./css/components/cards-x-timeline.css">
     <link rel="stylesheet" href="./css/pages/history.css">
 
-    <!-- Historyページ用スクリプト（モジュール化版） -->
-    <script type="module" src="./js/history/main.js"></script>
+    <!-- Historyページ用スクリプト(モジュール化版) -->
+    <script type="module" src="./js/history/history-main.js"></script>
     
     <style>
         /* フィルタ設定のヘッダー - クリック可能だが色は変わらない */
@@ -36,13 +37,20 @@
             user-select: none;
             font-size: 1rem; /* 通常サイズに */
             font-weight: normal; /* 太字を解除 */
+            position: relative;
+            z-index: 10; /* コンテンツがヘッダーの上に重ならないように */
+            color: #dc3545 !important; /* 赤字に設定 */
         }
-        /* クリック時やホバー時も背景色を変えない */
+        /* クリック時やホバー時も背景色と文字色を変えない */
         .filter-settings-header:hover,
         .filter-settings-header:active,
         .filter-settings-header:focus {
             background-color: #fff !important;
-            color: inherit !important;
+            color: #dc3545 !important; /* ホバー時も赤字を維持 */
+        }
+        /* strongタグの色も確実に赤字に */
+        .filter-settings-header strong {
+            color: #dc3545 !important;
         }
         /* Bootstrapのデフォルトスタイルを上書き */
         .card-header.filter-settings-header {
@@ -66,37 +74,32 @@
                 <div class="header-compact-logo">
                     <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon-compact">
                 </div>
-                <div class="header-compact-page-menu">
-                    <a href="index.html" class="page-menu-link">Home</a>
-                    <span class="page-menu-separator">|</span>
-                    <a href="about.html" class="page-menu-link">About</a>
-                    <span class="page-menu-separator">|</span>
-                    <a href="history.html" class="page-menu-link active">History</a>
-                </div>
             </div>
             <div class="header-compact-row2">
-                <div class="filter-controls-compact">
-                    <button class="btn btn-sm btn-outline-primary" onclick="scrollToFilterSettings(); return false;">⚙️ フィルタ設定</button>
+                <div class="abbreviation-menu-compact-wrapper">
+                    <button class="scroll-arrow scroll-arrow-left hidden" id="scrollLeftBtnCompact">‹</button>
+                    <div class="abbreviation-menu-compact" id="filterNavContainerCompact">
+                        <button class="abbreviation-menu-back-button" aria-label="Homeに戻る" onclick="location.href='index.html'"></button>
+                        <img src="./images/cmp2000-icon.gif" alt="History icon" class="abbreviation-menu-icon" id="historyIconCompact">
+                        <button class="btn btn-sm btn-outline-secondary filter-settings-btn" onclick="scrollToFilterSettings(); return false;">⚙️ フィルタ設定</button>
+                        <!-- 5年単位のジャンプボタンはJavaScriptで動的に生成 -->
+                    </div>
+                    <button class="scroll-arrow scroll-arrow-right hidden" id="scrollRightBtnCompact">›</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <div class="page-menu-wrapper">
-        <div class="page-menu">
-            <a href="index.html" class="page-menu-item">Home</a>
-            <span class="page-menu-separator">|</span>
-            <a href="about.html" class="page-menu-item">About</a>
-            <span class="page-menu-separator">|</span>
-            <a href="history.html" class="page-menu-item active">History</a>
-        </div>
-    </div>
-
-    <div id="filter-nav-wrapper" class="filter-nav-wrapper">
-        <div class="filter-nav-container">
-            <div class="filter-controls">
-                <button class="btn btn-sm btn-outline-primary" onclick="scrollToFilterSettings(); return false;">⚙️ フィルタ設定</button>
+    <div id="filter-nav-wrapper" class="abbreviation-menu-wrapper">
+        <div class="abbreviation-menu-scroll-wrapper">
+            <button class="scroll-arrow scroll-arrow-left hidden" id="scrollLeftBtn">‹</button>
+            <div class="abbreviation-menu-container" id="filterNavContainer">
+                <button class="abbreviation-menu-back-button" aria-label="Homeに戻る" onclick="location.href='index.html'"></button>
+                <img src="./images/cmp2000-icon.gif" alt="History icon" class="abbreviation-menu-icon" id="historyIcon">
+                <button class="btn btn-sm btn-outline-secondary filter-settings-btn" onclick="scrollToFilterSettings(); return false;">⚙️ フィルタ設定</button>
+                <!-- 5年単位のジャンプボタンはJavaScriptで動的に生成 -->
             </div>
+            <button class="scroll-arrow scroll-arrow-right hidden" id="scrollRightBtn">›</button>
         </div>
     </div>
 
@@ -152,7 +155,7 @@
                                     
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label class="form-label d-block">空白年の表示：</label>
+                                            <label class="form-label d-block">空白年の表示:</label>
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="showEmptyYears" id="showEmptyYearsOn" value="on" checked>
                                                 <label class="form-check-label" for="showEmptyYearsOn">[+] On</label>
@@ -164,7 +167,7 @@
                                         </div>
                                         
                                         <div class="col-md-6">
-                                            <label class="form-label d-block">記事順：</label>
+                                            <label class="form-label d-block">記事順:</label>
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="sortOrder" id="sortNewestFirst" value="desc" checked>
                                                 <label class="form-check-label" for="sortNewestFirst">▼ 降順</label>
@@ -236,14 +239,16 @@
         </div>
     </div>
 
-    <div class="dropup position-fixed bottom-0 end-0 m-3" style="z-index: 1000;">
-        <button class="btn btn-primary rounded-circle shadow" type="button" id="jumpMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="width: 60px; height: 60px;">
-            ☰
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" id="jumpMenuList" aria-labelledby="jumpMenuButton"></ul>
-    </div>
-
     <footer id="footer" class="text-center py-4 mt-5 border-top bg-light">
+        <div class="footer-page-menu-wrapper mb-3">
+            <div class="footer-page-menu">
+                <a href="index.html" class="footer-page-menu-item">Home</a>
+                <span class="page-menu-separator">|</span>
+                <a href="about.html" class="footer-page-menu-item">About</a>
+                <span class="page-menu-separator">|</span>
+                <a href="history.html" class="footer-page-menu-item active">History</a>
+            </div>
+        </div>
         <p class="mb-0 text-muted">
             <small>&copy; 2000-<span id="current-year"></span> CMP2000</small>
         </p>

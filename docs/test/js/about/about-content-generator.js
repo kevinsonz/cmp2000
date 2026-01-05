@@ -4,9 +4,9 @@
  */
 
 import { parseHashTags, convertHashTagsToLinks } from '../shared/hashtag.js';
-import { accordionStates } from './accordion.js';
-import { updateAccordionButtonStates, toggleAccordion } from './accordion.js';
-import { updateSectionNavigation } from './navigation.js';
+import { accordionStates } from './about-accordion.js';
+import { updateAccordionButtonStates, toggleAccordion } from './about-accordion.js';
+import { updateSectionNavigation } from './about-navigation.js';
 
 /**
  * CSVからcommentを取得
@@ -53,6 +53,35 @@ function getCommentByKey(csvText, targetKey) {
     }
     
     return '';
+}
+
+/**
+ * HTMLタグとmarkdown記法を除去
+ * @param {string} text - 元のテキスト
+ * @returns {string} タグとmarkdownを除去したテキスト
+ */
+function stripHtmlAndMarkdown(text) {
+    if (!text) return '';
+    
+    // HTMLタグを除去
+    let result = text.replace(/<[^>]*>/g, '');
+    
+    // markdown記法を除去
+    // 太字: **text** or __text__
+    result = result.replace(/\*\*([^*]+)\*\*/g, '$1');
+    result = result.replace(/__([^_]+)__/g, '$1');
+    
+    // 斜体: *text* or _text_
+    result = result.replace(/\*([^*]+)\*/g, '$1');
+    result = result.replace(/_([^_]+)_/g, '$1');
+    
+    // リンク: [text](url)
+    result = result.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+    
+    // コードブロック: `code`
+    result = result.replace(/`([^`]+)`/g, '$1');
+    
+    return result.trim();
 }
 
 /**
@@ -319,7 +348,7 @@ export function generateAboutPage(
                     siteLink.href = site.siteUrl;
                     siteLink.target = '_blank';
                     siteLink.className = 'site-link';
-                    siteLink.textContent = site.siteTitle;
+                    siteLink.textContent = stripHtmlAndMarkdown(site.siteTitle);
                     titleCell.appendChild(siteLink);
                     row.appendChild(titleCell);
                     
@@ -410,11 +439,11 @@ export function generateAboutPage(
                         archiveLink.href = archive.siteUrl;
                         archiveLink.target = '_blank';
                         archiveLink.className = 'site-link';
-                        archiveLink.textContent = archive.siteTitle;
+                        archiveLink.textContent = stripHtmlAndMarkdown(archive.siteTitle);
                         titleCell.appendChild(archiveLink);
                     } else {
                         const archiveText = document.createElement('span');
-                        archiveText.textContent = archive.siteTitle;
+                        archiveText.textContent = stripHtmlAndMarkdown(archive.siteTitle);
                         archiveText.style.color = '#6c757d';
                         titleCell.appendChild(archiveText);
                     }

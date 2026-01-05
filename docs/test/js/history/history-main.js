@@ -6,8 +6,8 @@
 import { updateCurrentYear } from '../shared/utils.js';
 import { initHeaderScroll, initHeaderTitleClick } from '../shared/header.js';
 import { fetchCSV, parseBasicInfoCSV } from '../shared/csv-loader.js';
-import { CATEGORIES, MIN_YEAR, MAX_YEAR, DEFAULT_YEAR_RANGE, CSV_URLS } from './constants.js';
-import { parseHistoryCSV } from './timeline.js';
+import { CATEGORIES, MIN_YEAR, MAX_YEAR, DEFAULT_YEAR_RANGE, CSV_URLS } from './history-constants.js';
+import { parseHistoryCSV } from './history-timeline.js';
 
 import { 
     initializeYearSelects,
@@ -15,7 +15,7 @@ import {
     initializeYearButtons,
     setAllPeriod,
     updateYearRangeDisplay
-} from './year-controls.js';
+} from './history-year-controls.js';
 
 import { 
     generateCategoryFilterList,
@@ -25,24 +25,29 @@ import {
     selectSingleCategory,
     updateSelectedCategoryIcons,
     handleCategoryIconClick
-} from './category-controls.js';
+} from './history-category-controls.js';
 
 import { 
     updateFilterSettingsButtonState,
     applyFilter,
     cancelFilter
-} from './filters.js';
+} from './history-filters.js';
 
 import { 
     generateHistoryTable,
     updateHeaderIndicators
-} from './table-generator.js';
+} from './history-table-generator.js';
 
 import { 
-    updateJumpMenu,
     scrollToYear,
     scrollToFilterSettings
-} from './navigation.js';
+} from './history-navigation.js';
+
+import {
+    generateYearJumpButtons,
+    initScrollArrows,
+    updateYearMenu
+} from './history-year-menu.js';
 
 // グローバル状態
 let historyData = [];
@@ -82,21 +87,11 @@ function generateTableWrapper() {
         historyData,
         basicInfoData,
         scrollToFilterSettings,
-        selectSingleCategoryWrapper,
-        updateJumpMenuWrapper
+        selectSingleCategoryWrapper
     );
-}
-
-/**
- * ジャンプメニュー更新のラッパー
- */
-function updateJumpMenuWrapper() {
-    updateJumpMenu(
-        getState(),
-        historyData,
-        scrollToFilterSettings,
-        scrollToYear
-    );
+    
+    // 年代メニューを更新（ソート順と表示範囲に応じて）
+    updateYearMenu(currentSortNewestFirst, currentStartYear, currentEndYear);
 }
 
 /**
@@ -119,9 +114,8 @@ function updateCategoryIconsWrapper() {
                 // テーブルとアイコンを更新
                 generateTableWrapper();
                 updateCategoryIconsWrapper();
-                updateJumpMenuWrapper();
             } else {
-                console.log('[main] フィルタ変更なし（最後の1つ）');
+                console.log('[main] フィルタ変更なし(最後の1つ)');
             }
         }
     );
@@ -151,7 +145,6 @@ function applyFilterWrapper() {
     // その後でテーブルを再生成
     generateTableWrapper();
     updateCategoryIconsWrapper();
-    updateJumpMenuWrapper();
     updateHeaderIndicators(currentShowEmptyYears, currentSortNewestFirst);
     
     console.log('[main] === applyFilterWrapper 完了 ===');
@@ -176,7 +169,6 @@ function showAllCategoriesWrapper() {
     // テーブルとアイコンを更新
     generateTableWrapper();
     updateCategoryIconsWrapper();
-    updateJumpMenuWrapper();
     
     console.log('[main] showAllCategoriesWrapper 完了');
 }
@@ -193,7 +185,6 @@ function selectSingleCategoryWrapper(category) {
     // テーブルとアイコンを更新
     generateTableWrapper();
     updateCategoryIconsWrapper();
-    updateJumpMenuWrapper();
     
     console.log('[main] selectSingleCategoryWrapper 完了');
 }
@@ -214,7 +205,6 @@ function toggleEmptyYearWrapper() {
     // 年表を更新
     generateTableWrapper();
     updateHeaderIndicators(currentShowEmptyYears, currentSortNewestFirst);
-    updateJumpMenuWrapper();
 }
 
 /**
@@ -233,7 +223,6 @@ function toggleSortOrderWrapper() {
     // 年表を更新
     generateTableWrapper();
     updateHeaderIndicators(currentShowEmptyYears, currentSortNewestFirst);
-    updateJumpMenuWrapper();
 }
 
 /**
@@ -296,7 +285,7 @@ async function initializePage() {
                 applyFilterWrapper();
             });
         } else {
-            console.error('[init] filterApplyBtn 要素が見つかりません！');
+            console.error('[init] filterApplyBtn 要素が見つかりません!');
         }
         
         const filterCancelBtn = document.getElementById('filterCancelBtn');
@@ -314,7 +303,7 @@ async function initializePage() {
                 showAllCategoriesWrapper();
             });
         } else {
-            console.error('[init] showAllBtn 要素が見つかりません！');
+            console.error('[init] showAllBtn 要素が見つかりません!');
         }
         
         const emptyYearIndicator = document.getElementById('emptyYearIndicator');
@@ -346,11 +335,29 @@ async function initializePage() {
             });
         }
         
-        // テーブルとメニューを生成
+        // テーブルを生成
         generateTableWrapper();
         updateCategoryIconsWrapper();
-        updateJumpMenuWrapper();
         updateHeaderIndicators(currentShowEmptyYears, currentSortNewestFirst);
+        
+        // スクロール矢印を初期化
+        initScrollArrows();
+        
+        // アイコンクリックイベント（通常モード）
+        const historyIcon = document.getElementById('historyIcon');
+        if (historyIcon) {
+            historyIcon.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+        
+        // アイコンクリックイベント（コンパクトモード）
+        const historyIconCompact = document.getElementById('historyIconCompact');
+        if (historyIconCompact) {
+            historyIconCompact.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
         
         console.log('=== History ページ初期化完了 ===');
     } catch (error) {
@@ -358,7 +365,7 @@ async function initializePage() {
     }
 }
 
-// グローバルスコープに公開（HTML内のonclickから呼ばれるため）
+// グローバルスコープに公開(HTML内のonclickから呼ばれるため)
 window.scrollToFilterSettings = scrollToFilterSettings;
 
 // DOMContentLoaded時に初期化

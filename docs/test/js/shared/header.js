@@ -184,36 +184,39 @@ export function updateCompactHeaderRow2(currentTab) {
     
     console.log('updateCompactHeaderRow2 - currentTab:', currentTab);
     
-    // TAB_CONFIGをインポート（動的インポートを避けるため、グローバルに保存されていることを想定）
-    // config.jsからTAB_CONFIGを取得
-    const TAB_CONFIG = window.TAB_CONFIG || {};
+    // filterタブの場合は「CMP2000 Official Portal」のみを表示
+    if (currentTab === 'filter') {
+        row2.innerHTML = `
+            <a href="./" class="filter-compact-header" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.5rem 0; cursor: pointer; text-decoration: none; color: inherit;">
+                <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" style="height: 1.5rem; width: auto; vertical-align: middle;">
+                <span style="font-size: 1.1rem; font-weight: 500; color: #333;">CMP2000 Official Portal</span>
+            </a>
+        `;
+        return;
+    }
     
-    // 各タブの3段目メニューを取得
-    const abbreviationMenus = {
-        common: document.getElementById('abbreviation-menu-common'),
-        kevin: document.getElementById('abbreviation-menu-kevin'),
-        ryo: document.getElementById('abbreviation-menu-ryo')
-    };
-    
-    if (currentTab === 'general' || currentTab === 'filter') {
-        // 総合タブ・フィルタタブの場合：タブナビゲーションを表示（ユニット・けびん・リョウにアイコン）
-        const tabs = [
-            { name: 'general', displayName: '総合', icon: null },
-            { name: 'common', displayName: 'ユニット', icon: TAB_CONFIG.common?.icon },
-            { name: 'kevin', displayName: 'けびん', icon: TAB_CONFIG.kevin?.icon },
-            { name: 'ryo', displayName: 'リョウ', icon: TAB_CONFIG.ryo?.icon }
-        ];
+    // generalタブの場合は通常のタブボタンを表示
+    if (currentTab === 'general') {
+        // window.tabOrderがあればその順序で、なければデフォルト順序
+        const tabOrder = window.tabOrder || ['common', 'kevin', 'ryo'];
         
-        const tabButtonsHTML = tabs.map(tab => {
-            const isActive = currentTab === tab.name ? 'active' : '';
-            const iconHTML = tab.icon ? 
-                `<img src="${tab.icon}" alt="${tab.displayName} icon" class="tab-icon" style="width: 1.2em; height: 1.2em; margin-right: 0.3em; vertical-align: middle; border-radius: 50%; object-fit: cover;">` : '';
-            return `<button class="tab-button ${isActive}" data-tab="${tab.name}">${iconHTML}${tab.displayName}</button>`;
+        const tabLabels = {
+            'common': 'ユニット',
+            'kevin': 'けびん',
+            'ryo': 'リョウ'
+        };
+        
+        const buttonsHTML = tabOrder.map(tabId => {
+            const label = tabLabels[tabId] || tabId;
+            // NEWバッジがある場合は赤い丸を追加
+            const hasNew = window.tabsWithNewBadge && window.tabsWithNewBadge.includes(tabId);
+            const newIndicator = hasNew ? '<span class="tab-button-new-indicator"></span>' : '';
+            return `<button class="tab-button" data-tab="${tabId}">${newIndicator}${label}</button>`;
         }).join('');
         
         row2.innerHTML = `
             <div class="tab-navigation-compact">
-                ${tabButtonsHTML}
+                ${buttonsHTML}
             </div>
         `;
         
@@ -228,214 +231,37 @@ export function updateCompactHeaderRow2(currentTab) {
                 document.dispatchEvent(event);
             });
         });
-    } else {
-        // 各タブの場合：左端にアイコン、その右に3段目メニューのコピーを表示
-        const sourceMenu = abbreviationMenus[currentTab];
-        const tabConfig = TAB_CONFIG[currentTab] || {};
-        const iconHTML = tabConfig.icon ? 
-            `<img src="${tabConfig.icon}" alt="${tabConfig.displayName || currentTab} icon" class="tab-icon-compact" style="width: 2em; height: 2em; margin-right: 0.5em; border-radius: 50%; object-fit: cover; flex-shrink: 0;">` : '';
-        
-        if (sourceMenu) {
-            const menuContainer = sourceMenu.querySelector('.abbreviation-menu-container');
-            if (menuContainer) {
-                row2.innerHTML = `
-                    <div class="abbreviation-menu-compact-wrapper" style="display: flex; align-items: center; width: 100%;">
-                        ${iconHTML}
-                        <button class="scroll-arrow scroll-arrow-left hidden" aria-label="左にスクロール">‹</button>
-                        <div class="abbreviation-menu-compact" style="flex: 1;">
-                            ${menuContainer.innerHTML}
-                        </div>
-                        <button class="scroll-arrow scroll-arrow-right hidden" aria-label="右にスクロール">›</button>
-                    </div>
-                `;
-                
-                // スクロールコンテナと矢印ボタンを取得
-                const scrollContainer = row2.querySelector('.abbreviation-menu-compact');
-                const leftArrow = row2.querySelector('.scroll-arrow-left');
-                const rightArrow = row2.querySelector('.scroll-arrow-right');
-                
-                // 矢印ボタンのクリックイベント
-                if (leftArrow && rightArrow && scrollContainer) {
-                    leftArrow.addEventListener('click', () => {
-                        scrollContainer.scrollBy({ left: -200, behavior: 'smooth' });
-                    });
-                    
-                    rightArrow.addEventListener('click', () => {
-                        scrollContainer.scrollBy({ left: 200, behavior: 'smooth' });
-                    });
-                    
-                    // スクロール位置を監視して矢印の表示/非表示を制御
-                    const updateArrows = () => updateCompactScrollArrows(scrollContainer, leftArrow, rightArrow);
-                    
-                    // 即座に実行
-                    updateArrows();
-                    
-                    // requestAnimationFrameで次のフレームに実行
-                    requestAnimationFrame(() => {
-                        updateArrows();
-                        // さらに次のフレームでも実行
-                        requestAnimationFrame(updateArrows);
-                    });
-                    
-                    // 複数のタイミングで実行（レンダリング完了を確実に捉える）
-                    setTimeout(updateArrows, 50);
-                    setTimeout(updateArrows, 100);
-                    setTimeout(updateArrows, 200);
-                    setTimeout(updateArrows, 500);
-                    setTimeout(updateArrows, 1000); // スマホサイズ用に追加
-                    setTimeout(updateArrows, 1500); // さらに追加
-                    
-                    // スクロールイベント
-                    scrollContainer.addEventListener('scroll', updateArrows);
-                    
-                    // リサイズイベント（スマホサイズでの画面回転などに対応）
-                    const resizeHandler = () => {
-                        updateArrows();
-                        setTimeout(updateArrows, 100);
-                        setTimeout(updateArrows, 300);
-                    };
-                    window.addEventListener('resize', resizeHandler);
-                    
-                    // オリエンテーション変更イベント（スマホの画面回転）
-                    window.addEventListener('orientationchange', () => {
-                        setTimeout(updateArrows, 100);
-                        setTimeout(updateArrows, 500);
-                    });
-                }
-                
-                // クリックイベントを再バインド
-                row2.querySelectorAll('.abbreviation-menu-button').forEach(button => {
-                    button.addEventListener('click', () => {
-                        const targetKey = button.getAttribute('data-target');
-                        
-                        console.log('=== コンパクト版ボタンクリック ===');
-                        console.log('Target key:', targetKey);
-                        
-                        // まず、アクティブなタブ内で要素を探す
-                        const activeTab = document.querySelector('.tab-content.active');
-                        let targetElement = null;
-                        
-                        if (activeTab) {
-                            targetElement = activeTab.querySelector(`#${targetKey}`);
-                            console.log('アクティブタブ内で検索:', activeTab.id);
-                            console.log('アクティブタブ内で発見:', targetElement ? 'あり' : 'なし');
-                        }
-                        
-                        // アクティブタブ内に見つからない場合は、全体から探す
-                        if (!targetElement) {
-                            targetElement = document.getElementById(targetKey);
-                            console.log('全体から検索して発見:', targetElement ? 'あり' : 'なし');
-                        }
-                        
-                        if (!targetElement) {
-                            console.warn(`要素が見つかりません: ${targetKey}`);
-                            return;
-                        }
-                        
-                        // 要素が表示されているか確認
-                        const isVisible = targetElement.offsetParent !== null;
-                        console.log('Element is visible:', isVisible);
-                        
-                        // 非表示の要素の場合は警告して終了
-                        if (!isVisible) {
-                            console.warn(`要素は見つかりましたが、非表示です: ${targetKey}`);
-                            console.warn('要素の親タブ:', targetElement.closest('.tab-content')?.id);
-                            return;
-                        }
-                        
-                        const header = document.getElementById('main-header');
-                        
-                        // スクロール後の最終的なヘッダー高さを使用
-                        const currentScrollY = window.scrollY || window.pageYOffset;
-                        const elementPosition = targetElement.getBoundingClientRect().top + currentScrollY;
-                        const willScrollDown = elementPosition > currentScrollY + 100;
-                        
-                        // 下スクロールの場合はコンパクト化後の高さ（50px）
-                        const finalHeaderHeight = willScrollDown ? 50 : (header ? header.offsetHeight : 50);
-                        const offsetPosition = elementPosition - finalHeaderHeight - 30;
-                        
-                        console.log('Current scroll Y:', currentScrollY);
-                        console.log('Element position:', elementPosition);
-                        console.log('Will scroll down:', willScrollDown);
-                        console.log('Final header height:', finalHeaderHeight);
-                        console.log('Offset position:', offsetPosition);
-                        
-                        window.scrollTo({
-                            top: offsetPosition,
-                            behavior: 'smooth'
-                        });
-                        
-                        // スクロール完了後に位置を再調整
-                        setTimeout(() => {
-                            const currentHeader = document.getElementById('main-header');
-                            const actualHeaderHeight = currentHeader ? currentHeader.offsetHeight : 50;
-                            const currentElementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
-                            const adjustedPosition = currentElementPosition - actualHeaderHeight - 30;
-                            
-                            console.log('=== スクロール完了後の再調整 ===');
-                            console.log('Actual header height:', actualHeaderHeight);
-                            console.log('Adjusted position:', adjustedPosition);
-                            
-                            const currentScroll = window.scrollY || window.pageYOffset;
-                            if (Math.abs(currentScroll - adjustedPosition) > 10) {
-                                console.log('位置を再調整します');
-                                window.scrollTo({
-                                    top: adjustedPosition,
-                                    behavior: 'smooth'
-                                });
-                            } else {
-                                console.log('位置調整は不要です');
-                            }
-                        }, 800);
-                    });
-                });
-            }
-        }
-    }
-}
-
-/**
- * コンパクトヘッダー用のスクロール矢印更新
- * @param {HTMLElement} container - スクロールコンテナ要素
- * @param {HTMLElement} leftArrow - 左矢印ボタン
- * @param {HTMLElement} rightArrow - 右矢印ボタン
- */
-function updateCompactScrollArrows(container, leftArrow, rightArrow) {
-    const scrollLeft = container.scrollLeft;
-    const scrollWidth = container.scrollWidth;
-    const clientWidth = container.clientWidth;
-    
-    // スマホサイズでは判定を厳密に（1pxの差でも検出）
-    const threshold = window.innerWidth <= 768 ? 1 : 5;
-    
-    console.log('updateCompactScrollArrows:', {
-        scrollWidth,
-        clientWidth,
-        scrollLeft,
-        threshold,
-        needsScroll: scrollWidth > clientWidth + threshold
-    });
-    
-    // スクロール不要な場合は両方非表示
-    if (scrollWidth <= clientWidth + threshold) {
-        leftArrow.classList.add('hidden');
-        rightArrow.classList.add('hidden');
         return;
     }
     
-    // 左端
-    if (scrollLeft <= threshold) {
-        leftArrow.classList.add('hidden');
-        rightArrow.classList.remove('hidden');
-    }
-    // 右端
-    else if (scrollLeft + clientWidth >= scrollWidth - threshold) {
-        leftArrow.classList.remove('hidden');
-        rightArrow.classList.add('hidden');
-    }
-    // 中間
-    else {
-        leftArrow.classList.remove('hidden');
-        rightArrow.classList.remove('hidden');
+    // common, kevin, ryoタブの場合は3段目メニューを表示
+    if (['common', 'kevin', 'ryo'].includes(currentTab)) {
+        // home-abbreviation-menu.jsから関数を取得
+        // グローバルに保存されていることを想定
+        const generateCompactAbbreviationMenuHTML = window.generateCompactAbbreviationMenuHTML;
+        const setupCompactAbbreviationMenuEvents = window.setupCompactAbbreviationMenuEvents;
+        const basicInfoData = window.basicInfoData;
+        const singleDataByKey = window.singleDataByKey;
+        
+        if (!generateCompactAbbreviationMenuHTML || !setupCompactAbbreviationMenuEvents) {
+            console.error('generateCompactAbbreviationMenuHTML or setupCompactAbbreviationMenuEvents not found in window');
+            return;
+        }
+        
+        if (!basicInfoData || !singleDataByKey) {
+            console.error('basicInfoData or singleDataByKey not found in window');
+            return;
+        }
+        
+        // コンパクトメニューのHTMLを生成
+        const menuHTML = generateCompactAbbreviationMenuHTML(currentTab, basicInfoData, singleDataByKey);
+        
+        // row2にHTMLを設定
+        row2.innerHTML = menuHTML;
+        
+        // イベントリスナーを設定
+        setupCompactAbbreviationMenuEvents(row2);
+        
+        console.log('Compact abbreviation menu set up successfully');
     }
 }

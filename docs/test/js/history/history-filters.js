@@ -3,8 +3,8 @@
  * フィルタ設定の適用、キャンセル、UI状態管理
  */
 
-import { CATEGORIES } from './constants.js';
-import { updateYearSelectOptions } from './year-controls.js';
+import { CATEGORIES } from './history-constants.js';
+import { updateYearSelectOptions } from './history-year-controls.js';
 
 /**
  * フィルタ設定ボタンの状態を更新

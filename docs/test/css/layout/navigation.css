@@ -1,23 +1,24 @@
-/* ページメニューのスタイル */
-.page-menu-wrapper {
-    background-color: #ffffff;
-    border-bottom: 1px solid #dee2e6;
-    padding: 0.75rem 0;
+/* ページメニューのスタイル（ヘッダー下から削除） */
+
+/* フッター内ページメニューのスタイル */
+.footer-page-menu-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.page-menu {
+.footer-page-menu {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 0.5rem;
     max-width: 960px;
-    margin: 0 auto;
     padding: 0.5rem;
     background-color: #f8f9fa;
     border-radius: 6px;
 }
 
-.page-menu-item {
+.footer-page-menu-item {
     text-decoration: none;
     color: #495057;
     font-weight: 500;
@@ -26,14 +27,15 @@
     transition: all 0.2s ease;
 }
 
-.page-menu-item:hover {
+.footer-page-menu-item:hover {
     background-color: #e9ecef;
     color: #212529;
 }
 
-.page-menu-item.active {
+.footer-page-menu-item.active {
     background-color: #dc3545;
     color: white;
+    border-bottom: 2px solid #dc3545;
 }
 
 .page-menu-separator {

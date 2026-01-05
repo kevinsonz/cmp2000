@@ -33,10 +33,13 @@
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+    position: relative; /* 擬似要素用 */
 }
 
 .tab-button:hover {
-    background-color: #e9ecef;
+    background-color: #fff !important; /* 白背景 */
+    border-bottom-color: #dc3545; /* 赤い下線 */
+    color: #dc3545; /* 赤文字 */
 }
 
 .tab-button.active {
@@ -69,11 +72,28 @@
         scroll-margin-top: 140px;
     }
 }
+/* タブボタンのNEW通知（赤い丸） */
+.tab-button-new-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #dc3545;
+    border-radius: 50%;
+    margin-right: 0.3em;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
 /* スマホでのタブナビゲーション調整 */
 @media (max-width: 576px) {
     .tab-button {
         min-width: 100px;
         padding: 0.5rem 0.75rem;
         font-size: 0.9rem;
+    }
+    
+    .tab-button-new-indicator {
+        width: 6px;
+        height: 6px;
     }
 }

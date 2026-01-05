@@ -3,7 +3,7 @@
  * 年範囲選択、スライダー、ボタンの制御
  */
 
-import { MIN_YEAR, MAX_YEAR } from './constants.js';
+import { MIN_YEAR, MAX_YEAR } from './history-constants.js';
 
 /**
  * 年セレクトボックスを初期化

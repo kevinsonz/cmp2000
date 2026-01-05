@@ -4,7 +4,7 @@
  */
 
 import { parseHashTags, collectAllHashTags } from '../shared/hashtag.js';
-import { accordionStates, preFilterStates, SECTION_INFO } from './accordion.js';
+import { accordionStates, preFilterStates, SECTION_INFO } from './about-accordion.js';
 
 /**
  * フィルタUIを表示

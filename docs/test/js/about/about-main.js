@@ -7,32 +7,33 @@ import { updateCurrentYear } from '../shared/utils.js';
 import { initHeaderScroll, initHeaderTitleClick } from '../shared/header.js';
 import { collectAllHashTags } from '../shared/hashtag.js';
 import { fetchCSV, parseBasicInfoCSV } from '../shared/csv-loader.js';
-import { parseArchiveCSV, parseFamilyCSV, CSV_URLS, updatePhilosophySection } from './content-loader.js';
+import { parseArchiveCSV, parseFamilyCSV, CSV_URLS, updatePhilosophySection } from './about-content-loader.js';
 
 import { 
     accordionStates, 
     updateAccordionButtonStates, 
     openAllAccordions, 
     closeAllAccordions,
-    initAccordionButtons 
-} from './accordion.js';
+    initAccordionButtons,
+    initSectionMenu,
+    initScrollArrows
+} from './about-accordion.js';
 
 import { 
     applyHashTagFilter, 
     clearHashTagFilter, 
     showFilterUI, 
     hideFilterUI 
-} from './filters.js';
+} from './about-filters.js';
 
 import { 
-    updateJumpMenu, 
     handleInitialHash 
-} from './navigation.js';
+} from './about-navigation.js';
 
 import { 
     generateAboutPage, 
     generateHashTagList 
-} from './content-generator.js';
+} from './about-content-generator.js';
 
 // グローバル状態
 let basicInfoData = [];
@@ -71,7 +72,6 @@ function applyHashTagFilterWrapper(tag) {
         archiveInfoData,
         familyInfoData,
         (filterTag) => generateAboutPageWrapper(filterTag),
-        (filterTag) => updateJumpMenu(filterTag, basicInfoData, archiveInfoData, familyInfoData),
         (allTags, activeTag) => generateHashTagList(allTags, activeTag, handleHashTagClick, basicInfoData, archiveInfoData, familyInfoData)
     );
     
@@ -95,7 +95,6 @@ function clearHashTagFilterWrapper() {
         archiveInfoData,
         familyInfoData,
         (filterTag) => generateAboutPageWrapper(filterTag),
-        (filterTag) => updateJumpMenu(filterTag, basicInfoData, archiveInfoData, familyInfoData),
         (allTags, activeTag) => generateHashTagList(allTags, activeTag, handleHashTagClick, basicInfoData, archiveInfoData, familyInfoData)
     );
     
@@ -157,6 +156,9 @@ async function initializeAboutPage() {
     // アコーディオンボタンの初期化
     initAccordionButtons(handleOpenAllClick, handleCloseAllClick);
     
+    // セクションメニューの初期化
+    initSectionMenu();
+    
     try {
         // CSVデータを読み込み
         console.log('=== CSV読み込み開始 ===');
@@ -190,7 +192,17 @@ async function initializeAboutPage() {
         // UIを更新
         updatePhilosophySection(basicInfo);
         generateAboutPageWrapper(null);
-        updateJumpMenu(null, basicInfo, archiveInfo, familyInfo);
+        
+        // スクロール矢印を初期化
+        console.log('>>> initScrollArrows を呼び出します');
+        console.log('>>> initScrollArrows関数:', initScrollArrows);
+        console.log('>>> initScrollArrows関数の型:', typeof initScrollArrows);
+        try {
+            initScrollArrows();
+            console.log('>>> initScrollArrows の呼び出し完了');
+        } catch (error) {
+            console.error('>>> initScrollArrows でエラー発生:', error);
+        }
         
         // URLハッシュをチェックしてセクションに移動
         handleInitialHash((sectionId, filterTag) => {

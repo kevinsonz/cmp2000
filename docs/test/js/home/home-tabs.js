@@ -4,7 +4,7 @@
  */
 
 import { shouldShowNewBadge } from '../shared/utils.js';
-import { NEW_BADGE_DAYS, TAB_CONFIG } from './config.js';
+import { NEW_BADGE_DAYS, TAB_CONFIG } from './home-config.js';
 
 /**
  * HTMLタグとmarkdown記法を除去
@@ -63,6 +63,14 @@ export function addTabIcons() {
         
         // ボタンの内容をクリアして再構成
         button.innerHTML = '';
+        
+        // NEWバッジがある場合は赤い丸を追加
+        if (window.tabsWithNewBadge && window.tabsWithNewBadge.includes(tabName)) {
+            const newIndicator = document.createElement('span');
+            newIndicator.className = 'tab-button-new-indicator';
+            button.appendChild(newIndicator);
+        }
+        
         button.appendChild(iconImg);
         button.appendChild(document.createTextNode(text));
     });
@@ -89,13 +97,9 @@ export function initTabs(switchTabCallback) {
  * @param {string} tabName - 切り替え先のタブ名
  * @param {string|null} currentFilterTag - 現在のフィルタタグ
  * @param {Function} clearFilterCallback - フィルタクリア時のコールバック
- * @param {Function} updateJumpMenuCallback - ジャンプメニュー更新のコールバック
- * @param {Function} updateDataTableCallback - データテーブル更新のコールバック（generalタブ用）
- * @param {Function} selectDateOnHeatmapCallback - ヒートマップ日付選択のコールバック（generalタブ用）
- * @param {Array} availableDates - 利用可能な日付の配列（generalタブ用）
  * @returns {string} 切り替え後のタブ名
  */
-export function switchTab(tabName, currentFilterTag, clearFilterCallback, updateJumpMenuCallback, updateDataTableCallback, selectDateOnHeatmapCallback, availableDates) {
+export function switchTab(tabName, currentFilterTag, clearFilterCallback) {
     console.log('=== switchTab called ===');
     console.log('Target tab:', tabName);
     console.log('Current filter tag:', currentFilterTag);
@@ -120,8 +124,13 @@ export function switchTab(tabName, currentFilterTag, clearFilterCallback, update
     const targetButtons = document.querySelectorAll(`.tab-button[data-tab="${tabName}"]`);
     const targetContent = document.getElementById(`tab-${tabName}`);
     
-    if (targetButtons.length > 0 && targetContent) {
-        targetButtons.forEach(btn => btn.classList.add('active'));
+    if (targetContent) {
+        // タブボタンがある場合はアクティブにする
+        if (targetButtons.length > 0) {
+            targetButtons.forEach(btn => btn.classList.add('active'));
+        }
+        
+        // タブコンテンツをアクティブにする
         targetContent.classList.add('active');
         
         // previousTabも更新（次回のフィルタ用）
@@ -129,23 +138,16 @@ export function switchTab(tabName, currentFilterTag, clearFilterCallback, update
             window.previousTab = tabName;
         }
         
-        // ジャンプメニューを更新（新しいタブ名を引数として渡す）
-        console.log('Updating jump menu for tab:', tabName);
-        if (updateJumpMenuCallback) {
-            updateJumpMenuCallback(tabName);
-        }
-        
-        // 総合タブの場合、最新日付を自動選択
-        if (tabName === 'general' && updateDataTableCallback && selectDateOnHeatmapCallback) {
-            setTimeout(() => {
-                if (availableDates && availableDates.length > 0) {
-                    const latestDate = availableDates[availableDates.length - 1];
-                    console.log('Auto-selecting latest date on general tab:', latestDate);
-                    
-                    updateDataTableCallback(latestDate);
-                    selectDateOnHeatmapCallback(latestDate);
-                }
-            }, 100);
+        // 2段目メニューの表示/非表示を制御
+        const tabNavigationWrapper = document.querySelector('.tab-navigation-wrapper');
+        if (tabNavigationWrapper) {
+            if (['common', 'kevin', 'ryo'].includes(tabName)) {
+                // ユニット・けびん・リョウタブの時は2段目メニューを非表示
+                document.body.classList.add('hide-tab-navigation');
+            } else {
+                // それ以外のタブの時は2段目メニューを表示
+                document.body.classList.remove('hide-tab-navigation');
+            }
         }
         
         // ページトップにスクロール
@@ -170,19 +172,61 @@ export function generateTabLinksSection(basicInfoData, singleDataGlobal, switchT
     const tabNames = ['common', 'kevin', 'ryo'];
     const tabData = [];
     
+    // tabIdに対応するkeyプレフィックスのマッピング
+    const tabKeyPrefixMap = {
+        'common': 'cmp',
+        'kevin': 'kevin',
+        'ryo': 'ryo'
+    };
+    
     tabNames.forEach(tabName => {
         const tabItems = basicInfoData.filter(item => item.tabId === tabName);
         if (tabItems.length > 0) {
             const firstItem = tabItems[0];
+            
+            // 該当する記事を検索して最新日付を取得
+            const keyPrefix = tabKeyPrefixMap[tabName] || tabName;
+            const articles = singleDataGlobal.filter(article => 
+                article.key.startsWith(keyPrefix) && article.date
+            );
+            
+            // 最新日付を取得
+            let latestDate = null;
+            if (articles.length > 0) {
+                const sortedArticles = articles.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+                    if (isNaN(dateA.getTime())) return 1;
+                    if (isNaN(dateB.getTime())) return -1;
+                    return dateB - dateA;
+                });
+                latestDate = new Date(sortedArticles[0].date);
+            }
+            
             tabData.push({
                 tabId: tabName,
                 tabName: firstItem.tab,
                 name: firstItem.summary || firstItem.category,
                 key: firstItem.key,
                 image: firstItem.image,
-                subImage: firstItem.subImage
+                subImage: firstItem.subImage,
+                latestDate: latestDate
             });
         }
+    });
+    
+    // 最新更新日順にソート（新しい順）
+    tabData.sort((a, b) => {
+        if (!a.latestDate && !b.latestDate) return 0;
+        if (!a.latestDate) return 1;
+        if (!b.latestDate) return -1;
+        return b.latestDate - a.latestDate;
+    });
+    
+    console.log('Tab data sorted by latest update:');
+    tabData.forEach(tab => {
+        console.log(`  ${tab.tabId}: ${tab.latestDate ? tab.latestDate.toISOString() : 'no date'}`);
     });
     
     // cmpOfficialPortalのロゴ情報を取得
@@ -202,13 +246,6 @@ export function generateTabLinksSection(basicInfoData, singleDataGlobal, switchT
         
         // 該当するタブのカード数をカウント
         const tabCardCount = basicInfoData.filter(item => item.tabId === tabInfo.tabId).length;
-        
-        // tabIdに対応するkeyプレフィックスのマッピング
-        const tabKeyPrefixMap = {
-            'common': 'cmp',
-            'kevin': 'kevin',
-            'ryo': 'ryo'
-        };
         
         // 該当する記事を検索
         const keyPrefix = tabKeyPrefixMap[tabInfo.tabId] || tabInfo.tabId;
@@ -385,4 +422,127 @@ export function generateTabLinksSection(basicInfoData, singleDataGlobal, switchT
             }
         });
     });
+    
+    // タブボタンの順序を更新（最新更新順）
+    const tabOrderArray = tabData.map(tab => tab.tabId);
+    updateTabButtonOrder(tabOrderArray);
+    
+    // タブ順序をグローバルに保存（header.jsから参照できるように）
+    window.tabOrder = tabOrderArray;
+    
+    // NEWバッジがあるタブを記録（タブアイコンの赤い丸表示用）
+    const tabsWithNewBadge = [];
+    tabData.forEach(tabInfo => {
+        // 該当する記事を検索
+        const keyPrefix = tabKeyPrefixMap[tabInfo.tabId] || tabInfo.tabId;
+        const articles = singleDataGlobal.filter(article => 
+            article.key.startsWith(keyPrefix) && article.date
+        );
+        
+        if (articles.length > 0) {
+            const sortedArticles = articles.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return dateB - dateA;
+            });
+            
+            const latestArticle = sortedArticles[0];
+            if (latestArticle && latestArticle.date && shouldShowNewBadge(latestArticle.date, NEW_BADGE_DAYS)) {
+                tabsWithNewBadge.push(tabInfo.tabId);
+            }
+        }
+    });
+    
+    window.tabsWithNewBadge = tabsWithNewBadge;
+    console.log('Tabs with NEW badge:', tabsWithNewBadge);
+    
+    // タブアイコンを更新（赤い丸を追加）
+    updateTabIcons();
+}
+
+/**
+ * タブアイコンを更新（赤い丸の追加/削除）
+ */
+function updateTabIcons() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    
+    tabButtons.forEach(button => {
+        const tabName = button.dataset.tab;
+        if (!tabName || tabName === 'general') return;
+        
+        // 既存の赤い丸を削除
+        const existingIndicator = button.querySelector('.tab-button-new-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        
+        // NEWバッジがある場合は赤い丸を追加
+        if (window.tabsWithNewBadge && window.tabsWithNewBadge.includes(tabName)) {
+            const newIndicator = document.createElement('span');
+            newIndicator.className = 'tab-button-new-indicator';
+            
+            // アイコンがある場合は、アイコンの前に挿入
+            const icon = button.querySelector('.tab-icon');
+            if (icon) {
+                button.insertBefore(newIndicator, icon);
+            } else {
+                // アイコンがない場合は、最初に挿入
+                button.insertBefore(newIndicator, button.firstChild);
+            }
+        }
+    });
+    
+    console.log('Tab icons updated with NEW indicators');
+}
+
+/**
+ * タブボタンの順序を更新
+ * @param {Array} tabOrder - タブIDの配列（表示順）
+ */
+function updateTabButtonOrder(tabOrder) {
+    console.log('Updating tab button order:', tabOrder);
+    
+    // 通常のタブナビゲーション
+    const normalNavigation = document.querySelector('.tab-navigation-wrapper .tab-navigation');
+    if (normalNavigation) {
+        const buttons = Array.from(normalNavigation.querySelectorAll('.tab-button'));
+        
+        // 新しい順序で並べ替え
+        const sortedButtons = tabOrder.map(tabId => {
+            return buttons.find(btn => btn.getAttribute('data-tab') === tabId);
+        }).filter(btn => btn); // undefinedを除外
+        
+        // DOMから一度削除して再追加
+        buttons.forEach(btn => btn.remove());
+        sortedButtons.forEach(btn => normalNavigation.appendChild(btn));
+    }
+    
+    // コンパクトヘッダーのタブナビゲーション
+    const compactNavigation = document.querySelector('.header-compact-row2 .tab-navigation-compact');
+    if (compactNavigation) {
+        const buttons = Array.from(compactNavigation.querySelectorAll('.tab-button'));
+        
+        // 新しい順序で並べ替え
+        const sortedButtons = tabOrder.map(tabId => {
+            return buttons.find(btn => btn.getAttribute('data-tab') === tabId);
+        }).filter(btn => btn); // undefinedを除外
+        
+        // DOMから一度削除して再追加
+        buttons.forEach(btn => btn.remove());
+        sortedButtons.forEach(btn => compactNavigation.appendChild(btn));
+        
+        // コンパクトヘッダーのイベントリスナーを再バインド
+        compactNavigation.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.getAttribute('data-tab');
+                console.log('Compact header tab button clicked:', targetTab);
+                
+                // カスタムイベントを発火してmain.jsに通知
+                const event = new CustomEvent('tabSwitch', { detail: { tab: targetTab } });
+                document.dispatchEvent(event);
+            });
+        });
+    }
+    
+    console.log('Tab button order updated');
 }

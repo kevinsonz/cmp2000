@@ -6,7 +6,7 @@
 import { extractHashTags, convertHashTagsToLinks, renderHashTagListForTab } from '../shared/hashtag.js';
 import { extractXUsername, formatXPostDate, shouldShowNewBadge } from '../shared/utils.js';
 import { getBasicInfoByKey } from '../shared/csv-loader.js';
-import { SINGLE_MAX_LENGTH, NEW_BADGE_DAYS } from './config.js';
+import { SINGLE_MAX_LENGTH, NEW_BADGE_DAYS } from './home-config.js';
 
 /**
  * NEW!!バッジを表示すべきかチェック
@@ -244,58 +244,22 @@ function generateFilterCards(filteredInfo, singleDataByKey, filterTag, allHashTa
     
     container.innerHTML = '';
     
+    // 1つのcard-containerにすべてのカードを入れる（通常タブと同じレスポンシブグリッド表示）
     const cardContainer = document.createElement('div');
     cardContainer.className = 'card-container';
     
-    // カテゴリ順序を維持するためのソート
-    const categoryOrder = ['共通コンテンツ', 'けびんケビンソン', 'イイダリョウ'];
-    const groupedByCategory = {};
-    filteredInfo.forEach(item => {
-        if (!groupedByCategory[item.category]) {
-            groupedByCategory[item.category] = [];
-        }
-        groupedByCategory[item.category].push(item);
+    // すべてのカードを追加
+    filteredInfo.forEach(site => {
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'card-wrapper';
+        cardWrapper.id = site.key;
+        cardWrapper.setAttribute('data-site-title', site.siteTitle);
+        cardWrapper.setAttribute('data-summary', site.summary || '');
+        cardWrapper.innerHTML = generateCardHTML(site, false, true, singleDataByKey, onHashTagClick);
+        cardContainer.appendChild(cardWrapper);
     });
     
-    const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
-        const indexA = categoryOrder.indexOf(a);
-        const indexB = categoryOrder.indexOf(b);
-        
-        if (indexA === -1 && indexB === -1) return 0;
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        
-        return indexA - indexB;
-    });
-    
-    sortedCategories.forEach(category => {
-        const items = groupedByCategory[category];
-        
-        if (items.length > 0) {
-            const sectionTitle = document.createElement('h3');
-            sectionTitle.className = 'section-title';
-            sectionTitle.textContent = category;
-            container.appendChild(sectionTitle);
-            
-            const categoryContainer = document.createElement('div');
-            categoryContainer.className = 'card-container';
-            
-            items.forEach(site => {
-                const cardWrapper = document.createElement('div');
-                cardWrapper.className = 'card-wrapper';
-                cardWrapper.id = site.key;
-                cardWrapper.setAttribute('data-site-title', site.siteTitle);
-                cardWrapper.setAttribute('data-summary', site.summary || '');
-                cardWrapper.innerHTML = generateCardHTML(site, false, true, singleDataByKey, onHashTagClick);
-                categoryContainer.appendChild(cardWrapper);
-            });
-            
-            container.appendChild(categoryContainer);
-            
-            const hr = document.createElement('hr');
-            container.appendChild(hr);
-        }
-    });
+    container.appendChild(cardContainer);
     
     // フィルタタブのハッシュタグ一覧を更新
     renderHashTagListForTab('filter', allHashTags, basicInfoData, filterTag, onHashTagClick);
@@ -419,7 +383,7 @@ function generateNormalCards(basicInfo, singleDataByKey, allHashTags, basicInfoD
             console.log(`  Processing summary group: ${summary}`);
             const items = groupedBySummary[summary];
             
-            // カードを新しい順にソート
+            // カードを更新順（日付の新しい順）にソート
             items.sort((a, b) => {
                 // aの日付を取得
                 let dateA = null;
@@ -451,12 +415,7 @@ function generateNormalCards(basicInfo, singleDataByKey, allHashTags, basicInfoD
                 if (!dateB) return -1; // bのみ日付なし：前
                 
                 // 日付を比較（新しい順）
-                if (dateB.getTime() !== dateA.getTime()) {
-                    return dateB - dateA; // 新しい順
-                }
-                
-                // 同じ日付の場合はCSV順（元の順序を維持）
-                return 0;
+                return dateB - dateA;
             });
             
             const cardContainer = document.createElement('div');

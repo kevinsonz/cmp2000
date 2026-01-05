@@ -3,7 +3,7 @@
  * カテゴリ選択、チェックボックス、アイコン表示の制御
  */
 
-import { CATEGORIES, CATEGORY_ICONS, CATEGORY_ABBREVIATIONS } from './constants.js';
+import { CATEGORIES, CATEGORY_ICONS, CATEGORY_ABBREVIATIONS } from './history-constants.js';
 
 /**
  * カテゴリフィルタリストを生成

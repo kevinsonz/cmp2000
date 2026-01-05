@@ -23,13 +23,14 @@
     <link rel="stylesheet" href="./css/layout/navigation.css">
     <link rel="stylesheet" href="./css/components/buttons.css">
     <link rel="stylesheet" href="./css/components/accordion.css">
+    <link rel="stylesheet" href="./css/components/abbreviation-menu.css">
     <link rel="stylesheet" href="./css/pages/about.css">
 
-    <!-- Aboutページ用スクリプト（モジュール化版） -->
-    <script type="module" src="./js/about/main.js"></script>
+    <!-- Aboutページ用スクリプト(モジュール化版) -->
+    <script type="module" src="./js/about/about-main.js"></script>
 </head>
 
-<body class="bg-light">
+<body class="bg-light" id="about">
     <header id="main-header" class="sticky-top bg-light border-bottom">
         <h1 class="text-center py-3 mb-0 header-title-normal">
             <a href="./" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
@@ -44,39 +45,34 @@
                 <div class="header-compact-logo">
                     <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon-compact">
                 </div>
-                <div class="header-compact-page-menu">
-                    <a href="index.html" class="page-menu-link">Home</a>
-                    <span class="page-menu-separator">|</span>
-                    <a href="about.html" class="page-menu-link active">About</a>
-                    <span class="page-menu-separator">|</span>
-                    <a href="history.html" class="page-menu-link">History</a>
-                </div>
             </div>
             <div class="header-compact-row2">
-                <div class="accordion-controls-compact">
-                    <button id="openAllBtnCompact" class="btn btn-sm btn-outline-primary">+全開</button>
-                    <button id="closeAllBtnCompact" class="btn btn-sm btn-outline-secondary">-全閉</button>
+                <div class="abbreviation-menu-compact-wrapper">
+                    <button class="scroll-arrow scroll-arrow-left hidden" id="scrollLeftBtnCompact">‹</button>
+                    <div class="abbreviation-menu-compact" id="sectionNavContainerCompact">
+                        <button class="abbreviation-menu-back-button" aria-label="Homeに戻る" onclick="location.href='index.html'"></button>
+                        <img src="./images/cmp2000-icon.gif" alt="About icon" class="abbreviation-menu-icon" id="aboutIconCompact">
+                        <button id="openAllBtnCompact" class="abbreviation-menu-button">+全開</button>
+                        <button id="closeAllBtnCompact" class="abbreviation-menu-button">-全閉</button>
+                        <!-- セクションジャンプボタンはJavaScriptで動的に生成 -->
+                    </div>
+                    <button class="scroll-arrow scroll-arrow-right hidden" id="scrollRightBtnCompact">›</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <div class="page-menu-wrapper">
-        <div class="page-menu">
-            <a href="index.html" class="page-menu-item">Home</a>
-            <span class="page-menu-separator">|</span>
-            <a href="about.html" class="page-menu-item active">About</a>
-            <span class="page-menu-separator">|</span>
-            <a href="history.html" class="page-menu-item">History</a>
-        </div>
-    </div>
-    
-    <div id="section-nav-wrapper" class="section-nav-wrapper">
-        <div class="section-nav-container">
-            <div class="accordion-controls">
-                <button id="openAllBtn" class="btn btn-sm btn-outline-primary">+全開</button>
-                <button id="closeAllBtn" class="btn btn-sm btn-outline-secondary">-全閉</button>
+    <div id="section-nav-wrapper" class="abbreviation-menu-wrapper">
+        <div class="abbreviation-menu-scroll-wrapper">
+            <button class="scroll-arrow scroll-arrow-left hidden" id="scrollLeftBtn">‹</button>
+            <div class="abbreviation-menu-container" id="sectionNavContainer">
+                <button class="abbreviation-menu-back-button" aria-label="Homeに戻る" onclick="location.href='index.html'"></button>
+                <img src="./images/cmp2000-icon.gif" alt="About icon" class="abbreviation-menu-icon" id="aboutIcon">
+                <button id="openAllBtn" class="abbreviation-menu-button">+全開</button>
+                <button id="closeAllBtn" class="abbreviation-menu-button">-全閉</button>
+                <!-- セクションジャンプボタンはJavaScriptで動的に生成 -->
             </div>
+            <button class="scroll-arrow scroll-arrow-right hidden" id="scrollRightBtn">›</button>
         </div>
     </div>
 
@@ -100,13 +96,6 @@
         </div>
     </div>
 
-    <div class="dropup position-fixed bottom-0 end-0 m-3" style="z-index: 1000;">
-        <button class="btn btn-primary rounded-circle shadow" type="button" id="jumpMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="width: 60px; height: 60px;">
-            ☰
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jumpMenuButton" id="jumpMenuList"></ul>
-    </div>
-
     <div id="hashtag-list-section" class="hashtag-list-section">
         <div class="container text-center">
             <div id="hashtag-list" class="hashtag-list"></div>
@@ -114,6 +103,15 @@
     </div>
 
     <footer id="footer" class="text-center py-4 mt-5 border-top bg-light">
+        <div class="footer-page-menu-wrapper mb-3">
+            <div class="footer-page-menu">
+                <a href="index.html" class="footer-page-menu-item">Home</a>
+                <span class="page-menu-separator">|</span>
+                <a href="about.html" class="footer-page-menu-item active">About</a>
+                <span class="page-menu-separator">|</span>
+                <a href="history.html" class="footer-page-menu-item">History</a>
+            </div>
+        </div>
         <p class="mb-0 text-muted">
             <small>&copy; 2000-<span id="current-year"></span> CMP2000</small>
         </p>

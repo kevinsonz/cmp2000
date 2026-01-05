@@ -5,17 +5,17 @@
 
 import { showFilterUI, hideFilterUI } from '../shared/hashtag.js';
 import { smoothScrollToElement } from '../shared/utils.js';
+import { updateCompactHeaderRow2 } from '../shared/header.js';
 
 /**
  * ハッシュタグフィルタを適用
  * @param {string} tag - フィルタタグ
  * @param {string} currentTab - 現在のタブ
  * @param {Function} generateCardsCallback - カード生成コールバック
- * @param {Function} updateJumpMenuCallback - ジャンプメニュー更新コールバック
  * @param {Function} clearFilterCallback - クリアコールバック（フィルタUI用）
  * @returns {Object} - { currentTab: string, currentFilterTag: string }
  */
-export function applyHashTagFilter(tag, currentTab, generateCardsCallback, updateJumpMenuCallback, clearFilterCallback) {
+export function applyHashTagFilter(tag, currentTab, generateCardsCallback, clearFilterCallback) {
     console.log('=== applyHashTagFilter ===');
     console.log('Tag:', tag);
     console.log('Current tab:', currentTab);
@@ -29,12 +29,45 @@ export function applyHashTagFilter(tag, currentTab, generateCardsCallback, updat
     generateCardsCallback(tag);
     showFilterUI(tag, clearFilterCallback);
     
-    // DOMの更新を待ってからジャンプメニューを更新
+    // filterタブに切り替え
+    console.log('Switching to filter tab');
+    
+    // すべてのタブボタンとコンテンツからactiveクラスを削除
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.remove('filtering');
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // filterタブをアクティブにする
+    const filterContent = document.getElementById('tab-filter');
+    if (filterContent) {
+        filterContent.classList.add('active');
+        console.log('Filter tab activated');
+    } else {
+        console.error('Filter tab not found (tab-filter)');
+    }
+    
+    // フィルタモード時はすべてのメニューを非表示
+    // 1. 2段目メニュー「ユニット｜けびん｜リョウ」を非表示
+    document.body.classList.add('hide-tab-navigation');
+    
+    // 2. 3段目メニュー（略称メニュー）を非表示
+    const allAbbreviationMenus = document.querySelectorAll('.abbreviation-menu-wrapper');
+    allAbbreviationMenus.forEach(menu => {
+        menu.style.display = 'none';
+    });
+    
+    // 3. コンパクトヘッダーの2段目をfilter専用表示に更新
+    updateCompactHeaderRow2('filter');
+    
+    console.log('Filter mode: All menus hidden, compact header shows filter mode');
+    
+    // DOMの更新を待ってからフィルタタブの先頭にスクロール
     setTimeout(() => {
-        console.log('Updating jump menu for filter mode');
-        if (updateJumpMenuCallback) {
-            updateJumpMenuCallback('filter'); // フィルタタブを明示的に渡す
-        }
+        console.log('Scrolling to filter tab');
         
         // フィルタタブの先頭にスクロール
         const filterTab = document.getElementById('tab-filter');
@@ -93,14 +126,27 @@ export function clearHashTagFilter(generateCardsCallback, switchTabCallback) {
     generateCardsCallback(null);
     hideFilterUI();
     
+    // すべてのメニューを元に戻す
+    // 1. 3段目メニュー（略称メニュー）を元に戻す
+    const allAbbreviationMenus = document.querySelectorAll('.abbreviation-menu-wrapper');
+    allAbbreviationMenus.forEach(menu => {
+        menu.style.display = '';
+    });
+    
     // 元のタブに戻る
     const targetTab = window.previousTab || 'general';
     console.log('Switching back to tab:', targetTab);
     
-    // タブ切り替えを実行（この中でジャンプメニューも更新される）
+    // タブ切り替えを実行
     if (switchTabCallback) {
         switchTabCallback(targetTab);
     }
+    
+    // 2. コンパクトヘッダーを元のタブに応じて復元
+    // タブ切り替え後に実行するため、少し遅延させる
+    setTimeout(() => {
+        updateCompactHeaderRow2(targetTab);
+    }, 50);
     
     console.log('Filter cleared - returning to tab:', targetTab);
     return {

@@ -1,4 +1,4 @@
-/* footer styles - 既存のCSSから移植してください */
+/* footer styles */
 #footer {
     scroll-margin-top: 120px;
 }
@@ -32,7 +32,7 @@
 }
 
 /* スクロール時の表示制御（About専用） */
-#main-header.scrolled + .page-menu-wrapper + .section-nav-wrapper {
+#main-header.scrolled + .section-nav-wrapper {
     display: none;
 }
 
@@ -65,7 +65,6 @@
 }
 
 /* スクロール時の表示制御（History専用） */
-#main-header.scrolled + .page-menu-wrapper + .filter-nav-wrapper {
+#main-header.scrolled + .filter-nav-wrapper {
     display: none;
 }
-

@@ -25,17 +25,16 @@
     <link rel="stylesheet" href="./css/components/buttons.css">
     <link rel="stylesheet" href="./css/components/filters.css">
     <link rel="stylesheet" href="./css/components/tabs.css">
-    <link rel="stylesheet" href="./css/components/heatmap.css">
     <link rel="stylesheet" href="./css/components/abbreviation-menu.css">
     <link rel="stylesheet" href="./css/pages/home.css">
     <link rel="stylesheet" href="./css/layout/header-mobile-fix.css">
 
-    <!-- Homeページ用スクリプト（ESモジュール） -->
-    <script src="./js/home/main.js" type="module"></script>
+    <!-- Homeページ用スクリプト(ESモジュール) -->
+    <script src="./js/home/home-main.js" type="module"></script>
 </head>
 
 <body class="bg-light" id="cmp">
-    <!-- ページヘッダー（固定） -->
+    <!-- ページヘッダー(固定) -->
     <header id="main-header" class="sticky-top bg-light border-bottom">
         <!-- 既存のヘッダー構造をそのまま維持 -->
         <h1 class="text-center py-3 mb-0 header-title-normal">
@@ -51,17 +50,9 @@
                 <div class="header-compact-logo">
                     <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon-compact">
                 </div>
-                <div class="header-compact-page-menu">
-                    <a href="index.html" class="page-menu-link active">Home</a>
-                    <span class="page-menu-separator">|</span>
-                    <a href="about.html" class="page-menu-link">About</a>
-                    <span class="page-menu-separator">|</span>
-                    <a href="history.html" class="page-menu-link">History</a>
-                </div>
             </div>
             <div class="header-compact-row2">
                 <div class="tab-navigation-compact">
-                    <button class="tab-button active" data-tab="general">総合</button>
                     <button class="tab-button" data-tab="common">ユニット</button>
                     <button class="tab-button" data-tab="kevin">けびん</button>
                     <button class="tab-button" data-tab="ryo">リョウ</button>
@@ -70,20 +61,8 @@
         </div>
     </header>
 
-    <!-- 既存のHTML構造をそのまま維持 -->
-    <div class="page-menu-wrapper">
-        <div class="page-menu">
-            <a href="index.html" class="page-menu-item active">Home</a>
-            <span class="page-menu-separator">|</span>
-            <a href="about.html" class="page-menu-item">About</a>
-            <span class="page-menu-separator">|</span>
-            <a href="history.html" class="page-menu-item">History</a>
-        </div>
-    </div>
-
     <div class="tab-navigation-wrapper">
         <div class="tab-navigation">
-            <button class="tab-button active" data-tab="general">総合</button>
             <button class="tab-button" data-tab="common">ユニット</button>
             <button class="tab-button" data-tab="kevin">けびん</button>
             <button class="tab-button" data-tab="ryo">リョウ</button>
@@ -99,68 +78,41 @@
                     <strong>CMP2000とは</strong>
                 </a>
                 <div class="card-body p-3">
-                    <p id="philosophy-content" class="mb-0" style="line-height: 1.4;"></p>
+                    <p id="philosophy-content" class="mb-3" style="line-height: 1.4;"></p>
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <a href="about.html" class="btn btn-outline-danger btn-sm">About(構成,関係者)</a>
+                        <a href="history.html" class="btn btn-outline-danger btn-sm">History(歴史,年表)</a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ヒートマップ（理念の直後に移動） -->
-        <div class="page-container text-center mt-3 mb-3">
-            <div class="contribution-graph-wrapper">
-                <div id="contribution-graph" class="contribution-graph"></div>
-            </div>
-        </div>
-
-        <!-- タブリンクセクション（3つのカード） -->
+        <!-- タブリンクセクション(3つのカード) -->
         <div id="tab-links-section" class="page-container mt-3 mb-3"></div>
 
         <!-- ハッシュタグ一覧 -->
-        <div id="hashtag-list-container-general" class="page-container text-center mt-3 mb-3"></div>
+        <div id="hashtag-list-container-general" class="page-container text-center mt-2 mb-2"></div>
     </div>
 
     <div id="tab-common" class="tab-content">
         <div id="abbreviation-menu-common" class="abbreviation-menu-wrapper"></div>
         <div id="about-sns-section-common" class="page-container"></div>
-        <div class="page-container text-center mt-2 mb-2">
-            <div class="contribution-graph-wrapper">
-                <div id="contribution-graph-common" class="contribution-graph"></div>
-            </div>
-        </div>
-        <div class="page-container">
-            <div id="data-table-wrapper-common" class="data-table-wrapper"></div>
-        </div>
-        <div id="card-content-container-common" class="mt-2 mb-2"></div>
-        <div id="hashtag-list-container-common" class="page-container text-center mt-2 mb-2"></div>
+        <div id="card-content-container-common" class="mt-1 mb-1"></div>
+        <div id="hashtag-list-container-common" class="page-container text-center mt-1 mb-1"></div>
     </div>
 
     <div id="tab-kevin" class="tab-content">
         <div id="abbreviation-menu-kevin" class="abbreviation-menu-wrapper"></div>
         <div id="about-sns-section-kevin" class="page-container"></div>
-        <div class="page-container text-center mt-2 mb-2">
-            <div class="contribution-graph-wrapper">
-                <div id="contribution-graph-kevin" class="contribution-graph"></div>
-            </div>
-        </div>
-        <div class="page-container">
-            <div id="data-table-wrapper-kevin" class="data-table-wrapper"></div>
-        </div>
-        <div id="card-content-container-kevin" class="mt-2 mb-2"></div>
-        <div id="hashtag-list-container-kevin" class="page-container text-center mt-2 mb-2"></div>
+        <div id="card-content-container-kevin" class="mt-1 mb-1"></div>
+        <div id="hashtag-list-container-kevin" class="page-container text-center mt-1 mb-1"></div>
     </div>
 
     <div id="tab-ryo" class="tab-content">
         <div id="abbreviation-menu-ryo" class="abbreviation-menu-wrapper"></div>
         <div id="about-sns-section-ryo" class="page-container"></div>
-        <div class="page-container text-center mt-2 mb-2">
-            <div class="contribution-graph-wrapper">
-                <div id="contribution-graph-ryo" class="contribution-graph"></div>
-            </div>
-        </div>
-        <div class="page-container">
-            <div id="data-table-wrapper-ryo" class="data-table-wrapper"></div>
-        </div>
-        <div id="card-content-container-ryo" class="mt-2 mb-2"></div>
-        <div id="hashtag-list-container-ryo" class="page-container text-center mt-2 mb-2"></div>
+        <div id="card-content-container-ryo" class="mt-1 mb-1"></div>
+        <div id="hashtag-list-container-ryo" class="page-container text-center mt-1 mb-1"></div>
     </div>
 
     <div id="tab-filter" class="tab-content">
@@ -169,16 +121,17 @@
         <div id="hashtag-list-container-filter" class="page-container text-center mt-4 mb-4"></div>
     </div>
 
-    <!-- ジャンプメニュー -->
-    <div class="dropup position-fixed bottom-0 end-0 m-3" style="z-index: 1000;">
-        <button class="btn btn-primary rounded-circle shadow" type="button" id="jumpMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="width: 60px; height: 60px;">
-            ☰
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jumpMenuButton" id="jumpMenuList"></ul>
-    </div>
-
     <!-- フッター -->
-    <footer id="footer" class="text-center py-4 mt-5 border-top bg-light">
+    <footer id="footer" class="text-center py-4 mt-3 border-top bg-light">
+        <div class="footer-page-menu-wrapper mb-3">
+            <div class="footer-page-menu">
+                <a href="index.html" class="footer-page-menu-item active">Home</a>
+                <span class="page-menu-separator">|</span>
+                <a href="about.html" class="footer-page-menu-item">About</a>
+                <span class="page-menu-separator">|</span>
+                <a href="history.html" class="footer-page-menu-item">History</a>
+            </div>
+        </div>
         <p class="mb-0 text-muted">
             <small>&copy; 2000-<span id="current-year"></span> CMP2000</small>
         </p>

@@ -8,17 +8,23 @@ import { initHeaderScroll, initHeaderTitleClick, updateCompactHeaderRow2 } from 
 import { fetchCSV, CSV_URLS, parseBasicInfoCSV, parseMultiCSV, parseSingleCSV } from '../shared/csv-loader.js';
 import { collectAllHashTags, convertHashTagsToLinks } from '../shared/hashtag.js';
 import { convertMarkdownToHTML } from '../shared/markdown.js';
-import { setTabIcons, TAB_CONFIG } from './config.js';
+import { setTabIcons, TAB_CONFIG } from './home-config.js';
 
-import { initTabs, switchTab, generateTabLinksSection, addTabIcons } from './tabs.js';
-import { generateCards, loadSingleFeeds } from './cards.js';
-import { applyHashTagFilter, clearHashTagFilter } from './filters.js';
-import { updateJumpMenuForCurrentTab } from './jump-menu.js';
-import { generateContributionGraph, generateContributionGraphForTab, selectDateOnHeatmap, updateDataTableForDate, availableDates, selectLatestDateForTab } from './heatmap.js';
-import { generateAbbreviationMenu, generateAboutSnsSection } from './abbreviation-menu.js';
+import { initTabs, switchTab, generateTabLinksSection, addTabIcons } from './home-tabs.js';
+import { generateCards, loadSingleFeeds } from './home-cards.js';
+import { applyHashTagFilter, clearHashTagFilter } from './home-filters.js';
+import { generateAbbreviationMenu, generateAboutSnsSection, generateCompactAbbreviationMenuHTML, setupCompactAbbreviationMenuEvents } from './home-abbreviation-menu.js';
+
+// グローバルに公開（header.jsで使用するため）
+window.generateCompactAbbreviationMenuHTML = generateCompactAbbreviationMenuHTML;
+window.setupCompactAbbreviationMenuEvents = setupCompactAbbreviationMenuEvents;
 
 // TAB_CONFIGをグローバルに公開（header.jsで使用するため）
 window.TAB_CONFIG = TAB_CONFIG;
+
+// basicInfoDataとsingleDataByKeyをグローバルに公開（header.jsで使用するため）
+window.basicInfoData = null;
+window.singleDataByKey = null;
 
 // グローバル状態
 let basicInfoData = null;
@@ -28,13 +34,6 @@ let singleDataByKey = {};
 let allHashTags = [];
 let currentFilterTag = null;
 let currentTab = 'general';
-
-// タブごとのヒートマップ生成状態を管理
-const heatmapGeneratedTabs = {
-    common: false,
-    kevin: false,
-    ryo: false
-};
 
 /**
  * 理念セクションを更新
@@ -54,38 +53,6 @@ function updatePhilosophySection(basicInfo) {
             争いの絶えない世の中において、平和は自然に生まれるモノではなく、ヒトの創造によって実現されるモノである、という理念。
         `;
     }
-}
-
-/**
- * MULTI_CSVからコントリビューションデータを生成
- * @param {Array} multiData - Multiデータ
- * @returns {Array} コントリビューションデータ
- */
-function generateContributionDataFromMulti(multiData) {
-    if (!multiData || !Array.isArray(multiData) || multiData.length === 0) {
-        console.warn('generateContributionDataFromMulti: multiDataが空です');
-        return [];
-    }
-    
-    console.log('generateContributionDataFromMulti: multiData件数:', multiData.length);
-    
-    const dateCounts = {};
-    multiData.forEach(item => {
-        if (item.date) {
-            dateCounts[item.date] = (dateCounts[item.date] || 0) + 1;
-        }
-    });
-    
-    console.log('generateContributionDataFromMulti: ユニークな日付数:', Object.keys(dateCounts).length);
-    
-    const result = Object.keys(dateCounts).map(date => ({
-        date: date,
-        count: dateCounts[date]
-    }));
-    
-    console.log('generateContributionDataFromMulti: 生成されたデータ件数:', result.length);
-    
-    return result;
 }
 
 /**
@@ -122,6 +89,9 @@ function generateCardsWrapper(filterTag = null) {
         console.log('=== singleDataByKey 構築完了 ===');
         console.log('全キー:', Object.keys(singleDataByKey));
         console.log('キー数:', Object.keys(singleDataByKey).length);
+        
+        // グローバルに公開（header.jsで使用するため）
+        window.singleDataByKey = singleDataByKey;
         
         // ryoのキーを確認
         const ryoKeys = Object.keys(singleDataByKey).filter(key => key.startsWith('ryo'));
@@ -178,50 +148,12 @@ function switchTabWrapper(tabName) {
     currentTab = switchTab(
         tabName,
         currentFilterTag,
-        () => clearHashTagFilterWrapper(),
-        (newTabName) => updateJumpMenuWrapper(newTabName),
-        (dateStr) => updateDataTableForDate(dateStr), // updateDataTableCallback
-        (dateStr) => selectDateOnHeatmap(dateStr, true), // selectDateOnHeatmapCallback（横スクロール有効）
-        availableDates // availableDates
+        () => clearHashTagFilterWrapper()
     );
     console.log('=== switchTabWrapper completed - currentTab:', currentTab, '===');
     
     // コンパクトヘッダーの2行目を更新
     updateCompactHeaderRow2(currentTab);
-    
-    // タブごとのヒートマップを生成（未生成の場合のみ）
-    if (['common', 'kevin', 'ryo'].includes(tabName) && !heatmapGeneratedTabs[tabName]) {
-        console.log(`Generating heatmap for tab: ${tabName}`);
-        generateTabHeatmap(tabName);
-        heatmapGeneratedTabs[tabName] = true;
-        
-        // ヒートマップ生成後、最新日付を自動選択
-        setTimeout(() => {
-            selectLatestDateForTab(tabName);
-        }, 100);
-    } else if (['common', 'kevin', 'ryo'].includes(tabName) && heatmapGeneratedTabs[tabName]) {
-        // 既に生成済みの場合も、最新日付を自動選択
-        setTimeout(() => {
-            selectLatestDateForTab(tabName);
-        }, 100);
-    }
-}
-
-/**
- * タブごとのヒートマップを生成
- * @param {string} tabName - タブ名（common, kevin, ryo）
- */
-function generateTabHeatmap(tabName) {
-    if (!multiDataGlobal || !basicInfoData) {
-        console.warn(`Cannot generate heatmap for ${tabName}: missing data`);
-        return;
-    }
-    
-    // コントリビューションデータを生成（全データから）
-    const contributionData = generateContributionDataFromMulti(multiDataGlobal);
-    
-    // タブ固有のヒートマップを生成
-    generateContributionGraphForTab(tabName, contributionData, multiDataGlobal, basicInfoData);
 }
 
 /**
@@ -242,7 +174,6 @@ function handleHashTagClick(tag) {
             tag,
             currentTab,
             (filterTag) => generateCardsWrapper(filterTag),
-            (newTabName) => updateJumpMenuWrapper(newTabName), // タブ名を引数として受け取る
             () => clearHashTagFilterWrapper()
         );
         currentTab = result.currentTab;
@@ -270,21 +201,6 @@ function clearHashTagFilterWrapper() {
     // currentFilterTagは既にnullに設定済み
     
     console.log('After clear - currentTab:', currentTab, 'currentFilterTag:', currentFilterTag);
-}
-
-/**
- * ジャンプメニュー更新のラッパー関数
- * @param {string|null} tabName - タブ名（省略時はcurrentTabを使用）
- */
-function updateJumpMenuWrapper(tabName = null) {
-    const targetTab = tabName !== null ? tabName : currentTab;
-    console.log('=== updateJumpMenuWrapper ===');
-    console.log('Passed tabName:', tabName);
-    console.log('Current tab:', currentTab);
-    console.log('Target tab for jump menu:', targetTab);
-    console.log('Current filter tag:', currentFilterTag);
-    
-    updateJumpMenuForCurrentTab(targetTab, currentFilterTag, basicInfoData, singleDataByKey);
 }
 
 /**
@@ -333,20 +249,18 @@ async function initializePage() {
         // タブボタンにアイコンを追加
         addTabIcons();
         
-        // コントリビューションデータを生成
-        const contributionData = generateContributionDataFromMulti(multiData);
-        
         // グローバル変数に保存
         basicInfoData = basicInfo;
         multiDataGlobal = multiData;
         singleDataGlobal = singleData;
         allHashTags = collectAllHashTags(basicInfo);
         
+        // グローバルに公開（header.jsで使用するため）
+        window.basicInfoData = basicInfo;
+        
         // UIを更新
         updatePhilosophySection(basicInfo);
         generateCardsWrapper(null);
-        generateContributionGraph(contributionData, multiData, basicInfo, (tabId) => switchTabWrapper(tabId));
-        updateJumpMenuWrapper();
         
         // URLハッシュをチェックしてタブを切り替え
         const hash = window.location.hash.substring(1); // #を除去
