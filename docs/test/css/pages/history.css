@@ -2,6 +2,11 @@
    History.html専用のスタイル
    ================================= */
 
+/* Historyページのbody設定 */
+body#history {
+    overflow-x: hidden !important; /* 横スクロールを防止 */
+}
+
 /* 年代ジャンプボタンのスタイル（テキストライク） */
 .abbreviation-menu-container .year-jump-btn,
 .abbreviation-menu-compact .year-jump-btn {
@@ -49,16 +54,20 @@ body#history #filter-nav-wrapper.abbreviation-menu-wrapper {
     max-height: 80px !important; /* ホバー時に高さが変わらないように最大高さを固定 */
     display: flex !important;
     align-items: center !important;
+    width: 100% !important; /* 幅を100%に設定 */
+    overflow: visible !important; /* 矢印ボタンが見えるように変更 */
 }
 
 /* スクロールラッパーの高さと幅を設定 */
 body#history #filter-nav-wrapper .abbreviation-menu-scroll-wrapper {
     height: 80px !important; /* 高さを高くする */
+    width: 100% !important; /* 幅を100%に変更 */
     max-width: 960px !important;
     margin: 0 auto !important;
     display: flex !important;
     align-items: center !important;
     position: relative !important;
+    overflow: visible !important; /* 矢印ボタンが見えるように */
 }
 
 /* ヘッダーがスクロールしてコンパクト表示の時は非表示 */
@@ -70,7 +79,7 @@ body#history #filter-nav-wrapper .abbreviation-menu-container {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    justify-content: center !important; /* 初期値は中央寄せ、JSで動的に変更 */
+    justify-content: flex-start !important; /* 初期値は左寄せ、JSでcenterに変更 */
     align-items: center !important;
     gap: 0.5rem !important;
     overflow-x: auto !important;
@@ -109,6 +118,7 @@ body#history .abbreviation-menu-icon {
 body#history .filter-settings-btn {
     flex-shrink: 0 !important;
     margin-right: 0.5rem !important;
+    min-width: 120px !important; /* 最小幅を設定 */
 }
 
 /* 戻るボタンのサイズ調整 */
@@ -131,12 +141,14 @@ body#history .year-jump-btn:hover::after {
 
 /* コンパクトヘッダーのメニューの高さを調整 */
 body#history .abbreviation-menu-compact-wrapper {
-    height: 48px !important;
+    min-height: 48px !important; /* min-heightに変更 */
+    width: 100% !important; /* 幅を100%に設定 */
     max-width: 960px !important;
     margin: 0 auto !important;
     display: flex !important;
     align-items: center !important;
     position: relative !important;
+    overflow: visible !important; /* 矢印ボタンが見えるように */
 }
 
 /* コンパクトメニューのパディングを調整 */
@@ -144,7 +156,7 @@ body#history .abbreviation-menu-compact {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
-    justify-content: center !important; /* 初期値は中央寄せ、JSで動的に変更 */
+    justify-content: flex-start !important; /* 初期値は左寄せ、JSでcenterに変更 */
     align-items: center !important;
     gap: 0.5rem !important;
     overflow-x: auto !important;
@@ -152,6 +164,7 @@ body#history .abbreviation-menu-compact {
     scroll-behavior: smooth !important;
     scrollbar-width: thin !important;
     scrollbar-color: rgba(0, 0, 0, 0.2) transparent !important;
+    width: 100% !important; /* 幅を確保 */
 }
 
 body#history .abbreviation-menu-compact::-webkit-scrollbar {
@@ -170,6 +183,12 @@ body#history .abbreviation-menu-compact::-webkit-scrollbar-thumb {
 /* コンパクトメニューのボタンの最小幅 */
 body#history .abbreviation-menu-compact .abbreviation-menu-button {
     min-width: 80px !important;
+    flex-shrink: 0 !important;
+}
+
+/* コンパクトメニューのフィルタ設定ボタンの最小幅 */
+body#history .abbreviation-menu-compact .filter-settings-btn {
+    min-width: 110px !important;
     flex-shrink: 0 !important;
 }
 
