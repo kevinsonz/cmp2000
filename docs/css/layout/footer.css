@@ -1,0 +1,70 @@
+/* footer styles */
+#footer {
+    scroll-margin-top: 120px;
+}
+
+/* セクションナビゲーションバーのスタイル */
+.section-nav-wrapper {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 0;
+    overflow: visible;
+}
+
+.section-nav-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.accordion-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.accordion-controls-compact {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+/* スクロール時の表示制御（About専用） */
+#main-header.scrolled + .section-nav-wrapper {
+    display: none;
+}
+
+/* フィルタ設定ボタンエリアのスタイル（History専用） */
+.filter-nav-wrapper {
+    background-color: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 0;
+    overflow: visible;
+}
+
+.filter-nav-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-controls-compact {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+/* スクロール時の表示制御（History専用） */
+#main-header.scrolled + .filter-nav-wrapper {
+    display: none;
+}

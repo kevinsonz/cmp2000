@@ -9,27 +9,34 @@
     <link rel="icon" type="image/png" href="./images/cmp2000-favicon.png">
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Bootstrap JavaScript Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- カスタムスタイルシート -->
-    <link rel="stylesheet" href="./style.css">
-    <link rel="stylesheet" href="./index-style.css">
+    <link rel="stylesheet" href="./css/base/variables.css">
+    <link rel="stylesheet" href="./css/base/reset.css">
+    <link rel="stylesheet" href="./css/base/typography.css">
+    <link rel="stylesheet" href="./css/layout/header.css">
+    <link rel="stylesheet" href="./css/layout/footer.css">
+    <link rel="stylesheet" href="./css/layout/navigation.css">
+    <link rel="stylesheet" href="./css/components/cards.css">
+    <link rel="stylesheet" href="./css/components/buttons.css">
+    <link rel="stylesheet" href="./css/components/filters.css">
+    <link rel="stylesheet" href="./css/components/tabs.css">
+    <link rel="stylesheet" href="./css/components/abbreviation-menu.css">
+    <link rel="stylesheet" href="./css/pages/home.css">
+    <link rel="stylesheet" href="./css/layout/header-mobile-fix.css">
 
-    <!-- ローカル開発用データ（GitHub Pagesでは404になるが問題なし） -->
-    <script src="./data/basic-info.js" onerror="console.log('ローカルデータなし: オンラインモードで動作します')"></script>
-    <script src="./data/test-data.js" onerror="console.log('テストデータなし: オンラインモードで動作します')"></script>
-
-    <!-- カスタムスクリプト（defer属性でHTML解析後に実行） -->
-    <script src="./script.js" defer></script>
+    <!-- Homeページ用スクリプト(ESモジュール) -->
+    <script src="./js/home/home-main.js" type="module"></script>
 </head>
 
 <body class="bg-light" id="cmp">
-    <!-- ページヘッダー（固定） -->
+    <!-- ページヘッダー(固定) -->
     <header id="main-header" class="sticky-top bg-light border-bottom">
-        <!-- 通常時のタイトル -->
+        <!-- 既存のヘッダー構造をそのまま維持 -->
         <h1 class="text-center py-3 mb-0 header-title-normal">
             <a href="./" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
                 <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon">
@@ -38,145 +45,93 @@
             </a>
         </h1>
         
-        <!-- スクロール時のコンパクトヘッダー（2段レイアウト） -->
         <div class="header-compact">
-            <!-- 1段目：ロゴ + ページメニュー -->
             <div class="header-compact-row1">
                 <div class="header-compact-logo">
                     <img src="./images/cmp2000-icon.gif" alt="CMP2000 Icon" class="header-icon-compact">
                 </div>
-                <div class="header-compact-page-menu">
-                    <a href="index.html" class="page-menu-link active">Home</a>
-                    <span class="page-menu-separator">|</span>
-                    <a href="about.html" class="page-menu-link">About</a>
-                    <span class="page-menu-separator">|</span>
-                    <a href="history.html" class="page-menu-link">History</a>
-                </div>
             </div>
-            <!-- 2段目：タブメニュー -->
             <div class="header-compact-row2">
                 <div class="tab-navigation-compact">
-                    <button class="tab-button active" data-tab="general" style="--tab-color: #6c757d;">総合</button>
-                    <button class="tab-button" data-tab="common" style="--tab-color: #dc3545;">ユニット</button>
-                    <button class="tab-button" data-tab="kevin" style="--tab-color: #198754;">けびん</button>
-                    <button class="tab-button" data-tab="ryo" style="--tab-color: #8b4513;">リョウ</button>
+                    <button class="tab-button" data-tab="common">ユニット</button>
+                    <button class="tab-button" data-tab="kevin">けびん</button>
+                    <button class="tab-button" data-tab="ryo">リョウ</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- ページメニュー（通常時） -->
-    <div class="page-menu-wrapper">
-        <div class="page-menu">
-            <a href="index.html" class="page-menu-item active">Home</a>
-            <span class="page-menu-separator">|</span>
-            <a href="about.html" class="page-menu-item">About</a>
-            <span class="page-menu-separator">|</span>
-            <a href="history.html" class="page-menu-item">History</a>
-        </div>
-    </div>
-
-    <!-- タブナビゲーション（通常時） -->
     <div class="tab-navigation-wrapper">
         <div class="tab-navigation">
-            <button class="tab-button active" data-tab="general" style="--tab-color: #6c757d;">総合</button>
-            <button class="tab-button" data-tab="common" style="--tab-color: #dc3545;">ユニット</button>
-            <button class="tab-button" data-tab="kevin" style="--tab-color: #198754;">けびん</button>
-            <button class="tab-button" data-tab="ryo" style="--tab-color: #8b4513;">リョウ</button>
+            <button class="tab-button" data-tab="common">ユニット</button>
+            <button class="tab-button" data-tab="kevin">けびん</button>
+            <button class="tab-button" data-tab="ryo">リョウ</button>
         </div>
     </div>
 
-    <!-- 総合タブコンテンツ -->
+    <!-- タブコンテンツ -->
     <div id="tab-general" class="tab-content active">
         <!-- 理念セクション -->
-        <div class="philosophy-section mt-3 mb-4 mx-auto" style="max-width: 960px;">
+        <div class="philosophy-section mt-3 mb-3 mx-auto" style="max-width: 960px;">
             <div class="card">
-                <div class="card-header bg-white d-flex justify-content-center align-items-center">
+                <a href="about.html" class="card-header bg-white d-flex justify-content-center align-items-center" style="text-decoration: none; color: #dc3545; cursor: pointer; font-size: 1.15rem;">
                     <strong>CMP2000とは</strong>
-                </div>
+                </a>
                 <div class="card-body p-3">
-                    <p id="philosophy-content" class="mb-3" style="line-height: 1.4;">
-                        <!-- cmpOfficialPortalのcommentがJavaScriptで挿入されます -->
-                    </p>
-                    
-                    <hr class="my-3">
-                    
-                    <div class="text-center">
-                        <a href="about.html" class="btn btn-outline-primary">📓 詳細情報を見る →</a>
+                    <p id="philosophy-content" class="mb-3" style="line-height: 1.4;"></p>
+                    <div class="d-flex justify-content-center gap-2 mt-3">
+                        <a href="about.html" class="btn btn-outline-danger btn-sm">About(構成,関係者)</a>
+                        <a href="history.html" class="btn btn-outline-danger btn-sm">History(歴史,年表)</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 各タブへのリンクセクション -->
-        <div id="tab-links-section" class="page-container">
-            <!-- script.jsで自動生成されます -->
-        </div>
-        <hr>
-
-        <!-- コントリビューショングラフセクション -->
-        <div class="page-container text-center mt-4">
-            <h3>ヒートマップ</h3>
-            <div class="contribution-graph-wrapper">
-                <div id="contribution-graph" class="contribution-graph"></div>
-            </div>
-        </div>
+        <!-- タブリンクセクション(3つのカード) -->
+        <div id="tab-links-section" class="page-container mt-3 mb-3"></div>
 
         <!-- ハッシュタグ一覧 -->
-        <div id="hashtag-list-container-general" class="page-container text-center mt-4 mb-4"></div>
+        <div id="hashtag-list-container-general" class="page-container text-center mt-2 mb-2"></div>
     </div>
 
-    <!-- ユニットタブコンテンツ -->
     <div id="tab-common" class="tab-content">
-        <div id="card-content-container-common">
-            <!-- カードはscript.jsで自動生成されます -->
-        </div>
-        <!-- ハッシュタグ一覧 -->
-        <div id="hashtag-list-container-common" class="page-container text-center mt-4 mb-4"></div>
+        <div id="abbreviation-menu-common" class="abbreviation-menu-wrapper"></div>
+        <div id="about-sns-section-common" class="page-container"></div>
+        <div id="card-content-container-common" class="mt-1 mb-1"></div>
+        <div id="hashtag-list-container-common" class="page-container text-center mt-1 mb-1"></div>
     </div>
 
-    <!-- けびんタブコンテンツ -->
     <div id="tab-kevin" class="tab-content">
-        <div id="card-content-container-kevin">
-            <!-- カードはscript.jsで自動生成されます -->
-        </div>
-        <!-- ハッシュタグ一覧 -->
-        <div id="hashtag-list-container-kevin" class="page-container text-center mt-4 mb-4"></div>
+        <div id="abbreviation-menu-kevin" class="abbreviation-menu-wrapper"></div>
+        <div id="about-sns-section-kevin" class="page-container"></div>
+        <div id="card-content-container-kevin" class="mt-1 mb-1"></div>
+        <div id="hashtag-list-container-kevin" class="page-container text-center mt-1 mb-1"></div>
     </div>
 
-    <!-- リョウタブコンテンツ -->
     <div id="tab-ryo" class="tab-content">
-        <div id="card-content-container-ryo">
-            <!-- カードはscript.jsで自動生成されます -->
-        </div>
-        <!-- ハッシュタグ一覧 -->
-        <div id="hashtag-list-container-ryo" class="page-container text-center mt-4 mb-4"></div>
+        <div id="abbreviation-menu-ryo" class="abbreviation-menu-wrapper"></div>
+        <div id="about-sns-section-ryo" class="page-container"></div>
+        <div id="card-content-container-ryo" class="mt-1 mb-1"></div>
+        <div id="hashtag-list-container-ryo" class="page-container text-center mt-1 mb-1"></div>
     </div>
 
-    <!-- フィルタ表示用タブコンテンツ -->
     <div id="tab-filter" class="tab-content">
-        <!-- フィルタUI表示エリア -->
         <div id="filter-ui-container" class="page-container"></div>
-        
-        <div id="card-content-container-filter">
-            <!-- フィルタ結果のカードはscript.jsで自動生成されます -->
-        </div>
-        <!-- ハッシュタグ一覧 -->
+        <div id="card-content-container-filter"></div>
         <div id="hashtag-list-container-filter" class="page-container text-center mt-4 mb-4"></div>
     </div>
 
-    <!-- ジャンプメニュー（Bootstrap dropdown使用） -->
-    <div class="dropup position-fixed bottom-0 end-0 m-3" style="z-index: 1000;">
-        <button class="btn btn-primary rounded-circle shadow" type="button" id="jumpMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="width: 60px; height: 60px;">
-            ☰
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jumpMenuButton" id="jumpMenuList">
-            <!-- script.jsで動的に生成されます -->
-        </ul>
-    </div>
-
     <!-- フッター -->
-    <footer id="footer" class="text-center py-4 mt-5 border-top bg-light">
+    <footer id="footer" class="text-center py-4 mt-3 border-top bg-light">
+        <div class="footer-page-menu-wrapper mb-3">
+            <div class="footer-page-menu">
+                <a href="index.html" class="footer-page-menu-item active">Home</a>
+                <span class="page-menu-separator">|</span>
+                <a href="about.html" class="footer-page-menu-item">About</a>
+                <span class="page-menu-separator">|</span>
+                <a href="history.html" class="footer-page-menu-item">History</a>
+            </div>
+        </div>
         <p class="mb-0 text-muted">
             <small>&copy; 2000-<span id="current-year"></span> CMP2000</small>
         </p>
