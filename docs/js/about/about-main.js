@@ -72,6 +72,7 @@ function applyHashTagFilterWrapper(tag) {
         archiveInfoData,
         familyInfoData,
         (filterTag) => generateAboutPageWrapper(filterTag),
+        null, // updateJumpMenuCallback（Aboutページには不要）
         (allTags, activeTag) => generateHashTagList(allTags, activeTag, handleHashTagClick, basicInfoData, archiveInfoData, familyInfoData)
     );
     
@@ -95,6 +96,7 @@ function clearHashTagFilterWrapper() {
         archiveInfoData,
         familyInfoData,
         (filterTag) => generateAboutPageWrapper(filterTag),
+        null, // updateJumpMenuCallback（Aboutページには不要）
         (allTags, activeTag) => generateHashTagList(allTags, activeTag, handleHashTagClick, basicInfoData, archiveInfoData, familyInfoData)
     );
     
